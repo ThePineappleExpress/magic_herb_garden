@@ -1,0 +1,400 @@
+#:kivy 2.3.0
+#:import get_hex_from_color kivy.utils.get_hex_from_color
+#:import KivyLabel kivy.uix.label.Label
+
+<Theme@Widget>:
+    dark_gray: 0.18, 0.122, 0.153, 1
+    dark_green: 0.12, 0.172, 0.153, 1
+    off_white:0.831, 0.875, 0.62, 1
+    light_green: 0.773, 0.847, 0.427, 1
+    nice_red: 0.827, 0.247, 0.286, 1
+    nice_yellow: 1, 0.651, 0.188, 1
+    nice_green: 0.259, 0.416, 0.353, 1 
+    black_transparent: 0, 0, 0, 0
+
+    bg_image: "res/img/background.png"
+    font_logo_1: "res/fonts/Quicksand-Light.ttf"
+    logo_size_1: "72sp"
+    font_logo_2: "res/fonts/Quicksand-Bold.ttf"
+    logo_size_2: "36sp"
+    font_logo_3: "res/fonts/Quicksand-Regular.ttf"
+    logo_size_3: "24sp"
+    font_title: "res/fonts/Quicksand-Light.ttf"
+    title_size: "32sp"
+    font_subtitle: "res/fonts/SpaceGrotesk-Light.ttf"
+    subtitle_size: "22sp"
+    font_input: "res/fonts/Quicksand-Regular.ttf"
+    input_size: "18sp"
+    font_body: "res/fonts/SpaceGrotesk-Regular.ttf"
+    body_size: "16sp"
+    font_button: "res/fonts/Quicksand-Bold.ttf"
+    small_size: "12sp"
+    padding_zero: 0, 0, 0, 0
+    padding_right: 0, 0, 20, 0
+    padding_left:  20, 0, 0, 0
+    padding_both: 20, 0, 20, 20
+    
+    array_4_10: 10, 10, 10, 10
+    array_4_40: 40, 40, 20, 40
+    array_4_100: 100, 100, 1000, 100
+    array_4_200: 200, 200, 200, 200
+    minimal_size: 1200, 800
+    small_button: 0.12, 0.7
+    med_button: 0.14, 0.8
+    big_button: 0.24, 0.9
+
+
+<App>:
+    theme: Theme()
+
+<Label>:
+    font_name: app.theme.font_body
+    color: app.theme.light_green
+    font_size: app.theme.body_size
+
+<ListLabel>:
+    font_name: app.theme.font_body
+    color: app.theme.light_green
+    font_size: app.theme.body_size
+
+<ListTitleLabel>:
+    font_name: app.theme.font_subtitle
+    color: app.theme.nice_yellow
+    font_size: app.theme.subtitle_size
+
+<ListSubLabel>:
+    font_name: app.theme.font_subtitle
+    color: app.theme.off_white
+    font_size: app.theme.small_size
+
+<LogoLabel1>:
+    halign: "left"
+    valign: "top"
+    padding: app.theme.padding_left
+    font_name: app.theme.font_logo_1
+    font_size: app.theme.logo_size_1
+    color: app.theme.nice_yellow
+    text_size: self.size
+    spacing: app.theme.array_4_40
+
+<LogoLabel3>:
+    halign: "left"
+    valign: "top"
+    padding: app.theme.padding_left
+    font_name: app.theme.font_logo_3
+    font_size: app.theme.logo_size_3
+    color: app.theme.nice_yellow
+    text_size: self.size
+    spacing: app.theme.array_4_40
+
+<LogoLabel2>:
+    halign: "left"
+    valign: "bottom"
+    padding: app.theme.padding_left
+    font_name: app.theme.font_logo_2
+    font_size: app.theme.logo_size_2
+    color: app.theme.off_white
+    text_size: self.size
+    spacing: app.theme.array_4_40
+
+<TitleLabel>:
+    halign: "left"
+    valign: "middle"
+    markup: True
+    highlight_color: get_hex_from_color(app.theme.off_white)
+    font_name: app.theme.font_title
+    font_size: app.theme.title_size
+    color: app.theme.nice_yellow
+    canvas.before:
+        PushMatrix
+        Rotate:
+            angle: root.angle
+            origin: self.center
+        Color:
+            rgba: app.theme.black_transparent
+        Rectangle:
+            texture: KivyLabel(text=root.text, font_size=root.font_size, font_name=root.font_name, markup=root.markup).texture
+            pos: self.center_x - self.texture_size[0] / 2, self.center_y - self.texture_size[1] / 2
+            size: self.texture_size
+    canvas.after:
+        PopMatrix
+
+<GardenLabel>:
+    halign: "left"
+    valign: "middle"
+    markup: True
+    highlight_color: get_hex_from_color(app.theme.off_white)
+    text: "Welcome to your [color=" + root.highlight_color + "]garden[/color]"
+    font_name: app.theme.font_title
+    font_size: app.theme.title_size
+
+<FieldLabel>:
+    halign: "right"
+    valign: "middle"
+    markup: True
+    padding: app.theme.padding_right
+    font_name: app.theme.font_subtitle
+    font_size: app.theme.body_size
+    color: app.theme.nice_yellow
+    text_size: self.size
+
+<HintLabel>:
+    halign: "right"
+    valign: "middle"
+    markup: True
+    padding: app.theme.padding_left
+    font_name: app.theme.font_subtitle
+    font_size: app.theme.body_size
+    color: app.theme.nice_yellow
+    text_size: self.size
+
+<RedBox>:
+    padding: app.theme.padding_zero
+    canvas:
+        Color:
+            rgba: app.theme.nice_red
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<YellowBox>:
+    padding: app.theme.padding_zero
+    canvas:
+        Color:
+            rgba: app.theme.nice_yellow
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<GreenBox>:
+    padding: app.theme.padding_zero
+    canvas:
+        Color:
+            rgba: app.theme.nice_green
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<BoxLayout>:
+    spacing: 0
+
+<ContentBox>:
+    spacing:0
+    canvas.before:
+        Color:
+            rgba: app.theme.black_transparent
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<TitleBox>:
+    padding: app.theme.padding_zero
+    spacing: 40
+    canvas.before:
+        Color:
+            rgba: app.theme.black_transparent
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<WrapperBox>:
+    padding: app.theme.padding_zero
+    canvas.before:
+        Color:
+            rgba: app.theme.dark_green
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<SpacerBox>:
+    padding: app.theme.padding_zero
+    canvas.before:
+        Color:
+            rgba: app.theme.black_transparent
+        Rectangle:
+            pos: self.pos
+            size: self.size
+            
+<TextInput>:
+    background_normal: ""
+    background_active: ""
+    border: 0, 1, 0, 0
+    background_color: app.theme.black_transparent
+    foreground_color: app.theme.off_white
+    hint_text_color: app.theme.nice_green
+    hint_text_size: app.theme.body_size
+    font_name: app.theme.font_input
+    font_name_hint_text: app.theme.font_subtitle
+    selection_color: app.theme.nice_green
+    cursor_color: app.theme.nice_green
+    font_size: app.theme.body_size
+    halign: "left"
+    padding_x: 10
+    padding_y: (self.height - self.line_height) / 2
+    text_size: self.size
+
+    
+<Button>:
+    background_normal: ""
+    background_down: ""
+    background_color: app.theme.dark_green
+    color: app.theme.nice_green
+    font_name: app.theme.font_button
+    font_size: app.theme.input_size
+    on_state:
+        self.background_color = app.theme.dark_green if self.state == "normal" else app.theme.nice_green
+        self.color = app.theme.nice_green if self.state == "normal" else app.theme.dark_green
+
+<ButtonGreen>:
+    background_normal: ""
+    background_down: ""
+    background_color: app.theme.nice_green
+    color: app.theme.dark_gray
+    font_name: app.theme.font_button
+    font_size: app.theme.input_size
+    on_state:
+        self.background_color = app.theme.nice_green if self.state == "normal" else app.theme.nice_yellow
+        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.nice_green
+
+<ButtonYellow>:
+    background_normal: ""
+    background_down: ""
+    background_color: app.theme.nice_yellow
+    color: app.theme.dark_gray
+    font_name: app.theme.font_button
+    font_size: app.theme.input_size
+    on_state:
+        self.background_color = app.theme.nice_yellow if self.state == "normal" else app.theme.nice_yellow
+        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.nice_yellow
+
+
+<ButtonRed>:
+    background_normal: ""
+    background_down: ""
+    background_color: app.theme.nice_red
+    color: app.theme.dark_gray
+    font_name: app.theme.font_button
+    font_size: app.theme.input_size
+    on_state:
+        self.background_color = app.theme.nice_red if self.state == "normal" else app.theme.nice_yellow
+        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.nice_red
+
+
+<ToggleButton>:
+    width: 200
+    background_normal: ""
+    background_down: ""
+    background_color: app.theme.black_transparent
+    color: app.theme.nice_yellow
+    font_name: app.theme.font_button
+    font_size: app.theme.input_size
+    size_hint: app.theme.small_button
+    on_state:
+        self.background_color = app.theme.black_transparent if self.state == "normal" else app.theme.nice_yellow
+        self.color = app.theme.nice_yellow if self.state == "normal" else app.theme.dark_gray
+
+<Slider>:
+    cursor_size: app.theme.subtitle_size, app.theme.subtitle_size
+    cursor_image: ""
+    canvas.before:
+        Color:
+            rgba: app.theme.nice_red
+        Rectangle:
+            size: self.cursor_size
+            pos: self.x + self.value_normalized * self.width - self.cursor_size[0] / 2, self.center_y - self.cursor_size[1] / 2
+    canvas.after:
+        Color:
+            rgba: app.theme.nice_yellow
+        Rectangle:
+            size: self.cursor_size
+            pos: self.x + self.value_normalized * self.width - self.cursor_size[0] / 2, self.center_y - self.cursor_size[1] / 2
+
+<PlantListView>:
+    viewclass: "PlantListItem"
+    RecycleBoxLayout:
+        default_size: None, dp(80)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: "vertical"
+
+<PlantListItem@BoxLayout>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: "120dp"
+
+    genes: ""
+    name: ""
+    strain: ""
+    info: ""
+    next_watering: ""
+    next_feeding: ""
+    flower_status: ""
+    harvest_status: ""
+
+    # left: type icon / text
+    ItemBox:
+        size_hint_x: 0.1
+        Label:
+            text: root.genes
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+    # middle: name / strain / info
+    ItemBox:
+        orientation: "vertical"
+        size_hint_x: 0.5
+        ListSubLabel:
+            text: root.name
+            halign: "left"
+            valign: "bottom"
+            text_size: self.size
+        ListTitleLabel:
+            padding_y: 0
+            text: root.strain
+            halign: "left"
+            valign: "middle"
+            text_size: self.size
+        ListLabel:
+            text: root.info
+            halign: "left"
+            valign: "top"
+            text_size: self.size
+
+    # next watering
+    ItemBox:
+        size_hint_x: 0.13
+        ListLabel:
+            text: root.next_watering
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+    # next feeding
+    ItemBox:
+        size_hint_x: 0.13
+        ListLabel:
+            text: root.next_feeding
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+    # flower / harvest
+    ItemBox:
+        size_hint_x: 0.14
+        ListLabel:
+            text: root.flower_status
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+    ItemBox:
+        size_hint_x: 0.14
+        ListLabel:
+            text: root.harvest_status
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
