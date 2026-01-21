@@ -9,7 +9,7 @@ from kivy.lang import Builder
 
 from empty_garden import EmptyGardenScreen
 from garden_view import GardenViewScreen
-from sow_seed import SowSeedScreen, TitleLabel
+from sow_seed import SowSeedScreen
 from plant_details import PlantDetailsScreen
 
 # initial window size
@@ -45,7 +45,7 @@ class MagicHerbTracker(App):
         return self.screen
 
     def go_back(self, instance):
-        # called from any cancel/back button button
+        # called from any cancel/back button 
         if self.previous_screen:
             self.screen.current = self.previous_screen
 

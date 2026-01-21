@@ -9,14 +9,19 @@
     light_green: 0.773, 0.847, 0.427, 1
     nice_red: 0.827, 0.247, 0.286, 1
     nice_yellow: 1, 0.651, 0.188, 1
-    nice_green: 0.259, 0.416, 0.353, 1 
+    nice_green: 0.259, 0.416, 0.353, 1  
+    nice_purple: 0.392, 0.259, 0.416, 1
     black_transparent: 0, 0, 0, 0
+
+    leaf_sativa: "res/svg/leaf_sativa.svg"
+    leaf_indica: "res/svg/leaf_indica.svg"
+    leaf_hybrid: "res/svg/leaf_hybrid.svg"
 
     bg_image: "res/img/background.png"
     font_logo_1: "res/fonts/Quicksand-Light.ttf"
     logo_size_1: "72sp"
     font_logo_2: "res/fonts/Quicksand-Bold.ttf"
-    logo_size_2: "36sp"
+    logo_size_2: "48sp"
     font_logo_3: "res/fonts/Quicksand-Regular.ttf"
     logo_size_3: "24sp"
     font_title: "res/fonts/Quicksand-Light.ttf"
@@ -119,14 +124,7 @@
     canvas.after:
         PopMatrix
 
-<GardenLabel>:
-    halign: "left"
-    valign: "middle"
-    markup: True
-    highlight_color: get_hex_from_color(app.theme.off_white)
-    text: "Welcome to your [color=" + root.highlight_color + "]garden[/color]"
-    font_name: app.theme.font_title
-    font_size: app.theme.title_size
+
 
 <FieldLabel>:
     halign: "right"
@@ -134,7 +132,7 @@
     markup: True
     padding: app.theme.padding_right
     font_name: app.theme.font_subtitle
-    font_size: app.theme.body_size
+    font_size: app.theme.subtitle_size
     color: app.theme.nice_yellow
     text_size: self.size
 
@@ -147,6 +145,24 @@
     font_size: app.theme.body_size
     color: app.theme.nice_yellow
     text_size: self.size
+
+<WarningLabel>:
+    halign: "left"
+    valign: "middle"
+    markup: True
+    padding: app.theme.padding_left
+    font_name: app.theme.font_subtitle
+    font_size: app.theme.small_size 
+    color: app.theme.off_white
+    text_size: self.size
+
+
+    canvas.before:
+        Color:
+            rgba: app.theme.nice_green
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
 <RedBox>:
     padding: app.theme.padding_zero
@@ -172,6 +188,15 @@
     canvas:
         Color:
             rgba: app.theme.nice_green
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+
+<EventBox>:
+    canvas.before:
+        Color:
+            rgba: root.hover_bg_color if root.hovered else root.normal_bg_color
         Rectangle:
             pos: self.pos
             size: self.size
@@ -295,6 +320,20 @@
         self.background_color = app.theme.black_transparent if self.state == "normal" else app.theme.nice_yellow
         self.color = app.theme.nice_yellow if self.state == "normal" else app.theme.dark_gray
 
+<SuggestionButton>:
+    background_normal: ""
+    background_down: ""
+    background_color: app.theme.nice_green
+    color: app.theme.off_white
+    font_name: app.theme.font_input
+    font_size: app.theme.body_size
+    size_hint_y: None
+    height: "28dp"
+    halign: "left"
+    valign: "middle"
+    text_size: self.size
+    padding: app.theme.padding_left
+
 <Slider>:
     cursor_size: app.theme.subtitle_size, app.theme.subtitle_size
     cursor_image: ""
@@ -313,14 +352,14 @@
 
 <PlantListView>:
     viewclass: "PlantListItem"
-    RecycleBoxLayout:
+    SelectableRecycleBoxLayout:
         default_size: None, dp(80)
         default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
         orientation: "vertical"
 
-<PlantListItem@BoxLayout>:
+<PlantListItem@SelectableBoxLayout>:
     orientation: "horizontal"
     size_hint_y: None
     height: "120dp"
@@ -329,62 +368,90 @@
     name: ""
     strain: ""
     info: ""
+    medium: ""
+    last_watering: ""
     next_watering: ""
-    next_feeding: ""
     flower_status: ""
     harvest_status: ""
 
-    # left: type icon / text
+    canvas.before:
+        Color:
+            rgba: (0.3, 0.5, 0.3, 0.7) if root.selected else app.theme.black_transparent
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    # left: type icon 
     ItemBox:
         size_hint_x: 0.1
-        Label:
-            text: root.genes
-            halign: "center"
-            valign: "middle"
-            text_size: self.size
-
+        LeafIcon:
+            source:
+                app.theme.leaf_sativa if root.genes == "Sativa" else \
+                app.theme.leaf_indica if root.genes == "Indica" else \
+                app.theme.leaf_hybrid if root.genes == "Hybrid" else ""
     # middle: name / strain / info
     ItemBox:
         orientation: "vertical"
         size_hint_x: 0.5
+        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
         ListSubLabel:
             text: root.name
             halign: "left"
             valign: "bottom"
+            padding_x:20
+            padding_y: 0
             text_size: self.size
         ListTitleLabel:
-            padding_y: 0
             text: root.strain
             halign: "left"
             valign: "middle"
+            padding_x:20
+            padding_y: 0
             text_size: self.size
         ListLabel:
             text: root.info
             halign: "left"
             valign: "top"
+            padding_x:20
+            padding_y: 0
             text_size: self.size
 
+    # medium
+    ItemBox:
+        size_hint_x: 0.10
+        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
+        ListLabel:
+            text: root.medium
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+    # last watering
+    ItemBox:
+        size_hint_x: 0.11
+        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
+        ListLabel:
+            text: root.last_watering
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+            
     # next watering
     ItemBox:
         size_hint_x: 0.13
+        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
         ListLabel:
             text: root.next_watering
             halign: "center"
             valign: "middle"
             text_size: self.size
 
-    # next feeding
-    ItemBox:
-        size_hint_x: 0.13
-        ListLabel:
-            text: root.next_feeding
-            halign: "center"
-            valign: "middle"
-            text_size: self.size
+
 
     # flower / harvest
     ItemBox:
         size_hint_x: 0.14
+        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
         ListLabel:
             text: root.flower_status
             halign: "center"
@@ -393,8 +460,10 @@
 
     ItemBox:
         size_hint_x: 0.14
+        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
         ListLabel:
             text: root.harvest_status
             halign: "center"
             valign: "middle"
             text_size: self.size
+       
