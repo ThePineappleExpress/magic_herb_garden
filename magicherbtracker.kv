@@ -9,7 +9,7 @@
     light_green: 0.773, 0.847, 0.427, 1
     nice_red: 0.827, 0.247, 0.286, 1
     nice_yellow: 1, 0.651, 0.188, 1
-    nice_green: 0.259, 0.416, 0.353, 1  
+    nice_green: 0.289, 0.516, 0.353, 1  
     nice_purple: 0.392, 0.259, 0.416, 1
     black_transparent: 0, 0, 0, 0
 
@@ -80,7 +80,6 @@
     font_size: app.theme.logo_size_1
     color: app.theme.nice_yellow
     text_size: self.size
-    spacing: app.theme.array_4_40
 
 <LogoLabel3>:
     halign: "left"
@@ -90,7 +89,6 @@
     font_size: app.theme.logo_size_3
     color: app.theme.nice_yellow
     text_size: self.size
-    spacing: app.theme.array_4_40
 
 <LogoLabel2>:
     halign: "left"
@@ -100,7 +98,6 @@
     font_size: app.theme.logo_size_2
     color: app.theme.off_white
     text_size: self.size
-    spacing: app.theme.array_4_40
 
 <TitleLabel>:
     halign: "left"
@@ -115,12 +112,6 @@
         Rotate:
             angle: root.angle
             origin: self.center
-        Color:
-            rgba: app.theme.black_transparent
-        Rectangle:
-            texture: KivyLabel(text=root.text, font_size=root.font_size, font_name=root.font_name, markup=root.markup).texture
-            pos: self.center_x - self.texture_size[0] / 2, self.center_y - self.texture_size[1] / 2
-            size: self.texture_size
     canvas.after:
         PopMatrix
 
@@ -367,7 +358,7 @@
     genes: ""
     name: ""
     strain: ""
-    info: ""
+    notes: ""
     medium: ""
     last_watering: ""
     next_watering: ""
@@ -389,7 +380,7 @@
                 app.theme.leaf_sativa if root.genes == "Sativa" else \
                 app.theme.leaf_indica if root.genes == "Indica" else \
                 app.theme.leaf_hybrid if root.genes == "Hybrid" else ""
-    # middle: name / strain / info
+    # middle: name / strain / notes
     ItemBox:
         orientation: "vertical"
         size_hint_x: 0.5
@@ -398,22 +389,19 @@
             text: root.name
             halign: "left"
             valign: "bottom"
-            padding_x:20
-            padding_y: 0
+            padding: app.theme.padding_left
             text_size: self.size
         ListTitleLabel:
             text: root.strain
             halign: "left"
             valign: "middle"
-            padding_x:20
-            padding_y: 0
+            padding: app.theme.padding_left
             text_size: self.size
         ListLabel:
-            text: root.info
+            text: root.notes
             halign: "left"
             valign: "top"
-            padding_x:20
-            padding_y: 0
+            padding: app.theme.padding_left
             text_size: self.size
 
     # medium

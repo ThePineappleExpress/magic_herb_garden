@@ -59,22 +59,5 @@ def load_plant_events(plant_id: str):
     if not os.path.exists(path):
         return None  # or {} / {"events": []}
     with open(path, "r", encoding="utf-8") as f:
-        print("load successful")
         return json.load(f)
 
-def load_events(self):
-    self.events_container.clear_widgets()
-
-    plant = self.plant or {}
-    plant_id = plant.get("id") or plant.get("plant_id")
-    print("details: plant_id:", repr(plant_id))
-
-    path = os.path.join(EVENTS_DIR, f"{plant_id}.json")
-    print("looking for:", path, "exists:", os.path.exists(path))
-
-    data = load_plant_events(str(plant_id))
-    if not data or not data.get("events"):
-        return
-
-    events = data["events"]
-    return events

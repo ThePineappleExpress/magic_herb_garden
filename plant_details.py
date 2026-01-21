@@ -1,156 +1,27 @@
-import json, os, datetime
-from kivy.config import Config
-from kivy.factory import Factory
-from kivy.properties import StringProperty, NumericProperty, ObjectProperty, ListProperty, BooleanProperty
+import datetime
+from kivy.properties import ObjectProperty, StringProperty
 from kivy.app import App
-from kivy.core.window import Window
-from kivy.uix.label import Label
+from kivy.uix.recycleview import RecycleView
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.textinput import TextInput
-from kivy.uix.togglebutton import ToggleButton
-from kivy.uix.slider import Slider
 from kivy.uix.scrollview import ScrollView
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import Screen
 from kivy.clock import Clock
-from kivy.core.window import Window
-from kivy.lang import Builder
 
-from helpers import rgba_to_hex, get_difference_days
-from storage import load_plant_events, load_events
+from helpers import get_difference_days
+from storage import load_plant_events
+from labels import TitleLabel, FieldLabel, HintLabel
+from boxes import WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout
+from buttons import ButtonRed, ButtonGreen, ButtonYellow
+from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 
-
-
-class FieldLabel(Label):
-    pass
-
-class TitleBox(BoxLayout):
-    pass
-
-
-class WrapperBox(BoxLayout):
-    pass
-
-class ContentBox(BoxLayout):
-    pass
-
-class ItemBox(BoxLayout):
-    pass
-
-class SpacerBox(BoxLayout):
-    pass
-
-class TitleLabel(Label):
-    highlight_color = StringProperty("")
-    angle = NumericProperty(90)
-    text_source = StringProperty("")   # <- used by KV
-    hex_color = StringProperty("")
-
+class EventListView(RecycleView):
+    genes = StringProperty("")
+    genes_icon = StringProperty("")
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        app = App.get_running_app()
-        
-        # guard in case this is called before theme exists
-        if app and hasattr(app, "theme"):
-            self.hex_color = rgba_to_hex(app.theme.off_white)
-        else:
-            self.hex_color = "#ffffff"
+        self.viewclass = "PlantListItem"  # uses the kv rule above
+        self.data = []                    # will fill from GardenViewScreen
 
-class LogoLabel1(Label):
-    pass
-
-
-class LogoLabel2(Label):
-    pass
-
-
-class LogoLabel3(Label):
-    pass
-class HintLabel(Label):
-    pass
-class EventBox(ItemBox):
-    hovered = BooleanProperty(False)
-    normal_text_color = ListProperty([1, 1, 1, 1])
-    hover_text_color = ListProperty([0, 0, 0, 1])
-    normal_bg_color = ListProperty([0, 0, 0, 0])
-    hover_bg_color = ListProperty([1, 1, 1, 1])
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        app = App.get_running_app()
-        if app and hasattr(app, "theme"):
-            self.normal_text_color = app.theme.nice_yellow
-            self.hover_text_color = app.theme.dark_gray
-            self.normal_bg_color = app.theme.black_transparent
-            self.hover_bg_color = app.theme.nice_green
-        Window.bind(mouse_pos=self._on_mouse_pos)
-        self.bind(hovered=self._apply_hover_state)
-
-    def on_parent(self, instance, parent):
-        if parent is None:
-            Window.unbind(mouse_pos=self._on_mouse_pos)
-
-    def _on_mouse_pos(self, _window, pos):
-        if not self.get_root_window():
-            return
-        is_hover = self.collide_point(*self.to_widget(*pos))
-        if self.hovered != is_hover:
-            self.hovered = is_hover
-
-    def add_widget(self, widget, *args, **kwargs):
-        super().add_widget(widget, *args, **kwargs)
-        self._apply_hover_state()
-
-    def _apply_hover_state(self, *_args):
-        color = self.hover_text_color if self.hovered else self.normal_text_color
-        for child in self.children:
-            if hasattr(child, "color"):
-                child.color = color
-class RedBox(ContentBox):
-    pass
-
-
-class YellowBox(ContentBox):
-    pass
-
-
-class GreenBox(ContentBox):
-    pass
-
-
-class ButtonGreen(Button):
-    pass
-
-
-class ButtonRed(Button):
-    pass
-
-class NumTextInput(TextInput):
-    max_chars = 3
-    def insert_text(self, substring, from_undo=False):
-        allowed = max(0, self.max_chars - len(self.text))
-        if allowed <= 0:
-            return
-        substring = substring[:allowed]
-        super().insert_text(substring, from_undo=from_undo)
-
-class MedTextInput(TextInput):
-    max_chars = 32
-    def insert_text(self, substring, from_undo=False):
-        allowed = max(0, self.max_chars - len(self.text))
-        if allowed <= 0:
-            return
-        substring = substring[:allowed]
-        super().insert_text(substring, from_undo=from_undo)
-
-class LargeTextInput(TextInput):
-    max_chars = 64
-    def insert_text(self, substring, from_undo=False):
-        allowed = max(0, self.max_chars - len(self.text))
-        if allowed <= 0:
-            return
-        substring = substring[:allowed]
-        super().insert_text(substring, from_undo=from_undo)
 
 class PlantDetailsScreen(Screen):
     theme = ObjectProperty(None)
@@ -178,67 +49,93 @@ class PlantDetailsScreen(Screen):
         spacer_left.add_widget(spacer_vertical)
         detail_view.add_widget(spacer_left)
 
-        content_wrapper = ContentBox(orientation="horizontal", size_hint=(1, 1))
-        content_left = ContentBox(orientation="vertical", size_hint_x=0.1)
-        content_wrapper.add_widget(content_left)
 
-        content_right = ContentBox(orientation="vertical")
+        content_wrapper = ContentBox(orientation="vertical", size_hint=(1, 1))
 
         spacer_box = SpacerBox(size_hint_y=0.02)
-        content_right.add_widget(spacer_box)
+        content_wrapper.add_widget(spacer_box)
 
-        name_box = ItemBox(orientation="vertical", size_hint_x=1, size_hint_y=0.3)
-        content_right.add_widget(name_box)
+        header = ContentBox(orientation="horizontal", size_hint_y=0.3)
+        content_wrapper.add_widget(header)
 
+        title_box = ItemBox(orientation="vertical")
+        header.add_widget(title_box)
+        spacer_box = SpacerBox(size_hint_y=0.2)
+        title_box.add_widget(spacer_box)
         
-        self.name_label = FieldLabel(text="")
+        name_box = ItemBox(orientation="horizontal", size_hint_y=0.2)
+        self.name_label = FieldLabel(text="", valign="middle", halign="left")
         self.name_label.font_size = app.theme.subtitle_size
+        self.name_label.color = app.theme.off_white
         name_box.add_widget(self.name_label)
+        title_box.add_widget(name_box)
 
-        self.strain_label = FieldLabel(text="")
+        strain_box = ItemBox(orientation="horizontal", size_hint_y=0.3)
+        self.strain_label = FieldLabel(text="", valign="bottom", halign="left")
         self.strain_label.font_size = app.theme.logo_size_2
         self.strain_label.color = app.theme.off_white
-        name_box.add_widget(self.strain_label)
 
-        self.info_label = FieldLabel(text="")
-        self.info_label.font_size = app.theme.small_size
-        name_box.add_widget(self.info_label)
+        strain_box.add_widget(self.strain_label)
+        title_box.add_widget(strain_box)
 
-        self.last_watering_label = FieldLabel(text="")
-        self.last_watering_label.font_size = app.theme.small_size
-        name_box.add_widget(self.last_watering_label)
+        notes_box = ItemBox(orientation="horizontal", size_hint_y=0.15)
+        self.notes_label = FieldLabel(text="", valign="middle", halign="left")
+        self.notes_label.font_size = app.theme.body_size
+        self.notes_label.color = app.theme.off_white
+
+        notes_box.add_widget(self.notes_label)
+        title_box.add_widget(notes_box)
+
+        watering_box = ItemBox(orientation="horizontal", size_hint_y=0.15)
+        self.last_watering_label = FieldLabel(text="", valign="middle", halign="left")
+        self.last_watering_label.font_size = app.theme.body_size
+        
+        watering_box.add_widget(self.last_watering_label)
+        title_box.add_widget(watering_box)
+
+        spacer = SpacerBox(size_hint_x=0.1)
+        header.add_widget(spacer)
+        days_passed_box = ItemBox(orientation="vertical", size_hint_x=0.3)
+        
+        days_passed_title = FieldLabel(text="Day:", valign="bottom", halign="right")
+        days_passed_title.font_size = app.theme.subtitle_size
+        days_passed_box.add_widget(days_passed_title)
+        self.days_passed_label = FieldLabel(text="", valign="top", halign="right")
+        self.days_passed_label.font_size = app.theme.logo_size_1
+        self.days_passed_label.color = app.theme.off_white
+        days_passed_box.add_widget(self.days_passed_label)
+
+        header.add_widget(days_passed_box)
+
 
         spacer_box = SpacerBox(size_hint_y=0.02)
-        content_right.add_widget(spacer_box)
+        content_wrapper.add_widget(spacer_box)
 
-        info_box = ContentBox(orientation="vertical", size_hint_x=1, size_hint_y=0.6)
+        info_box = ContentBox(orientation="vertical", size_hint_x=1, size_hint_y=0.8)
 
-        content_right.add_widget(info_box)
+        content_wrapper.add_widget(info_box)
 
         spacer_box = SpacerBox(size_hint_y=0.02)
-        content_right.add_widget(spacer_box)
+        content_wrapper.add_widget(spacer_box)
 
         # events scroll 
         scroll_events = ItemBox(orientation="vertical", size_hint_y=0.2, size_hint_x=1)
         self.events_scroll = ScrollView(do_scroll_x=True, do_scroll_y=False,)
 
-        self.events_container = BoxLayout(orientation="horizontal", size_hint_x=None, size_hint_y=1, padding=5, spacing=0,)
+        self.events_container = SelectableBoxLayout(orientation="horizontal", size_hint_x=None, size_hint_y=1, padding=5, spacing=0,)
         self.events_container.bind(minimum_width=self.events_container.setter("width"))
         self.events_scroll.add_widget(self.events_container)
         scroll_events.add_widget(self.events_scroll)
-        content_right.add_widget(scroll_events)
+        content_wrapper.add_widget(scroll_events)
         spacer_box = SpacerBox(size_hint_y=0.02)
-        content_right.add_widget(spacer_box)
+        content_wrapper.add_widget(spacer_box)
 
-
-
-        content_wrapper.add_widget(content_right)
 
         buttons = ItemBox(size_hint_y=0.1)
         go_back_btn = ButtonRed(text="Back")
         go_back_btn.bind(on_press=App.get_running_app().go_back)
         buttons.add_widget(go_back_btn)
-        content_right.add_widget(buttons)
+        content_wrapper.add_widget(buttons)
 
         detail_view.add_widget(content_wrapper)
         spacer_right = SpacerBox(size_hint_x=0.1)
@@ -253,17 +150,31 @@ class PlantDetailsScreen(Screen):
         self._update_ui()
 
     def _update_ui(self):
+        app = App.get_running_app()
         plant = self.plant or {}
-        self.name_label.text = plant.get("name", "")
+        self.genes = plant.get("genes", "")
+        self.name_label.text = " | ".join([plant.get("name", ""), self.genes])
+        
         self.strain_label.text = plant.get("strain", "")
-        self.info_label.text = plant.get("notes", "")
+        genes = (self.genes or "").strip().lower()
+        if genes == "sativa":
+            self.strain_label.color = app.theme.nice_green
+        elif genes == "indica":
+            self.strain_label.color = app.theme.nice_red
+        elif genes == "hybrid":
+            self.strain_label.color = app.theme.nice_yellow
+        else:
+            self.strain_label.color = app.theme.off_white
+        self.notes_label.text = plant.get("notes")
+        days_passed = get_difference_days(datetime.datetime.now(), plant.get("date_planted", ""))
+        self.days_passed_label.text = str(days_passed) if days_passed is not None else "–"
         self._load_and_display_events()
 
     def _load_and_display_events(self):
         self.events_container.clear_widgets()
 
         plant = self.plant or {}
-        plant_id = plant.get("id") or plant.get("plant_id")
+        plant_id = plant.get("id")
         if not plant_id:
             return
 
@@ -283,8 +194,8 @@ class PlantDetailsScreen(Screen):
                 return datetime.datetime.fromisoformat(value)
             return None
 
-        def _sort_key(evt):
-            ts_value = evt.get("ts") if isinstance(evt, dict) else None
+        def _sort_key(event):
+            ts_value = event.get("ts") if isinstance(event, dict) else None
             parsed = _parse_ts(ts_value)
             if parsed:
                 return (0, parsed)
@@ -293,10 +204,10 @@ class PlantDetailsScreen(Screen):
         # chronological (oldest -> newest)
         events_sorted = sorted(events, key=_sort_key)
 
-        for evt in events_sorted:
-            evt_type = evt.get("type", "")
-            feeding = evt.get("feeding", "")
-            ts = evt.get("ts", "")
+        for event in events_sorted:
+            event_type = event.get("type", "")
+            feeding = event.get("feeding", "")
+            ts = event.get("ts", "")
             days_ago = get_difference_days(datetime.datetime.now(), ts)
 
 
@@ -308,7 +219,7 @@ class PlantDetailsScreen(Screen):
             )
             info_box = EventBox(orientation='vertical', padding=App.get_running_app().theme.padding_right)
             box.add_widget(info_box)
-            # you can format ts to date-only if you like
+            
             if days_ago == 0:
                 info_box.add_widget(HintLabel(text="Today", font_size="12sp", valign="bottom"))
             elif days_ago == 1:
@@ -344,7 +255,7 @@ class PlantDetailsScreen(Screen):
                 info_box.add_widget(HintLabel(text=str("feeding"), font_size="12sp", valign="middle"))
             else:
                 info_box.add_widget(SpacerBox())
-            info_box.add_widget(HintLabel(text=str(evt_type), font_size="12sp", valign="top"))
+            info_box.add_widget(HintLabel(text=str(event_type), font_size="12sp", valign="top"))
 
             
             
@@ -367,3 +278,11 @@ class PlantDetailsScreen(Screen):
             self.last_watering_label.text = f"Last event: {last.get('type')} @ {last.get('ts')}"
 
         Clock.schedule_once(lambda *_: setattr(self.events_scroll, "scroll_x", 1), 0)
+
+    def selected_event_view(self):
+        plant = self.plant or {}
+        plant_id = plant.get("id")
+        if not plant_id:
+            return
+        events = load_plant_events(str(plant_id))
+        

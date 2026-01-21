@@ -4,82 +4,21 @@ from kivy.config import Config
 from kivy.factory import Factory
 from kivy.properties import StringProperty, NumericProperty, ObjectProperty, BooleanProperty
 from kivy.app import App
-from kivy.uix.label import Label
-from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
-from kivy.uix.textinput import TextInput
-from kivy.uix.togglebutton import ToggleButton
-from kivy.uix.slider import Slider
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import Screen
 from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.uix.recycleview import RecycleView
-from kivy.uix.recycleboxlayout import RecycleBoxLayout
-from kivy.uix.recycleview.layout import LayoutSelectionBehavior
-from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.widget import Widget
 from kivy.graphics.svg import Svg
 from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale
-from kivy.logger import Logger
 
-
+from labels import TitleLabel
 from storage import load_plants, save_plants, load_plant_events
-from helpers import on_plant_seed, rgba_to_hex, get_difference_days
-
-class FieldLabel(Label):
-    pass
-class TitleBox(BoxLayout):
-    pass
-class WrapperBox(BoxLayout):
-    pass
-class ContentBox(BoxLayout):
-    pass
-class ItemBox(BoxLayout):
-    pass
-class SpacerBox(BoxLayout):
-    pass
-class GardenLabel(Label):
-    pass
-class LogoLabel1(Label):
-    pass
-class LogoLabel2(Label):
-    pass
-class LogoLabel3(Label):
-    pass
-class ListLabel(Label):
-    pass
-class ListTitleLabel(Label):
-    pass
-class ListSubLabel(Label):
-    pass
-class TitleLabel(Label):
-    highlight_color = StringProperty("")
-    angle = NumericProperty(90)
-    text_source = StringProperty("")   # <- used by KV
-    hex_color = StringProperty("")
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        app = App.get_running_app()
-        
-        # guard in case this is called before theme exists
-        if app and hasattr(app, "theme"):
-            self.hex_color = rgba_to_hex(app.theme.off_white)
-        else:
-            self.hex_color = "#ffffff" 
-            
-class HintLabel(Label):
-    pass
-class RedBox(ContentBox):
-    pass
-class YellowBox(ContentBox):
-    pass
-class GreenBox(ContentBox):
-    pass
-class ButtonGreen(Button):
-    pass
-class ButtonRed(Button):
-    pass
+from helpers import on_plant_seed, get_difference_days
+from boxes import TitleBox, WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox, SelectableBoxLayout, SelectableRecycleBoxLayout
+from buttons import ButtonRed, ButtonGreen, ButtonYellow
+from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 class LeafIcon(Widget):
     source = StringProperty("")
 
@@ -107,31 +46,6 @@ class LeafIcon(Widget):
         self.canvas.add(Translate(offset_x, offset_y))
         self.canvas.add(svg)
         self.canvas.add(PopMatrix())
-
-class NumTextInput(TextInput):
-    max_chars = 3
-    def insert_text(self, substring, from_undo=False):
-        allowed = max(0, self.max_chars - len(self.text))
-        if allowed <= 0:
-            return
-        substring = substring[:allowed]
-        super().insert_text(substring, from_undo=from_undo)
-class MedTextInput(TextInput):
-    max_chars = 32
-    def insert_text(self, substring, from_undo=False):
-        allowed = max(0, self.max_chars - len(self.text))
-        if allowed <= 0:
-            return
-        substring = substring[:allowed]
-        super().insert_text(substring, from_undo=from_undo)
-class LargeTextInput(TextInput):
-    max_chars = 64
-    def insert_text(self, substring, from_undo=False):
-        allowed = max(0, self.max_chars - len(self.text))
-        if allowed <= 0:
-            return
-        substring = substring[:allowed]
-        super().insert_text(substring, from_undo=from_undo)
 class PlantListView(RecycleView):
     genes = StringProperty("")
     genes_icon = StringProperty("")
@@ -149,31 +63,6 @@ class PlantListView(RecycleView):
             self.genes_icon = "H"
         else:
             self.genes_icon = "?"
-
-class SelectableRecycleBoxLayout(LayoutSelectionBehavior, RecycleBoxLayout):
-    # Adds selection support to the RecycleBoxLayout
-    pass
-class SelectableBoxLayout(RecycleDataViewBehavior, BoxLayout):
-    index = None
-    selected = BooleanProperty(False)
-    selectable = BooleanProperty(True)
-
-    def refresh_view_attrs(self, rv, index, data):
-        self.index = index
-        return super().refresh_view_attrs(rv, index, data)
-
-    def on_touch_down(self, touch):
-        if super().on_touch_down(touch):
-            return True
-        if self.collide_point(*touch.pos) and self.selectable:
-            # ask the layout manager to select this node
-            rv = self.parent.parent  # ScrollView -> RecycleView
-            if rv.layout_manager:
-                rv.layout_manager.select_node(self.index)
-            return True
-
-    def apply_selection(self, rv, index, is_selected):
-        self.selected = is_selected
 
 class GardenViewScreen(Screen):
     theme = ObjectProperty(None)
@@ -231,8 +120,6 @@ class GardenViewScreen(Screen):
         spacer_box = SpacerBox(size_hint_x=0.02)
         garden_list.add_widget(spacer_box)
 
-
-
         content_wrapper.add_widget(garden_list)
 
         spacer_box = SpacerBox(size_hint_y=0.02)
@@ -241,14 +128,14 @@ class GardenViewScreen(Screen):
         garden_footer = ContentBox(orientation="horizontal", size_hint_y=0.1)
         spacer_box = SpacerBox(size_hint_x=0.8)
         garden_footer.add_widget(spacer_box)
-        add_plant_btn = Button(text="Add aPlant")
+        add_plant_btn = ButtonGreen(text="Add Plant")
         add_plant_btn.bind(on_press=on_plant_seed)
         garden_footer.add_widget(add_plant_btn)
-        view_selected_btn = Button(text="View Selected Plant")
+        view_selected_btn = ButtonYellow(text="View Selected Plant")
         view_selected_btn.bind(on_press=self.on_details_button)
         view_selected_btn.bind(on_press=self.on_view_selected)
         garden_footer.add_widget(view_selected_btn)
-        delete_selected_btn = Button(text="Delete Selected Plant")
+        delete_selected_btn = ButtonRed(text="Delete Selected Plant")
         delete_selected_btn.bind(on_press=self.on_delete_selected)
         garden_footer.add_widget(delete_selected_btn)
 
@@ -270,8 +157,9 @@ class GardenViewScreen(Screen):
             plant_id = p.get("id")
             name = p.get("name", "")
             strain = p.get("strain", "")
-            info = p.get("notes", "")
+            notes = p.get("notes", "")
             genes = p.get("genes", "")
+            date_planted  = p.get("date_planted", "")
             self.plant_event = load_plant_events(str(plant_id)) if plant_id else None
             events = (self.plant_event or {}).get("events", [])
             last_event = events[-1] if events else None
@@ -320,33 +208,35 @@ class GardenViewScreen(Screen):
                     flower_status = f"{est_f}"
             medium = p.get("medium")
 
-            # example: rough days to harvest based on estimate and date_planted
-
-            # for next_watering / next_watering you can later derive from
-            # watering_profile / feeding_profile + days_since
 
             data.append({
                 "id": plant_id,
                 "genes": genes,
                 "name": name,
                 "strain": strain,
-                "info": info,
+                "notes": notes,
                 "medium": medium,
                 "last_watering": last_watering,
                 "next_watering": next_watering,
                 "flower_status": flower_status,
                 "harvest_status": harvest_status,
+                "date_planted": date_planted,
             })
 
         self.plant_list.data = data
 
-    def get_selected_plant(self):
-        rv = self.plant_list
-        if not rv.layout_manager.selected_nodes:
+    def get_selected_index(self):
+        lm = self.plant_list.layout_manager
+        if not lm or not lm.selected_nodes:
             return None
-        index = rv.layout_manager.selected_nodes[0]
-        return rv.data[index]
-        
+        return lm.selected_nodes[0]
+    
+    def get_selected_plant(self):
+        idx = self.get_selected_index()
+        if idx is None:
+            return None
+        return self.plant_list.data[idx]   
+         
     def on_view_selected(self, instance):
         plant = self.get_selected_plant()
         if plant is None:
@@ -354,18 +244,6 @@ class GardenViewScreen(Screen):
             return
         print("Selected plant:", plant)
     
-    def get_selected_index(self):
-        lm = self.plant_list.layout_manager
-        if not lm or not lm.selected_nodes:
-            return None
-        return lm.selected_nodes[0]
-
-    def get_selected_plant(self):
-        idx = self.get_selected_index()
-        if idx is None:
-            return None
-        return self.plant_list.data[idx]
-
     def on_delete_selected(self, *args):
         idx = self.get_selected_index()
         if idx is None:

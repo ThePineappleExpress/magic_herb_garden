@@ -5,7 +5,6 @@ from kivy.properties import ObjectProperty
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager
 from kivy.core.window import Window
-from kivy.lang import Builder
 
 from empty_garden import EmptyGardenScreen
 from garden_view import GardenViewScreen

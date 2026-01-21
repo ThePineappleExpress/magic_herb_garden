@@ -1,28 +1,24 @@
-
+import json
+import os
 import uuid
 from datetime import date
-from kivy.config import Config
 from kivy.factory import Factory
-from kivy.properties import StringProperty, NumericProperty, ObjectProperty, ListProperty
+from kivy.properties import ObjectProperty
 from kivy.app import App
 from kivy.core.window import Window
-from kivy.uix.label import Label
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.textinput import TextInput
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.slider import Slider
 from kivy.uix.dropdown import DropDown
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import Screen
 from kivy.core.window import Window
-from kivy.lang import Builder
 
 from strain_trie import trie_search
 from storage import save_plant
 from effects import shake_and_flash
-from helpers import rgba_to_hex
-import json
-import os
+from labels import FieldLabel, TitleLabel, WarningLabel, HintLabel
+from boxes import WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox
+from buttons import ButtonRed, ButtonGreen
+from text_inputs import MedTextInput, LargeTextInput, NumTextInput
 
 CATALOG_FILE = "bin/db/seed_catalog.json"
 
@@ -33,84 +29,6 @@ def load_catalog():
 
 SEED_CATALOG = load_catalog()
 
-class FieldLabel(Label):
-    pass
-class TitleBox(BoxLayout):
-    pass
-class WrapperBox(BoxLayout):
-    pass
-class ContentBox(BoxLayout):
-    pass
-class ItemBox(BoxLayout):
-    pass
-class SpacerBox(BoxLayout):
-    pass
-class TitleLabel(Label):
-    highlight_color = StringProperty("")
-    angle = NumericProperty(90)
-    text_source = StringProperty("")   # <- used by KV
-    hex_color = StringProperty("")
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        app = App.get_running_app()
-        
-        # guard in case this is called before theme exists
-        if app and hasattr(app, "theme"):
-            self.hex_color = rgba_to_hex(app.theme.off_white)
-        else:
-            self.hex_color = "#ffffff"
-        
-class LogoLabel1(Label):
-    pass
-class LogoLabel2(Label):
-    pass
-class LogoLabel3(Label):
-    pass
-class HintLabel(Label):
-    pass
-class WarningLabel(Label):
-    pass
-class RedBox(ContentBox):
-    pass
-class YellowBox(ContentBox):
-    pass
-class GreenBox(ContentBox):
-    pass
-class ButtonGreen(Button):
-    pass
-class ButtonRed(Button):
-    pass
-
-class SuggestionButton(Button):
-    
-    pass
-
-class NumTextInput(TextInput):
-    max_chars = 3
-    def insert_text(self, substring, from_undo=False):
-        allowed = max(0, self.max_chars - len(self.text))
-        if allowed <= 0:
-            return
-        substring = substring[:allowed]
-        super().insert_text(substring, from_undo=from_undo)
-class MedTextInput(TextInput):
-    max_chars = 32
-    hint_color = ListProperty([0.259, 0.416, 0.353, 1 ]) # empty = “no override”
-    def insert_text(self, substring, from_undo=False):
-        allowed = max(0, self.max_chars - len(self.text))
-        if allowed <= 0:
-            return
-        substring = substring[:allowed]
-        super().insert_text(substring, from_undo=from_undo)
-class LargeTextInput(TextInput):
-    max_chars = 64
-    def insert_text(self, substring, from_undo=False):
-        allowed = max(0, self.max_chars - len(self.text))
-        if allowed <= 0:
-            return
-        substring = substring[:allowed]
-        super().insert_text(substring, from_undo=from_undo)
 
 class SowSeedScreen(Screen):
     theme = ObjectProperty(None)
@@ -523,6 +441,7 @@ class SowSeedScreen(Screen):
             self.hunger_label.text = f"Every 2nd watering"
         else:
             self.hunger_label.text = f"Every 3rd watering"
+
     def on_save_plant(self, instance):
         # if we’re already shaking things, ignore extra clicks
         if self._is_validating:

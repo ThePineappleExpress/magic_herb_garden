@@ -1,41 +1,10 @@
 from kivy.properties import ObjectProperty
-from kivy.app import App
-from kivy.uix.label import Label
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
 from kivy.uix.screenmanager import Screen
 
 from helpers import on_plant_seed, go_to_garden
-
-class FieldLabel(Label):
-    pass
-class TitleBox(BoxLayout):
-    pass
-class WrapperBox(BoxLayout):
-    pass
-class ContentBox(BoxLayout):
-    pass
-class ItemBox(BoxLayout):
-    pass
-class SpacerBox(BoxLayout):
-    pass
-class LogoLabel1(Label):
-    pass
-class LogoLabel2(Label):
-    pass
-class LogoLabel3(Label):
-    pass
-class RedBox(ContentBox):
-    pass
-class YellowBox(ContentBox):
-    pass
-class GreenBox(ContentBox):
-    pass
-class ButtonGreen(Button):
-    pass
-class ButtonYellow(Button):
-    pass
-
+from labels import LogoLabel1, LogoLabel2, LogoLabel3
+from buttons import ButtonGreen, ButtonYellow
+from boxes import WrapperBox, ContentBox, ItemBox, TitleBox, RedBox, YellowBox, GreenBox
 
 class EmptyGardenScreen(Screen):
     theme = ObjectProperty(None)
