@@ -1,0 +1,620 @@
+{
+  "plant_id": "1307",
+  "strain": "Amnesia Haze",
+  "cycle": {
+    "stage": "veg",
+    "day_in_stage": 38,
+    "seedling_days": 14,
+    "veg_days": 75,
+    "flower_days": 75
+  },
+  "events": [
+    {
+      "id": "evt-1",
+      "ts": "2025-12-02",
+      "type": "watering",
+      "soil_wetness": 0,
+      "volume_l": 0.1,
+      "water_temp_c": 21.0,
+      "ph": 5.9,
+      "ppm": 134,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 24.1,
+        "rh_percent": 66,
+        "vpd_kpa": 0.86
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Gentle droop after lights off."
+    },
+    {
+      "id": "evt-2",
+      "ts": "2025-12-05",
+      "type": "watering",
+      "soil_wetness": 1,
+      "volume_l": 0.1,
+      "water_temp_c": 19.3,
+      "ph": 6.0,
+      "ppm": 120,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 24.5,
+        "rh_percent": 69,
+        "vpd_kpa": 0.75
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Stem steady, soil surface drying."
+    },
+    {
+      "id": "evt-3",
+      "ts": "2025-12-08",
+      "type": "watering",
+      "soil_wetness": 0,
+      "volume_l": 0.1,
+      "water_temp_c": 18.0,
+      "ph": 6.1,
+      "ppm": 102,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 24.2,
+        "rh_percent": 60,
+        "vpd_kpa": 0.71
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaves perked up by evening."
+    },
+    {
+      "id": "evt-4",
+      "ts": "2025-12-11",
+      "type": "watering",
+      "soil_wetness": 1,
+      "volume_l": 0.1,
+      "water_temp_c": 18.8,
+      "ph": 5.8,
+      "ppm": 95,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 23.9,
+        "rh_percent": 67,
+        "vpd_kpa": 0.78
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Cotyledons open, light misting."
+    },
+    {
+      "id": "evt-5",
+      "ts": "2025-12-14",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 22.0,
+      "ph": 6.0,
+      "ppm": 584,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 24.3,
+        "rh_percent": 62,
+        "vpd_kpa": 1.07
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaf tips praying toward light."
+    },
+    {
+      "id": "evt-6",
+      "ts": "2025-12-17",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 19.4,
+      "ph": 6.2,
+      "ppm": 434,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 25.2,
+        "rh_percent": 61,
+        "vpd_kpa": 0.98
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaf tips praying toward light."
+    },
+    {
+      "id": "evt-7",
+      "ts": "2025-12-20",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 19.7,
+      "ph": 6.0,
+      "ppm": 653,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 25.4,
+        "rh_percent": 57,
+        "vpd_kpa": 1.1
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Slight droop after feed, recovered fast."
+    },
+    {
+      "id": "evt-8",
+      "ts": "2025-12-23",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 20.7,
+      "ph": 6.2,
+      "ppm": 352,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 24.7,
+        "rh_percent": 61,
+        "vpd_kpa": 1.03
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Runoff visible, pot light afterward."
+    },
+    {
+      "id": "evt-9",
+      "ts": "2025-12-26",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 18.6,
+      "ph": 6.0,
+      "ppm": 380,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 25.8,
+        "rh_percent": 59,
+        "vpd_kpa": 0.94
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaf tips praying toward light."
+    },
+    {
+      "id": "evt-10",
+      "ts": "2025-12-29",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 22.0,
+      "ph": 6.2,
+      "ppm": 434,
+      "feeding": {
+        "grow_mix": 1.03,
+        "root_mix": 0.52,
+        "blom_mix": 0.0,
+        "bloom_boost": 0.0,
+        "soil_boost": 0.53,
+        "myco_trico": 1,
+        "vit_boost": 1,
+        "Algae": 0.43,
+        "CalMag": 0.0
+      },
+      "environment": {
+        "air_temp_c": 24.2,
+        "rh_percent": 60,
+        "vpd_kpa": 1.0
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Slight droop after feed, recovered fast."
+    },
+    {
+      "id": "evt-11",
+      "ts": "2026-01-01",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 21.0,
+      "ph": 6.3,
+      "ppm": 355,
+      "feeding": {
+        "grow_mix": 1.49,
+        "root_mix": 0.58,
+        "blom_mix": 0.0,
+        "bloom_boost": 0.0,
+        "soil_boost": 0.74,
+        "myco_trico": 1,
+        "vit_boost": 1,
+        "Algae": 0.55,
+        "CalMag": 0.0
+      },
+      "environment": {
+        "air_temp_c": 24.6,
+        "rh_percent": 58,
+        "vpd_kpa": 0.93
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaf tips praying toward light."
+    },
+    {
+      "id": "evt-12",
+      "ts": "2026-01-04",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 20.4,
+      "ph": 6.0,
+      "ppm": 525,
+      "feeding": {
+        "grow_mix": 1.13,
+        "root_mix": 0.56,
+        "blom_mix": 0.0,
+        "bloom_boost": 0.0,
+        "soil_boost": 0.67,
+        "myco_trico": 1,
+        "vit_boost": 1,
+        "Algae": 0.42,
+        "CalMag": 0.0
+      },
+      "environment": {
+        "air_temp_c": 24.5,
+        "rh_percent": 59,
+        "vpd_kpa": 1.04
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "New growth vigorous, internodes tight."
+    },
+    {
+      "id": "evt-13",
+      "ts": "2026-01-07",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 18.2,
+      "ph": 5.9,
+      "ppm": 421,
+      "feeding": {
+        "grow_mix": 1.22,
+        "root_mix": 0.45,
+        "blom_mix": 0.0,
+        "bloom_boost": 0.0,
+        "soil_boost": 0.55,
+        "myco_trico": 1,
+        "vit_boost": 1,
+        "Algae": 0.48,
+        "CalMag": 0.0
+      },
+      "environment": {
+        "air_temp_c": 24.5,
+        "rh_percent": 64,
+        "vpd_kpa": 1.0
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaf tips praying toward light."
+    },
+    {
+      "id": "evt-14",
+      "ts": "2026-01-10",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 21.2,
+      "ph": 5.9,
+      "ppm": 504,
+      "feeding": {
+        "grow_mix": 1.04,
+        "root_mix": 0.55,
+        "blom_mix": 0.0,
+        "bloom_boost": 0.0,
+        "soil_boost": 0.73,
+        "myco_trico": 1,
+        "vit_boost": 1,
+        "Algae": 0.46,
+        "CalMag": 0.0
+      },
+      "environment": {
+        "air_temp_c": 24.7,
+        "rh_percent": 63,
+        "vpd_kpa": 0.94
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaf tips praying toward light."
+    },
+    {
+      "id": "evt-15",
+      "ts": "2026-01-13",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 19.8,
+      "ph": 6.3,
+      "ppm": 722,
+      "feeding": {
+        "grow_mix": 1.47,
+        "root_mix": 0.55,
+        "blom_mix": 0.0,
+        "bloom_boost": 0.0,
+        "soil_boost": 0.66,
+        "myco_trico": 1,
+        "vit_boost": 1,
+        "Algae": 0.4,
+        "CalMag": 0.0
+      },
+      "environment": {
+        "air_temp_c": 25.6,
+        "rh_percent": 61,
+        "vpd_kpa": 1.0
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Runoff visible, pot light afterward."
+    },
+    {
+      "id": "evt-16",
+      "ts": "2026-01-16",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 20.1,
+      "ph": 6.2,
+      "ppm": 769,
+      "feeding": {
+        "grow_mix": 1.26,
+        "root_mix": 0.47,
+        "blom_mix": 0.0,
+        "bloom_boost": 0.0,
+        "soil_boost": 0.71,
+        "myco_trico": 1,
+        "vit_boost": 1,
+        "Algae": 0.56,
+        "CalMag": 0.0
+      },
+      "environment": {
+        "air_temp_c": 25.0,
+        "rh_percent": 57,
+        "vpd_kpa": 1.09
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Runoff visible, pot light afterward."
+    },
+    {
+      "id": "evt-17",
+      "ts": "2026-01-19",
+      "type": "watering",
+      "soil_wetness": 2,
+      "volume_l": 0.33,
+      "water_temp_c": 20.4,
+      "ph": 6.2,
+      "ppm": 396,
+      "feeding": {
+        "grow_mix": 1.48,
+        "root_mix": 0.43,
+        "blom_mix": 0.0,
+        "bloom_boost": 0.0,
+        "soil_boost": 0.7,
+        "myco_trico": 1,
+        "vit_boost": 1,
+        "Algae": 0.36,
+        "CalMag": 0.0
+      },
+      "environment": {
+        "air_temp_c": 25.6,
+        "rh_percent": 59,
+        "vpd_kpa": 0.97
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "New growth vigorous, internodes tight."
+    }
+  ]
+}

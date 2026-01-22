@@ -1,0 +1,199 @@
+{
+  "plant_id": "1105",
+  "strain": "Deep Sleep",
+  "cycle": {
+    "stage": "seedling",
+    "day_in_stage": 8,
+    "seedling_days": 14,
+    "veg_days": 60,
+    "flower_days": 60
+  },
+  "events": [
+    {
+      "id": "evt-1",
+      "ts": "2026-01-15",
+      "type": "watering",
+      "soil_wetness": 0,
+      "volume_l": 0.1,
+      "water_temp_c": 21.4,
+      "ph": 5.8,
+      "ppm": 99,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 24.5,
+        "rh_percent": 60,
+        "vpd_kpa": 0.81
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Stem steady, soil surface drying."
+    },
+    {
+      "id": "evt-2",
+      "ts": "2026-01-16",
+      "type": "watering",
+      "soil_wetness": 1,
+      "volume_l": 0.1,
+      "water_temp_c": 19.6,
+      "ph": 6.2,
+      "ppm": 90,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 23.9,
+        "rh_percent": 67,
+        "vpd_kpa": 0.74
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaves perked up by evening."
+    },
+    {
+      "id": "evt-3",
+      "ts": "2026-01-17",
+      "type": "watering",
+      "soil_wetness": 0,
+      "volume_l": 0.1,
+      "water_temp_c": 19.9,
+      "ph": 6.0,
+      "ppm": 111,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 24.3,
+        "rh_percent": 68,
+        "vpd_kpa": 0.84
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaves perked up by evening."
+    },
+    {
+      "id": "evt-4",
+      "ts": "2026-01-18",
+      "type": "watering",
+      "soil_wetness": 1,
+      "volume_l": 0.1,
+      "water_temp_c": 21.7,
+      "ph": 6.0,
+      "ppm": 125,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 24.7,
+        "rh_percent": 62,
+        "vpd_kpa": 0.71
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaves perked up by evening."
+    },
+    {
+      "id": "evt-5",
+      "ts": "2026-01-19",
+      "type": "watering",
+      "soil_wetness": 0,
+      "volume_l": 0.1,
+      "water_temp_c": 19.1,
+      "ph": 5.8,
+      "ppm": 105,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 23.1,
+        "rh_percent": 60,
+        "vpd_kpa": 0.82
+      },
+      "deficiencies": {
+        "n": true,
+        "p": false,
+        "k": true,
+        "ca": false,
+        "mg": true,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Multiple deficiencies noted; corrective feed scheduled."
+    },
+    {
+      "id": "evt-6",
+      "ts": "2026-01-20",
+      "type": "watering",
+      "soil_wetness": 1,
+      "volume_l": 0.1,
+      "water_temp_c": 21.5,
+      "ph": 5.8,
+      "ppm": 132,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 23.2,
+        "rh_percent": 66,
+        "vpd_kpa": 0.88
+      },
+      "deficiencies": {
+        "n": true,
+        "p": false,
+        "k": true,
+        "ca": false,
+        "mg": true,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Multiple deficiencies noted; corrective feed scheduled."
+    }
+  ]
+}

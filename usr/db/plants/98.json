@@ -1,0 +1,106 @@
+{
+  "plant_id": "98",
+  "strain": "Chiesel",
+  "cycle": {
+    "stage": "seedling",
+    "day_in_stage": 8,
+    "seedling_days": 14,
+    "veg_days": 69,
+    "flower_days": 69
+  },
+  "events": [
+    {
+      "id": "evt-1",
+      "ts": "2026-01-15",
+      "type": "watering",
+      "soil_wetness": 0,
+      "volume_l": 0.1,
+      "water_temp_c": 21.2,
+      "ph": 5.8,
+      "ppm": 140,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 23.7,
+        "rh_percent": 68,
+        "vpd_kpa": 0.77
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Stem steady, soil surface drying."
+    },
+    {
+      "id": "evt-2",
+      "ts": "2026-01-17",
+      "type": "watering",
+      "soil_wetness": 1,
+      "volume_l": 0.1,
+      "water_temp_c": 21.1,
+      "ph": 6.1,
+      "ppm": 80,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 23.8,
+        "rh_percent": 66,
+        "vpd_kpa": 0.86
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Leaves perked up by evening."
+    },
+    {
+      "id": "evt-3",
+      "ts": "2026-01-19",
+      "type": "watering",
+      "soil_wetness": 0,
+      "volume_l": 0.1,
+      "water_temp_c": 18.7,
+      "ph": 6.0,
+      "ppm": 149,
+      "feeding": null,
+      "environment": {
+        "air_temp_c": 23.1,
+        "rh_percent": 67,
+        "vpd_kpa": 0.87
+      },
+      "deficiencies": {
+        "n": false,
+        "p": false,
+        "k": false,
+        "ca": false,
+        "mg": false,
+        "s": false,
+        "fe": false,
+        "mn": false,
+        "zn": false,
+        "cu": false,
+        "b": false,
+        "mo": false
+      },
+      "notes": "Stem steady, soil surface drying."
+    }
+  ]
+}
