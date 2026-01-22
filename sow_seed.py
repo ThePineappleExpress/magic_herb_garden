@@ -6,6 +6,7 @@ from kivy.factory import Factory
 from kivy.properties import ObjectProperty
 from kivy.app import App
 from kivy.core.window import Window
+from kivy.uix.button import Button
 from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.slider import Slider
 from kivy.uix.dropdown import DropDown
@@ -16,8 +17,8 @@ from strain_trie import trie_search
 from storage import save_plant
 from effects import shake_and_flash
 from labels import FieldLabel, TitleLabel, WarningLabel, HintLabel
-from boxes import WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox
-from buttons import ButtonRed, ButtonGreen
+from boxes import WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox, DarkBox
+from buttons import ButtonRed, ButtonGreen, ButtonYellow
 from text_inputs import MedTextInput, LargeTextInput, NumTextInput
 
 CATALOG_FILE = "bin/db/seed_catalog.json"
@@ -69,8 +70,6 @@ class SowSeedScreen(Screen):
         window_title = ContentBox(orientation="horizontal", size_hint_y=0.1)
         layout.add_widget(window_title)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
         # Inputs
 
         plant_name = ContentBox(orientation="horizontal")
@@ -80,8 +79,6 @@ class SowSeedScreen(Screen):
         plant_name.add_widget(self.input_plant_name)
         layout.add_widget(plant_name)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         plant_strain = ContentBox(orientation="horizontal")
         label_plant_strain = FieldLabel(text="Strain: ", size_hint_x=0.3)
@@ -97,8 +94,6 @@ class SowSeedScreen(Screen):
         self.input_plant_strain.bind(text=self.on_strain_text)
         # listen for keyboard
         Window.bind(on_key_down=self.on_key_down)
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         plant_description = ContentBox(orientation="horizontal")
         label_plant_description = FieldLabel(text="Info: ", size_hint_x=0.3)
@@ -107,8 +102,6 @@ class SowSeedScreen(Screen):
         plant_description.add_widget(self.input_plant_description)
         layout.add_widget(plant_description)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         plant_genes = ContentBox(orientation="horizontal")
         label_plant_genes = FieldLabel(text="Heritage: ", size_hint_x=0.3)
@@ -123,8 +116,6 @@ class SowSeedScreen(Screen):
         plant_genes.add_widget(input_plant_genes)
         layout.add_widget(plant_genes)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         plant_type = ContentBox(orientation="horizontal")
         label_plant_type = FieldLabel(text="Type: ", size_hint_x=0.3)
@@ -137,8 +128,6 @@ class SowSeedScreen(Screen):
         plant_type.add_widget(input_plant_type)
         layout.add_widget(plant_type)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         to_flower = ContentBox(orientation="horizontal")
         label_to_flower = FieldLabel(text="Flowering period: ", size_hint_x=0.3)
@@ -148,8 +137,6 @@ class SowSeedScreen(Screen):
         input_to_flower.add_widget(self.days_to_flower)
         to_flower.add_widget(input_to_flower)
         layout.add_widget(to_flower)
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         pot_size = ContentBox(orientation="horizontal")
         label_pot_size = FieldLabel(text="Pot size: ", size_hint_x=0.3)
@@ -163,23 +150,21 @@ class SowSeedScreen(Screen):
         pot_size.add_widget(input_pot_size)
         layout.add_widget(pot_size)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         warning_layout = ContentBox(orientation="horizontal", size_hint_y=2)
         warning_spavcer = SpacerBox(size_hint_x=0.3)
         warning_layout.add_widget(warning_spavcer)
+        warning_box = DarkBox(orientation="horizontal")
         warning_label = WarningLabel(text="Consult the packaging or the breeder for estimated profiles.\nValues will adjust automatically during your plants life.\nIf you are not sure just leave both sliders in the default position.")
-        warning_layout.add_widget(warning_label)
+        warning_box.add_widget(warning_label)
+        warning_layout.add_widget(warning_box)
         layout.add_widget(warning_layout)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         plant_thirst = ContentBox(orientation="horizontal")
         label_plant_thirst = FieldLabel(text="Watering: ", size_hint_x=0.3)
         plant_thirst.add_widget(label_plant_thirst)
-        input_plant_thirst = ItemBox(orientation="horizontal")
+        input_plant_thirst = DarkBox(orientation="horizontal")
         self.thirsty_slider = Slider(min=1, max=3, step=1, value=2)
         self.thirsty_label = HintLabel(text="Every 3 days", size_hint_x=0.3, halign="left")
         self.thirsty_slider.bind(value=self.on_thirst_change)
@@ -188,13 +173,11 @@ class SowSeedScreen(Screen):
         plant_thirst.add_widget(input_plant_thirst)
         layout.add_widget(plant_thirst)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         plant_hunger = ContentBox(orientation="horizontal")
         label_plant_hunger = FieldLabel(text="Feeding: ", size_hint_x=0.3)
         plant_hunger.add_widget(label_plant_hunger)
-        input_plant_hunger = ItemBox(orientation="horizontal")
+        input_plant_hunger = DarkBox(orientation="horizontal")
         self.hunger_slider = Slider(min=1, max=3, step=1, value=2)
         self.hunger_slider.bind(value=self.on_hunger_change)
         input_plant_hunger.add_widget(self.hunger_slider)
@@ -203,8 +186,6 @@ class SowSeedScreen(Screen):
         plant_hunger.add_widget(input_plant_hunger)
         layout.add_widget(plant_hunger)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         medium_type = ContentBox(orientation="horizontal")
         label_medium_type = FieldLabel(text="Medium: ", size_hint_x=0.3)
@@ -221,8 +202,6 @@ class SowSeedScreen(Screen):
         medium_type.add_widget(input_medium_type)
         layout.add_widget(medium_type)
         
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         medium_nutrients = ContentBox(orientation="horizontal")
         label_medium_nutrients = FieldLabel(text="Fertilized: ", size_hint_x=0.3)
@@ -235,8 +214,6 @@ class SowSeedScreen(Screen):
         medium_nutrients.add_widget(input_medium_nutrients)
         layout.add_widget(medium_nutrients)
 
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         fertilizer_type = ContentBox(orientation="horizontal")
         label_fertilizer_type = FieldLabel(text="Your fertilizer: ", size_hint_x=0.3)
@@ -248,8 +225,6 @@ class SowSeedScreen(Screen):
         input_fertilizer_type.add_widget(self.min_btn)
         fertilizer_type.add_widget(input_fertilizer_type)
         layout.add_widget(fertilizer_type)
-        spacer = SpacerBox(size_hint_y=0.02)
-        layout.add_widget(spacer)
 
         # buttons
         buttons_wrapper = ContentBox(orientation="vertical")

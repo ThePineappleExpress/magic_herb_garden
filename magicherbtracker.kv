@@ -5,6 +5,7 @@
 <Theme@Widget>:
     dark_gray: 0.18, 0.122, 0.153, 1
     dark_green: 0.12, 0.172, 0.153, 1
+    very_dark_green: 0.09, 0.11, 0.095, 1
     off_white:0.831, 0.875, 0.62, 1
     light_green: 0.773, 0.847, 0.427, 1
     nice_red: 0.827, 0.247, 0.286, 1
@@ -146,11 +147,9 @@
     font_size: app.theme.small_size 
     color: app.theme.off_white
     text_size: self.size
-
-
     canvas.before:
         Color:
-            rgba: app.theme.nice_green
+            rgba: app.theme.black_transparent
         Rectangle:
             pos: self.pos
             size: self.size
@@ -183,6 +182,14 @@
             pos: self.pos
             size: self.size
 
+<DarkBox>:
+    padding: app.theme.padding_zero
+    canvas:
+        Color:
+            rgba: app.theme.very_dark_green
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
 <EventBox>:
     canvas.before:

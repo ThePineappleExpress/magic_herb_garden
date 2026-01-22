@@ -210,7 +210,6 @@ class PlantDetailsScreen(Screen):
             ts = event.get("ts", "")
             days_ago = get_difference_days(datetime.datetime.now(), ts)
 
-
             # event box
             box = ContentBox(
                 orientation="horizontal",
@@ -256,8 +255,6 @@ class PlantDetailsScreen(Screen):
             else:
                 info_box.add_widget(SpacerBox())
             info_box.add_widget(HintLabel(text=str(event_type), font_size="12sp", valign="top"))
-
-            
             
             color_bar = ItemBox(orientation="vertical", size_hint_x=0.005)
             color_bar.add_widget(RedBox())
@@ -285,4 +282,11 @@ class PlantDetailsScreen(Screen):
         if not plant_id:
             return
         events = load_plant_events(str(plant_id))
+
+        # event loadning logic goes here 
+
+        event_layout = ContentBox(orientation="vertical")
+        row_1 = ContentBox(orientation="horizontal")
+        event_layout.add_widget(row_1)
+
         
