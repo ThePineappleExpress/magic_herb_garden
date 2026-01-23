@@ -3,6 +3,7 @@ from datetime import date
 from kivy.config import Config
 from kivy.factory import Factory
 from kivy.properties import StringProperty, NumericProperty, ObjectProperty, BooleanProperty
+import xml.etree.ElementTree as ET
 from kivy.app import App
 from kivy.uix.button import Button
 from kivy.uix.screenmanager import Screen
@@ -21,29 +22,38 @@ from buttons import ButtonRed, ButtonGreen, ButtonYellow
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 class LeafIcon(Widget):
     source = StringProperty("")
+    _svg = ObjectProperty(None, allownone=True)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.bind(source=self._redraw, pos=self._redraw, size=self._redraw)
+        self.bind(source=self._on_source, pos=self._redraw, size=self._redraw)
+
+    def _on_source(self, *args):
+        # Recreate Svg only when source changes
+        self._svg = Svg(self.source) if self.source else None
+        self._redraw()
 
     def _redraw(self, *args):
         self.canvas.clear()
-        if not self.source:
+        if not self._svg:
             return
-        svg = Svg(self.source)
-        # guard against zero sizes
-        svg_w = svg.width or 1
-        svg_h = svg.height or 1
-        scale = min((self.width / svg_w) * 0.8, (self.height / svg_h) * 0.8)
-        # center the icon after scaling
-        offset_x = (self.width / scale - svg_w) / 2
-        offset_y = (self.height / scale - svg_h) / 2
 
-        # draw with transforms so we don't mutate the Svg instruction
+        svg = self._svg
+        # Guard against zero sizes
+        if self.height <= 0 or self.width <= 0 or svg.width <= 0 or svg.height <= 0:
+            return
+
+        # Scale to fit height, preserve aspect ratio
+        scale = (self.height / svg.height) / 1.5
+        # Optionally center horizontally within the box
+        scaled_w = svg.width * scale
+        scaled_h = svg.height * scale
+        x = self.x + (self.width - scaled_w) * 0.5
+        y = self.y + (self.height - scaled_h) * 0.6
+
         self.canvas.add(PushMatrix())
-        self.canvas.add(Translate(self.x, self.y))
+        self.canvas.add(Translate(x, y))
         self.canvas.add(Scale(scale, scale, 1))
-        self.canvas.add(Translate(offset_x, offset_y))
         self.canvas.add(svg)
         self.canvas.add(PopMatrix())
 class PlantListView(RecycleView):

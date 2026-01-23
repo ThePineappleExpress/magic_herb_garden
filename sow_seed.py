@@ -16,7 +16,7 @@ from kivy.core.window import Window
 from strain_trie import trie_search
 from storage import save_plant
 from effects import shake_and_flash
-from labels import FieldLabel, TitleLabel, WarningLabel, HintLabel
+from labels import FieldLabel, TitleLabel, WarningLabel, HintLabel, WarningTitleLabel
 from boxes import WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox, DarkBox
 from buttons import ButtonRed, ButtonGreen, ButtonYellow
 from text_inputs import MedTextInput, LargeTextInput, NumTextInput
@@ -64,11 +64,10 @@ class SowSeedScreen(Screen):
         #Input screen
         layout = WrapperBox(orientation="vertical")
         # top title bar
-        spacer = WrapperBox()
+        spacer = WrapperBox(size_hint_y=0.5)
         layout.add_widget(spacer)
 
-        window_title = ContentBox(orientation="horizontal", size_hint_y=0.1)
-        layout.add_widget(window_title)
+
 
         # Inputs
 
@@ -151,10 +150,12 @@ class SowSeedScreen(Screen):
         layout.add_widget(pot_size)
 
 
-        warning_layout = ContentBox(orientation="horizontal", size_hint_y=2)
-        warning_spavcer = SpacerBox(size_hint_x=0.3)
-        warning_layout.add_widget(warning_spavcer)
-        warning_box = DarkBox(orientation="horizontal")
+        warning_layout = ContentBox(orientation="horizontal", size_hint_y=2.5)
+        warning_spacer = SpacerBox(size_hint_x=0.3)
+        warning_layout.add_widget(warning_spacer)
+        warning_box = DarkBox(orientation="vertical")
+        warning_title = WarningTitleLabel(text="Watering and feeding:", halign="left", size_hint_y=0.35)
+        warning_box.add_widget(warning_title)
         warning_label = WarningLabel(text="Consult the packaging or the breeder for estimated profiles.\nValues will adjust automatically during your plants life.\nIf you are not sure just leave both sliders in the default position.")
         warning_box.add_widget(warning_label)
         warning_layout.add_widget(warning_box)
@@ -166,7 +167,7 @@ class SowSeedScreen(Screen):
         plant_thirst.add_widget(label_plant_thirst)
         input_plant_thirst = DarkBox(orientation="horizontal")
         self.thirsty_slider = Slider(min=1, max=3, step=1, value=2)
-        self.thirsty_label = HintLabel(text="Every 3 days", size_hint_x=0.3, halign="left")
+        self.thirsty_label = HintLabel(text="Every 3 days", size_hint_x=0.3, halign="left", valign="middle")
         self.thirsty_slider.bind(value=self.on_thirst_change)
         input_plant_thirst.add_widget(self.thirsty_slider)
         input_plant_thirst.add_widget(self.thirsty_label)
@@ -181,7 +182,7 @@ class SowSeedScreen(Screen):
         self.hunger_slider = Slider(min=1, max=3, step=1, value=2)
         self.hunger_slider.bind(value=self.on_hunger_change)
         input_plant_hunger.add_widget(self.hunger_slider)
-        self.hunger_label = HintLabel(text="Every 2nd Watering", size_hint_x=0.3, halign="left")
+        self.hunger_label = HintLabel(text="Every 2nd Watering", size_hint_x=0.3, halign="left", valign="middle")
         input_plant_hunger.add_widget(self.hunger_label)
         plant_hunger.add_widget(input_plant_hunger)
         layout.add_widget(plant_hunger)
@@ -248,7 +249,7 @@ class SowSeedScreen(Screen):
         buttons_layout.add_widget(buttons)
         buttons_wrapper.add_widget(buttons_layout)
         layout.add_widget(buttons_wrapper)
-        spacer = WrapperBox(size_hint_y=1)
+        spacer = WrapperBox(size_hint_y=0.5)
         layout.add_widget(spacer)
 
         data_input.add_widget(layout)
@@ -446,8 +447,8 @@ class SowSeedScreen(Screen):
             "notes": self.input_plant_description.text.strip(),
             "genes": self.save_genes(),
             "type": self.save_type(),
-            "days_to_flower": self.days_to_flower.text,
-            "pot_size_l": float(self.pot_slider.value),
+            "days_to_flower": int(self.days_to_flower.text),
+            "pot_size_l": int(self.pot_slider.value),
             "watering_profile": int(self.thirsty_slider.value),
             "feeding_profile": int(self.hunger_slider.value),
             "medium": self.save_medium_type(),

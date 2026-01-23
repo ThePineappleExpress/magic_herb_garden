@@ -38,5 +38,7 @@ class FieldLabel(Label):
     pass
 class HintLabel(Label):
     pass
+class WarningTitleLabel(Label):
+    pass
 class WarningLabel(Label):
     pass

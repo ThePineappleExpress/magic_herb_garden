@@ -5,8 +5,10 @@ description = "A grow tracking app"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "kaki>=0.1.9",
     "kivy>=2.3.1",
     "kivy-garden>=0.1.5",
+    "watchdog>=6.0.0",
 ]
 
 [tool.uv.workspace]

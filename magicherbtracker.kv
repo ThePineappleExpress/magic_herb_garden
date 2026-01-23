@@ -5,12 +5,14 @@
 <Theme@Widget>:
     dark_gray: 0.18, 0.122, 0.153, 1
     dark_green: 0.12, 0.172, 0.153, 1
-    very_dark_green: 0.09, 0.11, 0.095, 1
+    very_dark_green: 0.09, 0.11, 0.1, 1
     off_white:0.831, 0.875, 0.62, 1
     light_green: 0.773, 0.847, 0.427, 1
     nice_red: 0.827, 0.247, 0.286, 1
     nice_yellow: 1, 0.651, 0.188, 1
-    nice_green: 0.289, 0.516, 0.353, 1  
+    light_yellow: 0.84, 0.68, 0.35, 1
+    nice_green: 0.289, 0.516, 0.353, 1 
+    nice_blue: 0.235, 0.451, 0.686, 1 
     nice_purple: 0.392, 0.259, 0.416, 1
     black_transparent: 0, 0, 0, 0
 
@@ -34,11 +36,14 @@
     font_body: "res/fonts/SpaceGrotesk-Regular.ttf"
     body_size: "16sp"
     font_button: "res/fonts/Quicksand-Bold.ttf"
-    small_size: "12sp"
+    small_size: "14sp"
     padding_zero: 0, 0, 0, 0
     padding_right: 0, 0, 20, 0
     padding_left:  20, 0, 0, 0
-    padding_both: 20, 0, 20, 20
+    padding_both: 20, 0, 20, 0
+    padding_both_half: 10, 0, 10, 0
+    padding_all: 20, 20, 20, 20
+    padding_all_half: 10, 10, 10, 10
     
     array_4_10: 10, 10, 10, 10
     array_4_40: 40, 40, 20, 40
@@ -130,11 +135,20 @@
 
 <HintLabel>:
     halign: "right"
-    valign: "middle"
+    valign: "bottom"
     markup: True
-    padding: app.theme.padding_left
+    padding: app.theme.padding_both_half
     font_name: app.theme.font_subtitle
     font_size: app.theme.body_size
+    color: app.theme.nice_yellow
+    text_size: self.size
+
+<WarningTitleLabel>:
+    halign: "left"
+    valign: "top"
+    padding: app.theme.padding_all
+    font_name: app.theme.font_title
+    font_size: app.theme.subtitle_size 
     color: app.theme.nice_yellow
     text_size: self.size
 
@@ -239,7 +253,15 @@
         Rectangle:
             pos: self.pos
             size: self.size
-            
+
+<SelectableEventBox>:
+    canvas.before:
+        Color:
+            rgba: root.selected_bg_color if root.selected else root.normal_bg_color
+        Rectangle:
+            pos: self.pos
+            size: self.size      
+
 <TextInput>:
     background_normal: ""
     background_active: ""
@@ -374,7 +396,7 @@
 
     canvas.before:
         Color:
-            rgba: (0.3, 0.5, 0.3, 0.7) if root.selected else app.theme.black_transparent
+            rgba: app.theme.light_yellow if root.selected else app.theme.black_transparent
         Rectangle:
             pos: self.pos
             size: self.size

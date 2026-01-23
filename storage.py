@@ -31,15 +31,13 @@ def _normalize_plants(data):    # Normalize plant data into a list of dictionari
 def load_plants():  # Load plant data from JSON file
     if not DB_PATH.exists():
         return []
-    try:
-        with DB_PATH.open("r", encoding="utf-8") as f:
-            content = f.read().strip()
-            if not content:
-                return []
-            data = json.loads(content)
-            return _normalize_plants(data)
-    except json.JSONDecodeError:
-        return []
+
+    with DB_PATH.open("r", encoding="utf-8") as f:
+        content = f.read().strip()
+        if not content:
+            return []
+        data = json.loads(content)
+        return _normalize_plants(data)
 
 
 def save_plants(plants):  # Save plant data to JSON file

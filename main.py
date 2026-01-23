@@ -10,6 +10,7 @@ from empty_garden import EmptyGardenScreen
 from garden_view import GardenViewScreen
 from sow_seed import SowSeedScreen
 from plant_details import PlantDetailsScreen
+from storage import load_plants
 
 # initial window size
 Config.set("graphics", "width", "1200")
@@ -32,6 +33,7 @@ class MagicHerbTracker(App):
         Window.size = (1200, 800)
         Window.minimum_width = 1200
         Window.minimum_height = 800
+        file = load_plants()
 
         # add screens once
         self.screen.add_widget(EmptyGardenScreen(name="empty_garden"))
@@ -40,7 +42,10 @@ class MagicHerbTracker(App):
         self.screen.add_widget(GardenViewScreen(name="garden_view"))
 
         # start on empty garden
-        self.screen.current = "empty_garden"
+        if file == []:
+            self.screen.current = "empty_garden"
+        else:
+            self.screen.current = "garden_view"
         return self.screen
 
     def go_back(self, instance):

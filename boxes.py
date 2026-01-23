@@ -5,6 +5,8 @@ from kivy.core.window import Window
 from kivy.uix.recycleboxlayout import RecycleBoxLayout
 from kivy.uix.recycleview.layout import LayoutSelectionBehavior
 from kivy.uix.recycleview.views import RecycleDataViewBehavior
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.graphics import Color, Rectangle
 from kivy.properties import ListProperty, BooleanProperty
 
 
@@ -87,3 +89,46 @@ class SelectableBoxLayout(RecycleDataViewBehavior, BoxLayout):
 
     def apply_selection(self, rv, index, is_selected):
         self.selected = is_selected
+
+class SelectableEventBox(ButtonBehavior, BoxLayout):
+    selected = BooleanProperty(False)
+    normal_bg_color = ListProperty([0, 0, 0, 0])
+    selected_bg_color = ListProperty([0.3, 0.7, 0.4, 0.7])
+    normal_text_color = ListProperty([1, 1, 1, 1])
+    selected_text_color = ListProperty([0, 0, 0, 1])
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        app = App.get_running_app()
+        if app and hasattr(app, "theme"):
+            self.normal_bg_color = app.theme.black_transparent
+            self.selected_bg_color = app.theme.nice_green
+            self.normal_text_color = app.theme.off_white
+            self.selected_text_color = app.theme.dark_gray
+
+        with self.canvas.before:
+            self._bg_color = Color(*self.normal_bg_color)
+            self._bg_rect = Rectangle(pos=self.pos, size=self.size)
+
+        self.bind(pos=self._update_rect, size=self._update_rect)
+        self.bind(selected=self._apply_selected_state)
+        self.bind(normal_bg_color=self._apply_selected_state)
+        self.bind(selected_bg_color=self._apply_selected_state)
+        self.bind(normal_text_color=self._apply_selected_state)
+        self.bind(selected_text_color=self._apply_selected_state)
+
+    def _update_rect(self, *_args):
+        self._bg_rect.pos = self.pos
+        self._bg_rect.size = self.size
+
+    def _apply_selected_state(self, *_args):
+        bg = self.selected_bg_color if self.selected else self.normal_bg_color
+        fg = self.selected_text_color if self.selected else self.normal_text_color
+        self._bg_color.rgba = bg
+        self._set_label_colors(self, fg)
+
+    def _set_label_colors(self, widget, color):
+        for child in widget.children:
+            if hasattr(child, "color"):
+                child.color = color
+            self._set_label_colors(child, color)
