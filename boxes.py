@@ -21,7 +21,7 @@ class ItemBox(BoxLayout):
     pass
 class SpacerBox(BoxLayout):
     pass
-class EventBox(ItemBox):
+class EventBox(BoxLayout):
     hovered = BooleanProperty(False)
     normal_text_color = ListProperty([1, 1, 1, 1])
     hover_text_color = ListProperty([0, 0, 0, 1])
@@ -59,13 +59,15 @@ class EventBox(ItemBox):
         for child in self.children:
             if hasattr(child, "color"):
                 child.color = color
-class RedBox(ContentBox):
+class RedBox(BoxLayout):
     pass
-class YellowBox(ContentBox):
+class YellowBox(BoxLayout):
     pass
-class GreenBox(ContentBox):
+class GreenBox(BoxLayout):
     pass
-class DarkBox(ContentBox):
+class DarkBox(BoxLayout):
+    pass
+class LightBox(BoxLayout):
     pass
 class SelectableRecycleBoxLayout(LayoutSelectionBehavior, RecycleBoxLayout):
     pass

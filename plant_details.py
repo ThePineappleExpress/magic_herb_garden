@@ -7,12 +7,13 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.screenmanager import Screen
 from kivy.clock import Clock
 
-from helpers import get_difference_days
+from helpers import get_difference_days, go_to_add_event, go_to_garden, go_to_timeline
 from storage import load_plant_events
-from labels import TitleLabel, FieldLabel, HintLabel, ListTitleLabel, LogoLabel2
-from boxes import WrapperBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
-from buttons import ButtonRed, ButtonGreen, ButtonYellow
+from labels import TitleLabel, FieldLabel, HintLabel, NutrientLabel, ListTitleLabel, LogoLabel2
+from boxes import ItemBox, WrapperBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
+from buttons import ButtonRed, ButtonGreen, ButtonYellow, ButtonTransparent
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
+from screens import BaseScreen
 
 class EventListView(RecycleView):
     genes = StringProperty("")
@@ -22,8 +23,33 @@ class EventListView(RecycleView):
         self.viewclass = "PlantListItem"  # uses the kv rule above
         self.data = []                    # will fill from GardenViewScreen
 
+class HorizontalScrollView(ScrollView):
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            if 'button' in touch.profile:
+                # Find the container with event boxes
+                container = self.children[0] if self.children else None
+                if container:
+                    num_events = len(container.children)
+                    # Estimate how many events fit in the visible area
+                    if num_events > 0 and container.children[0].width > 0:
+                        visible_events = int(self.width // container.children[0].width)
+                    else:
+                        visible_events = 1
+                    # Calculate step so you can scroll through all events
+                    step = 0.1 / max(1, num_events - visible_events + 1)
+                else:
+                    step = 0.001  # fallback
 
-class PlantDetailsScreen(Screen):
+                if touch.button == 'scrolldown':
+                    self.scroll_x = min(self.scroll_x + step, 1)
+                    return True
+                elif touch.button == 'scrollup':
+                    self.scroll_x = max(self.scroll_x - step, 0)
+                    return True
+        return super().on_touch_down(touch)
+
+class PlantDetailsScreen(BaseScreen):
     theme = ObjectProperty(None)
 
     def __init__(self, **kwargs):
@@ -33,7 +59,7 @@ class PlantDetailsScreen(Screen):
         app = App.get_running_app()
 
         # build UI 
-        detail_view = WrapperBox(orientation="horizontal")
+        plant_details_screen = WrapperBox(orientation="horizontal")
         spacer_left = SpacerBox(size_hint_x=0.2)
         stripes_holder = WrapperBox(orientation="horizontal")
         stripe_0 = ContentBox(size_hint_x=0.45); stripes_holder.add_widget(stripe_0)
@@ -48,8 +74,7 @@ class PlantDetailsScreen(Screen):
         spacer_left.add_widget(title)
         spacer_vertical = SpacerBox(size_hint_x=0.3)
         spacer_left.add_widget(spacer_vertical)
-        detail_view.add_widget(spacer_left)
-
+        plant_details_screen.add_widget(spacer_left)
 
         content_wrapper = WrapperBox(orientation="vertical", size_hint=(1, 1))
 
@@ -122,8 +147,6 @@ class PlantDetailsScreen(Screen):
         self.days_stage_value.color = app.theme.off_white
         days_stage_box.add_widget(self.days_stage_value)
 
-
-
         spacer_box = SpacerBox(size_hint_y=0.02)
         content_wrapper.add_widget(spacer_box)
 
@@ -135,28 +158,44 @@ class PlantDetailsScreen(Screen):
         content_wrapper.add_widget(spacer_box)
 
         # events scroll 
-        scroll_events = ContentBox(orientation="vertical", size_hint_y=0.2, size_hint_x=1)
-        self.events_scroll = ScrollView(do_scroll_x=True, do_scroll_y=False,)
+        scroll_events = ContentBox(orientation="horizontal", size_hint_y=0.3)
+        view_timeline_button = ButtonTransparent(text="View\nTimeline", size_hint_x=0.2)
+        view_timeline_button.bind(on_release=lambda instance: go_to_timeline(instance, self.plant))
+        scroll_events.add_widget(view_timeline_button)
+        self.events_scroll = HorizontalScrollView(do_scroll_x=True, do_scroll_y=False, scroll_distance=0.1, scroll_timeout=250,)
 
         self.events_container = WrapperBox(orientation="horizontal", size_hint_x=None, size_hint_y=1, padding=5, spacing=0,)
         self.events_container.bind(minimum_width=self.events_container.setter("width"))
         self.events_scroll.add_widget(self.events_container)
         scroll_events.add_widget(self.events_scroll)
+        add_event_box = WrapperBox(orientation="horizontal", size_hint_x=0.1)
+        scroll_events.add_widget(add_event_box)
+        add_event_button = ButtonYellow(text="+")
+        add_event_button.font_size = app.theme.logo_size_1
+        add_event_button.font_name = app.theme.font_logo_1
+        def safe_go_to_add_event(instance):
+            plant = self.plant or {}
+            # Patch: ensure plant_id is present for AddEventScreen
+            if 'plant_id' not in plant and 'id' in plant:
+                plant = dict(plant)
+                plant['plant_id'] = plant['id']
+            go_to_add_event(self, plant)
+        add_event_button.bind(on_release=safe_go_to_add_event)
+        add_event_box.add_widget(add_event_button)
         content_wrapper.add_widget(scroll_events)
         spacer_box = SpacerBox(size_hint_y=0.02)
         content_wrapper.add_widget(spacer_box)
 
-
         buttons = ContentBox(size_hint_y=0.1)
         go_back_btn = ButtonRed(text="Back")
-        go_back_btn.bind(on_press=App.get_running_app().go_back)
+        go_back_btn.bind(on_release=go_to_garden)
         buttons.add_widget(go_back_btn)
         content_wrapper.add_widget(buttons)
 
-        detail_view.add_widget(content_wrapper)
+        plant_details_screen.add_widget(content_wrapper)
         spacer_right = SpacerBox(size_hint_x=0.1)
-        detail_view.add_widget(spacer_right)
-        self.add_widget(detail_view)
+        plant_details_screen.add_widget(spacer_right)
+        self.add_widget(plant_details_screen)
 
         # load and show events
         self._load_and_display_events()
@@ -193,7 +232,6 @@ class PlantDetailsScreen(Screen):
         self._selected_event_item = item
         self._selected_event_data = event 
         self.selected_event_view()
-
 
     def _load_and_display_events(self):
         self.events_container.clear_widgets()
@@ -277,7 +315,11 @@ class PlantDetailsScreen(Screen):
             else:
                 info_box.add_widget(SpacerBox())
             
+            status_box = ContentBox(orientation="horizontal")
+            info_box.add_widget(status_box)
             
+            status_text = HintLabel(text=f"{self.get_health_indicator(event.get('plant', {}))}")
+            status_box.add_widget(status_text)
             
             info_box.add_widget(SpacerBox())
             info_box.add_widget(HintLabel(text=str(event_type), font_size="12sp", valign="top"))
@@ -304,6 +346,38 @@ class PlantDetailsScreen(Screen):
         if event_boxes:
             last_box, last_event = event_boxes[-1]
             Clock.schedule_once(lambda *_: self._select_event_item(last_box, last_event), 0)
+
+    def get_nutrient(self, plant_dict, key):
+        deficiencies = plant_dict.get("deficiencies", {})
+        excess = plant_dict.get("excess", {})
+        if deficiencies.get(key):
+            return "deficient"
+        elif excess.get(key):
+            return "excess"
+        else:
+            return False
+
+    def get_health_indicator(self, plant=None):
+        indicators = []
+        plant = plant or self.plant or {}
+        coloration = plant.get("leaf_color", "normal")
+        morphology = plant.get("leaf_morphology", "normal")
+        for nutrient in ['n','p','k','ca','mg','s','fe','mn','zn','cu','b','mo']:
+            status = self.get_nutrient(plant, nutrient)
+            if status == "deficient":
+                indicators.append(f"{nutrient.upper()}↓")
+            elif status == "excess":
+                indicators.append(f"{nutrient.upper()}↑")
+        if len(indicators) == 0 and coloration == "normal" and morphology == "normal":
+            return "Healthy"
+        elif len(indicators) <= 3 and coloration == "normal" and morphology == "normal":
+            return "Minor issues"
+        elif len(indicators) > 3 and (coloration != "normal" or morphology == "normal"):
+            return "Moderate issues"
+        elif len(indicators) > 3 and coloration != "normal" and morphology != "normal":
+            return "Severe issues"
+        else:
+            return "Minor issues"
 
     def selected_event_view(self):
         self.info_box.clear_widgets()
@@ -340,39 +414,13 @@ class PlantDetailsScreen(Screen):
 
         plant = event.get("plant", "")
         stage = plant.get("stage", "")
-        health = plant.get("health", "")
         plant_height = int(plant.get("plant_height", ""))
         number_of_nodes = int(plant.get("num_nodes", ""))
         node_spacing = float(plant.get("node_spacing", ""))
         main_stems = int(plant.get("main_stem_number", ""))
         coloration = plant.get("leaf_color", "")
         morphology = plant.get("leaf_morphology", "")
-        deficiencies = plant.get("deficiencies", "")
-        def_nitrogen = deficiencies.get("n","")
-        def_phosphorus = deficiencies.get("p","")
-        def_potassium = deficiencies.get("k","")
-        def_calcium = deficiencies.get("ca","")
-        def_magnesium = deficiencies.get("mg","")
-        def_sulfur = deficiencies.get("s","")
-        def_iron = deficiencies.get("fe","")
-        def_manganese = deficiencies.get("mn","")
-        def_zinc = deficiencies.get("zn","")
-        def_copper = deficiencies.get("cu","")
-        def_boron = deficiencies.get("b","") 
-        def_molybdenum = deficiencies.get("mo","")
-        excess = plant.get("excess", "")
-        exc_nitrogen = excess.get("n","")
-        exc_phosphorus = excess.get("p","")
-        exc_potassium = excess.get("k","")
-        exc_calcium = excess.get("ca","")
-        exc_magnesium = excess.get("mg","")
-        exc_sulfur = excess.get("s","")
-        exc_iron = excess.get("fe","")
-        exc_manganese = excess.get("mn","")
-        exc_zinc = excess.get("zn","")
-        exc_copper = excess.get("cu","")
-        exc_boron = excess.get("b","") 
-        exc_molybdenum = excess.get("mo","")
+
         days_stage = stage
         self.days_stage_value.text = f"{days_stage}" if days_stage is not None else "–"
 
@@ -384,10 +432,12 @@ class PlantDetailsScreen(Screen):
         vpd = float(environment.get("vpd_kpa",""))
         light_schedule = environment.get("light_schedule","")
         ppfd = int(environment.get("ppfd",""))
+            
+        health = self.get_health_indicator(plant)
 
         event_details = WrapperBox(orientation="vertical")
 
-        event_title_row = WrapperBox(orientation="horizontal", size_hint_y=0.25)
+        event_title_row = WrapperBox(orientation="horizontal", size_hint_y=0.4)
         event_details.add_widget(event_title_row)
 
         date_and_type_box = WrapperBox(orientation="vertical", size_hint_x=0.3)
@@ -395,14 +445,14 @@ class PlantDetailsScreen(Screen):
 
         event_date_label_box =  ContentBox(orientation="horizontal")
         date_and_type_box.add_widget(event_date_label_box)
-        event_date_value = FieldLabel(text=f"{formatted_date}", valign="bottom", halign="left")
+        event_date_value = FieldLabel(text=f"{formatted_date}", valign="middle", halign="left")
         event_date_value.color = app.theme.off_white
         event_date_value.font_size = app.theme.title_size
         event_date_label_box.add_widget(event_date_value)
 
         event_type_label_box = ContentBox(orientation="horizontal")
         date_and_type_box.add_widget(event_type_label_box)
-        event_type_label = FieldLabel(text=f"{event_type}", valign="top", halign="left")
+        event_type_label = FieldLabel(text=f"{event_type}", valign="middle", halign="left")
         if event_type == "water":
             event_type_label.color = app.theme.nice_blue
         elif event_type == "feeding":
@@ -411,127 +461,87 @@ class PlantDetailsScreen(Screen):
             event_type_label.color = app.theme.nice_green
         event_type_label.font_size = app.theme.subtitle_size
         event_type_label_box.add_widget(event_type_label)
+
+        health_indicator_box = ContentBox(orientation="horizontal")
+        date_and_type_box.add_widget(health_indicator_box)
+        health_indicator_label = FieldLabel(text=f"{health}", valign="middle", halign="left")
+        if health == "Healthy":
+            health_indicator_label.color = app.theme.nice_green
+        elif health == "Minor issues":
+            health_indicator_label.color = app.theme.nice_yellow
+        elif health == "Moderate issues":
+            health_indicator_label.color = app.theme.nice_red
+        elif health == "Severe issues":
+            health_indicator_label.color = app.theme.nice_purple  
+        health_indicator_label.font_size = app.theme.body_size
+        health_indicator_box.add_widget(health_indicator_label)
         
-        environment_box = WrapperBox(orientation="horizontal")         
-        event_title_row.add_widget(environment_box)
+        # Refactored: Generate event info fields in a loop
+        plant_and_environment_box = WrapperBox(orientation="vertical", size_hint_x=0.7)
+        event_title_row.add_widget(plant_and_environment_box)
 
-        temperature_box = WrapperBox(orientation="vertical")
-        environment_box.add_widget(temperature_box)
+        # Define event info fields: (title, value, source_dict, key, special)
+        event_info_fields = [
+            ("Height", plant, "plant_height", False),
+            ("Nodes", plant, "num_nodes", False),
+            ("Spacing", plant, "node_spacing", False),
+            ("Main Stems", plant, "main_stem_number", False),
+            ("Color", plant, "leaf_color", False),
+            ("Morphology", plant, "leaf_morphology", False),
+            ("Air Temp", environment, "air_temp_c", False),
+            ("Humidity", environment, "rh_percent", False),
+            ("VPD", environment, "vpd_kpa", False),
+            ("Soil pH", environment, "soil_ph", False),
+            ("Soil", environment, "soil_moisture", False),
+            ("PPFD", environment, "ppfd", False),
+            ("Light", environment, "light_schedule", False),
+        ]
 
-        temperature_title_box = ContentBox(orientation="horizontal")
-        temperature_box.add_widget(temperature_title_box)
-        temperature_label_title = FieldLabel(text="Air Temp", valign="bottom", halign="left")
-        temperature_label_title.color = app.theme.nice_green
-        temperature_label_title.font_size = app.theme.small_size
-        temperature_title_box.add_widget(temperature_label_title)
+        # Split into two rows: plant info and environment info
+        plant_row = WrapperBox(orientation="horizontal")
+        env_row = WrapperBox(orientation="horizontal")
+        plant_and_environment_box.add_widget(plant_row)
+        plant_and_environment_box.add_widget(env_row)
 
-        temperature_label_box = ContentBox(orientation="horizontal")
-        temperature_box.add_widget(temperature_label_box)
-        temperature_label = FieldLabel(text=f"{air_temperature}°C", valign="top", halign="left")
-        temperature_label.font_size = app.theme.subtitle_size
-        temperature_label.color = app.theme.off_white
-        temperature_label_box.add_widget(temperature_label)
+        # Helper to get value and format
+        def get_event_value(source, key, special):
+            val = source.get(key, None)
+            if special:
+                return "Yes" if val else "No"
+            if val is None:
+                return "–"
+            if isinstance(val, list):
+                return "/".join(map(str, val))
+            return str(val)
 
-        humidity_box = WrapperBox(orientation="vertical")
-        environment_box.add_widget(humidity_box)
-        
-        humidity_title_box = ContentBox(orientation="horizontal")
-        humidity_box.add_widget(humidity_title_box)
-        humidity_title = FieldLabel(text="Humidity", valign="bottom", halign="left")
-        humidity_title.color = app.theme.nice_green
-        humidity_title.font_size = app.theme.small_size
-        humidity_title_box.add_widget(humidity_title)
-
-        humidity_value_box = ContentBox(orientation="horizontal")
-        humidity_box.add_widget(humidity_value_box)
-        humidity_value = FieldLabel(text=f"{humidity} %", valign="top", halign="left")
-        humidity_value.font_size = app.theme.subtitle_size
-        humidity_value.color = app.theme.off_white
-        humidity_value_box.add_widget(humidity_value)
-        vpd_box = WrapperBox(orientation="vertical")
-        environment_box.add_widget(vpd_box)
-
-        vpd_title_box = ContentBox(orientation="horizontal")
-        vpd_box.add_widget(vpd_title_box)
-        vpd_title = FieldLabel(text="VPD", valign="bottom", halign="left")
-        vpd_title.color = app.theme.nice_green
-        vpd_title.font_size = app.theme.small_size
-        vpd_title_box.add_widget(vpd_title)
-
-        vpd_value_box = ContentBox(orientation="horizontal")
-        vpd_box.add_widget(vpd_value_box)
-        vpd_value = FieldLabel(text=f"{vpd} kPa", valign="top", halign="left")
-        vpd_value.font_size = app.theme.subtitle_size
-        vpd_value.color = app.theme.off_white
-        vpd_value_box.add_widget(vpd_value)
-
-        soil_ph_box = WrapperBox(orientation="vertical")
-        environment_box.add_widget(soil_ph_box)
-
-        soil_ph_title_box = ContentBox(orientation="horizontal")
-        soil_ph_box.add_widget(soil_ph_title_box)
-        soil_ph_title = FieldLabel(text="Soil pH", valign="bottom", halign="left")
-        soil_ph_title.color = app.theme.nice_green
-        soil_ph_title.font_size = app.theme.small_size
-        soil_ph_title_box.add_widget(soil_ph_title)
-
-        soil_ph_value_box = ContentBox(orientation="horizontal")
-        soil_ph_box.add_widget(soil_ph_value_box)
-        soil_ph_value = FieldLabel(text=f"{soil_ph}", valign="top", halign="left")
-        soil_ph_value.font_size = app.theme.subtitle_size
-        soil_ph_value.color = app.theme.off_white
-        soil_ph_value_box.add_widget(soil_ph_value)
-
-        soil_moisture_box = WrapperBox(orientation="vertical")
-        environment_box.add_widget(soil_moisture_box)
-
-        soil_moisture_title_box = ContentBox(orientation="horizontal")
-        soil_moisture_box.add_widget(soil_moisture_title_box)
-        soil_moisture_title = FieldLabel(text="Soil", valign="bottom", halign="left")
-        soil_moisture_title.color = app.theme.nice_green
-        soil_moisture_title.font_size = app.theme.small_size
-        soil_moisture_title_box.add_widget(soil_moisture_title)
-
-        soil_moisture_value_box = ContentBox(orientation="horizontal")
-        soil_moisture_box.add_widget(soil_moisture_value_box)
-        soil_moisture_value = FieldLabel(text=f"{soil_moisture}", valign="top", halign="left")
-        soil_moisture_value.font_size = app.theme.subtitle_size
-        soil_moisture_value.color = app.theme.off_white
-        soil_moisture_value_box.add_widget(soil_moisture_value)
-
-        ppfd_box = WrapperBox(orientation="vertical")
-        environment_box.add_widget(ppfd_box)
-
-        ppfd_title_box = ContentBox(orientation="horizontal")
-        ppfd_box.add_widget(ppfd_title_box)
-        ppfd_title = FieldLabel(text="PPFD", valign="bottom", halign="left")
-        ppfd_title.color = app.theme.nice_green
-        ppfd_title.font_size = app.theme.small_size
-        ppfd_title_box.add_widget(ppfd_title)
-
-        ppfd_value_box = ContentBox(orientation="horizontal")
-        ppfd_box.add_widget(ppfd_value_box)
-        ppfd_value = FieldLabel(text=f"{ppfd} µmol/m²/s", valign="top", halign="left")
-        ppfd_value.font_size = app.theme.subtitle_size
-        ppfd_value.color = app.theme.off_white
-        ppfd_value_box.add_widget(ppfd_value)
-
-        light_cycle_box = WrapperBox(orientation="vertical")
-        environment_box.add_widget(light_cycle_box)
-
-        light_cycle_title_box = ContentBox(orientation="horizontal")
-        light_cycle_box.add_widget(light_cycle_title_box)
-        light_cycle_title = FieldLabel(text="Light", valign="bottom", halign="left")
-        light_cycle_title.color = app.theme.nice_green
-        light_cycle_title.font_size = app.theme.small_size
-        light_cycle_title_box.add_widget(light_cycle_title)
-
-        light_cycle_value_box = ContentBox(orientation="horizontal")
-        light_cycle_box.add_widget(light_cycle_value_box)
-        light_cycle_value = FieldLabel(text=f"{"/".join(map(str, light_schedule))}", valign="top", halign="left")
-        light_cycle_value.font_size = app.theme.subtitle_size
-        light_cycle_value.color = app.theme.off_white
-        light_cycle_value_box.add_widget(light_cycle_value)
+        # Plant + env
+        for i, (title, source, key, special) in enumerate(event_info_fields):
+            box = WrapperBox(orientation="vertical")
+            # Title
+            title_box = ContentBox(orientation="horizontal")
+            label = FieldLabel(text=title, valign="bottom", halign="left")
+            label.color = app.theme.nice_green
+            label.font_size = app.theme.small_size
+            title_box.add_widget(label)
+            box.add_widget(title_box)
+            # Value
+            value_box = ContentBox(orientation="horizontal")
+            value = get_event_value(source, key, special)
+            value_label = FieldLabel(text=value, valign="top", halign="left")
+            value_label.font_size = app.theme.subtitle_size
+            if special:
+                value_label.color = app.theme.nice_green if value == "Yes" else app.theme.light_green
+            else:
+                value_label.color = app.theme.off_white
+            value_box.add_widget(value_label)
+            box.add_widget(value_box)
+            # Add to row
+            if i < 6:
+                plant_row.add_widget(box)
+            elif i < 12:
+                env_row.add_widget(box)
+            else:
+                env_row.add_widget(box)
 
         main_data_column = WrapperBox(orientation="horizontal")
         event_details.add_widget(main_data_column)
@@ -539,262 +549,147 @@ class PlantDetailsScreen(Screen):
         water_and_food_box = WrapperBox(orientation="vertical", size_hint_x=0.4)
         main_data_column.add_widget(water_and_food_box)
 
-        water_row = WrapperBox(orientation="horizontal", size_hint_y=0.2)
-        water_and_food_box.add_widget(water_row)
-
-        if event_type == "watering" or event_type == "feeding":
-
-            water_data_box = WrapperBox(orientation="horizontal")
-            water_row.add_widget(water_data_box)
-
-            water_volume_box = WrapperBox(orientation="vertical")
-            water_data_box.add_widget(water_volume_box)
-
-            water_volume_title_box = ContentBox(orientation="horizontal")
-            water_volume_box.add_widget(water_volume_title_box)
-            water_volume_title = FieldLabel(text="Ltr", valign="bottom", halign="left")
-            water_volume_title.color = app.theme.nice_blue
-            water_volume_title.font_size = app.theme.small_size
-            water_volume_title_box.add_widget(water_volume_title)
-
-            water_volume_value_box = ContentBox(orientation="horizontal")
-            water_volume_box.add_widget(water_volume_value_box)
-            water_volume_value = FieldLabel(text=f"{water_volume}", valign="top", halign="left")
-            water_volume_value.font_size = app.theme.subtitle_size
-            water_volume_value.color = app.theme.off_white
-            water_volume_value_box.add_widget(water_volume_value)
-
-            water_temperature_box = WrapperBox(orientation="vertical")
-            water_data_box.add_widget(water_temperature_box)
-
-            water_temperature_title_box = ContentBox(orientation="horizontal")
-            water_temperature_box.add_widget(water_temperature_title_box)
-            water_temperature_title = FieldLabel(text="Temp", valign="bottom", halign="left")
-            water_temperature_title.color = app.theme.nice_blue
-            water_temperature_title.font_size = app.theme.small_size
-            water_temperature_title_box.add_widget(water_temperature_title)
-
-            water_temperature_value_box = ContentBox(orientation="horizontal")
-            water_temperature_box.add_widget(water_temperature_value_box)
-            water_temperature_value = FieldLabel(text=f"{water_temperature}°C", valign="top", halign="left")
-            water_temperature_value.font_size = app.theme.subtitle_size
-            water_temperature_value.color = app.theme.off_white
-            water_temperature_value_box.add_widget(water_temperature_value)
-
-            ph_box = WrapperBox(orientation="vertical")
-            water_data_box.add_widget(ph_box)
-
-            ph_title_box = ContentBox(orientation="horizontal")
-            ph_box.add_widget(ph_title_box)
-            ph_title = FieldLabel(text="pH", valign="bottom", halign="left")
-            ph_title.color = app.theme.nice_blue
-            ph_title.font_size = app.theme.small_size
-            ph_title_box.add_widget(ph_title)
-
-            ph_value_box = ContentBox(orientation="horizontal")
-            ph_box.add_widget(ph_value_box)
-            ph_value = FieldLabel(text=f"{ph}", valign="top", halign="left")
-            ph_value.font_size = app.theme.subtitle_size
-            ph_value.color = app.theme.off_white
-            ph_value_box.add_widget(ph_value)
-
-            ppm_box = WrapperBox(orientation="vertical")
-            water_data_box.add_widget(ppm_box)
-
-            ppm_title_box = ContentBox(orientation="horizontal")
-            ppm_box.add_widget(ppm_title_box)
-            ppm_title = FieldLabel(text="PPM", valign="bottom", halign="left")
-            ppm_title.color = app.theme.nice_blue
-            ppm_title.font_size = app.theme.small_size
-            ppm_title_box.add_widget(ppm_title) 
-
-            ppm_value_box = ContentBox(orientation="horizontal")
-            ppm_box.add_widget(ppm_value_box)
-            ppm_value = FieldLabel(text=f"{ppm}", valign="top", halign="left")
-            ppm_value.font_size = app.theme.subtitle_size
-            ppm_value.color = app.theme.off_white
-            ppm_value_box.add_widget(ppm_value)
-            
+        # Watering/Feeding fields (no units, looped)
+        if event_type in ("watering", "feeding"):
+            water_row = WrapperBox(orientation="horizontal", size_hint_y=0.2)
+            water_and_food_box.add_widget(water_row)
+            water_fields = [
+                ("Volume", water_volume),
+                ("Temp", water_temperature),
+                ("pH", ph),
+                ("PPM", ppm),
+            ]
+            for title, value in water_fields:
+                box = WrapperBox(orientation="vertical")
+                title_box = ContentBox(orientation="horizontal")
+                label = FieldLabel(text=title, valign="bottom", halign="left")
+                label.color = app.theme.nice_blue
+                label.font_size = app.theme.small_size
+                title_box.add_widget(label)
+                box.add_widget(title_box)
+                value_box = ContentBox(orientation="horizontal")
+                value_label = FieldLabel(text=str(value) if value not in (None, "") else "–", valign="top", halign="left")
+                value_label.font_size = app.theme.subtitle_size
+                value_label.color = app.theme.off_white
+                value_box.add_widget(value_label)
+                box.add_widget(value_box)
+                water_row.add_widget(box)
         else:
             spacer = SpacerBox(size_hint_y=0.2)
             water_and_food_box.add_widget(spacer)
 
-
+        # Feeding fields (looped, special logic for stage)
         if event_type == "feeding":
+            # Row 1: Veg/Root/Soil/Vit
             feeding_row_1 = WrapperBox(orientation="horizontal", size_hint_y=0.2)
             water_and_food_box.add_widget(feeding_row_1)
-            feeding_box = WrapperBox(orientation="horizontal")
-            feeding_row_1.add_widget(feeding_box)
-
-            grow_box = WrapperBox(orientation="vertical")
-            feeding_box.add_widget(grow_box)
-
+            feeding_fields_1 = []
             if stage == "vegetative":
-                grow_title_box = ContentBox(orientation="horizontal")
-                grow_box.add_widget(grow_title_box)
-                grow_title = FieldLabel(text="Veg", valign="bottom", halign="left")
-                grow_title.color = app.theme.nice_yellow
-                grow_title.font_size = app.theme.small_size
-                grow_title_box.add_widget(grow_title)
-
-                grow_value_box = ContentBox(orientation="horizontal")
-                grow_box.add_widget(grow_value_box)
-                grow_value = FieldLabel(text=f"{grow_mix}", valign="top", halign="left")
-                grow_value.font_size = app.theme.subtitle_size
-                grow_value.color = app.theme.off_white
-                grow_value_box.add_widget(grow_value)
+                feeding_fields_1.append(("Veg", grow_mix))
             else:
-                spacer = SpacerBox(size_hint_y=0.2)
-                grow_box.add_widget(spacer)
-            
+                feeding_fields_1.append(("Veg", None))
+            feeding_fields_1 += [
+                ("Root", root_mix),
+                ("Soil", soil_boost),
+                ("Vit", vit_boost),
+            ]
+            for title, value in feeding_fields_1:
+                box = WrapperBox(orientation="vertical")
+                title_box = ContentBox(orientation="horizontal")
+                label = FieldLabel(text=title, valign="bottom", halign="left")
+                label.color = app.theme.nice_yellow
+                label.font_size = app.theme.small_size
+                title_box.add_widget(label)
+                box.add_widget(title_box)
+                value_box = ContentBox(orientation="horizontal")
+                value_label = FieldLabel(text=str(value) if value not in (None, "") else "–", valign="top", halign="left")
+                value_label.font_size = app.theme.subtitle_size
+                value_label.color = app.theme.off_white
+                value_box.add_widget(value_label)
+                box.add_widget(value_box)
+                feeding_row_1.add_widget(box)
 
-            root_box = WrapperBox(orientation="vertical")
-            feeding_box.add_widget(root_box)
-
-            root_title_box = ContentBox(orientation="horizontal")
-            root_box.add_widget(root_title_box)
-            root_title = FieldLabel(text="Root", valign="bottom", halign="left")
-            root_title.color = app.theme.nice_yellow
-            root_title.font_size = app.theme.small_size
-            root_title_box.add_widget(root_title)
-
-            root_value_box = ContentBox(orientation="horizontal")
-            root_box.add_widget(root_value_box)
-            root_value = FieldLabel(text=f"{root_mix}", valign="top", halign="left")
-            root_value.font_size = app.theme.subtitle_size
-            root_value.color = app.theme.off_white
-            root_value_box.add_widget(root_value)
-
-            soil_boost_box = WrapperBox(orientation="vertical")
-            feeding_box.add_widget(soil_boost_box)
-
-            soil_boost_title_box = ContentBox(orientation="horizontal")
-            soil_boost_box.add_widget(soil_boost_title_box)
-            soil_boost_title = FieldLabel(text="Soil", valign="bottom", halign="left")
-            soil_boost_title.color = app.theme.nice_yellow
-            soil_boost_title.font_size = app.theme.small_size
-            soil_boost_title_box.add_widget(soil_boost_title)
-
-            soil_boost_value_box = ContentBox(orientation="horizontal")
-            soil_boost_box.add_widget(soil_boost_value_box)
-            soil_boost_value = FieldLabel(text=f"{soil_boost}", valign="top", halign="left")
-            soil_boost_value.font_size = app.theme.subtitle_size
-            soil_boost_value.color = app.theme.off_white
-            soil_boost_value_box.add_widget(soil_boost_value)
-            
-            vit_box = WrapperBox(orientation="vertical")
-            feeding_box.add_widget(vit_box)
-
-            vit_title_box = ContentBox(orientation="horizontal")
-            vit_box.add_widget(vit_title_box)
-            vit_title = FieldLabel(text="Vit", valign="bottom", halign="left")
-            vit_title.color = app.theme.nice_yellow
-            vit_title.font_size = app.theme.small_size
-            vit_title_box.add_widget(vit_title)
-
-            vit_value_box = ContentBox(orientation="horizontal")
-            vit_box.add_widget(vit_value_box)
-            vit_value = FieldLabel(text=f"{vit_boost}", valign="top", halign="left")
-            vit_value.font_size = app.theme.subtitle_size
-            vit_value.color = app.theme.off_white
-            vit_value_box.add_widget(vit_value)
-            
-        else:
-            spacer = SpacerBox(size_hint_y=0.2)
-            water_and_food_box.add_widget(spacer)
-
-
-        if event_type == "feeding":
+            # Row 2: Flower/Tops/CalMag/Fungi
             feeding_row_2 = WrapperBox(orientation="horizontal", size_hint_y=0.2)
-            water_and_food_box.add_widget(feeding_row_2)            
-            feeding_box_2 = WrapperBox(orientation="horizontal")
-            feeding_row_2.add_widget(feeding_box_2)
-            
+            water_and_food_box.add_widget(feeding_row_2)
+            feeding_fields_2 = []
             if stage == "flowering":
-                bloom_box = WrapperBox(orientation="vertical")
-                feeding_box_2.add_widget(bloom_box)
-
-                bloom_title_box = ContentBox(orientation="horizontal")
-                bloom_box.add_widget(bloom_title_box)
-                bloom_title = FieldLabel(text="Flower", valign="bottom", halign="left")
-                bloom_title.color = app.theme.nice_yellow
-                bloom_title.font_size = app.theme.small_size
-                bloom_title_box.add_widget(bloom_title)
-
-                bloom_value_box = ContentBox(orientation="horizontal")
-                bloom_box.add_widget(bloom_value_box)
-                bloom_value = FieldLabel(text=f"{bloom_mix}", valign="top", halign="left")
-                bloom_value.font_size = app.theme.subtitle_size
-                bloom_value.color = app.theme.off_white
-                bloom_value_box.add_widget(bloom_value)
+                feeding_fields_2.append(("Flower", bloom_mix))
+                feeding_fields_2.append(("Tops", bloom_boost))
             else:
-                spacer = SpacerBox()
-                feeding_box_2.add_widget(spacer)
-
-            if stage == "flowering":
-                bloom_boost_box = WrapperBox(orientation="vertical")
-                feeding_box_2.add_widget(bloom_boost_box)
-
-                bloom_boost_title_box = ContentBox(orientation="horizontal")
-                bloom_boost_box.add_widget(bloom_boost_title_box)
-                bloom_boost_title = FieldLabel(text="Tops", valign="bottom", halign="left")
-                bloom_boost_title.color = app.theme.nice_yellow
-                bloom_boost_title.font_size = app.theme.small_size
-                bloom_boost_title_box.add_widget(bloom_boost_title)
-
-                bloom_boost_value_box = ContentBox(orientation="horizontal")
-                bloom_boost_box.add_widget(bloom_boost_value_box)
-                bloom_boost_value = FieldLabel(text=f"{bloom_boost}ml", valign="top", halign="left")
-                bloom_boost_value.font_size = app.theme.subtitle_size
-                bloom_boost_value.color = app.theme.off_white
-                bloom_boost_value_box.add_widget(bloom_boost_value)
-            else:
-                spacer = SpacerBox()
-                feeding_box_2.add_widget(spacer)
-
-            calmag_box = WrapperBox(orientation="vertical")
-            feeding_box_2.add_widget(calmag_box) 
-
-            calmag_title_box = ContentBox(orientation="horizontal")
-            calmag_box.add_widget(calmag_title_box)
-            calmag_title = FieldLabel(text="CalMag", valign="bottom", halign="left")
-            calmag_title.color = app.theme.nice_yellow
-            calmag_title.font_size = app.theme.small_size
-            calmag_title_box.add_widget(calmag_title)
-
-            calmag_value_box = ContentBox(orientation="horizontal")
-            calmag_box.add_widget(calmag_value_box)
-            calmag_value = FieldLabel(text=f"{CalMag}ml", valign="top", halign="left")
-            calmag_value.font_size = app.theme.subtitle_size
-            calmag_value.color = app.theme.off_white
-            calmag_value_box.add_widget(calmag_value)
-
-            myco_trico_box = WrapperBox(orientation="vertical")
-            feeding_box_2.add_widget(myco_trico_box)
-
-            myco_trico_title_box = ContentBox(orientation="horizontal")
-            myco_trico_box.add_widget(myco_trico_title_box)
-            myco_trico_title = FieldLabel(text="Fungi", valign="bottom", halign="left")
-            myco_trico_title.color = app.theme.nice_yellow
-            myco_trico_title.font_size = app.theme.small_size
-            myco_trico_title_box.add_widget(myco_trico_title)
-
-            myco_trico_value_box = ContentBox(orientation="horizontal")
-            myco_trico_box.add_widget(myco_trico_value_box)
-            myco_trico_value = FieldLabel(text=f"{'Yes' if myco_trico else 'No'}", valign="top", halign="left")
-            myco_trico_value.font_size = app.theme.subtitle_size
-            myco_trico_value.color = app.theme.nice_green if myco_trico else app.theme.light_green
-            myco_trico_value_box.add_widget(myco_trico_value)
-            
+                feeding_fields_2.append(("Flower", None))
+                feeding_fields_2.append(("Tops", None))
+            feeding_fields_2.append(("CalMag", CalMag))
+            # Fungi special logic
+            fungi_val = "Yes" if myco_trico else "No"
+            feeding_fields_2.append(("Fungi", fungi_val))
+            for i, (title, value) in enumerate(feeding_fields_2):
+                box = WrapperBox(orientation="vertical")
+                title_box = ContentBox(orientation="horizontal")
+                label = FieldLabel(text=title, valign="bottom", halign="left")
+                label.color = app.theme.nice_yellow
+                label.font_size = app.theme.small_size
+                title_box.add_widget(label)
+                box.add_widget(title_box)
+                value_box = ContentBox(orientation="horizontal")
+                value_label = FieldLabel(text=str(value) if value not in (None, "") else "–", valign="top", halign="left")
+                value_label.font_size = app.theme.subtitle_size
+                if title == "Fungi":
+                    value_label.color = app.theme.nice_green if value == "Yes" else app.theme.light_green
+                else:
+                    value_label.color = app.theme.off_white
+                value_box.add_widget(value_label)
+                box.add_widget(value_box)
+                feeding_row_2.add_widget(box)
         else:
             spacer = SpacerBox(size_hint_y=0.2)
             water_and_food_box.add_widget(spacer)
 
+        right_column_box = WrapperBox(orientation="vertical", size_hint_x=0.3)
+        main_data_column.add_widget(right_column_box)
 
+        nutrients_box = WrapperBox(orientation="vertical", size_hint_y = 0.4)
+        right_column_box.add_widget(nutrients_box)
 
+        nutrients_title_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
+        nutrients_box.add_widget(nutrients_title_box)
 
-        notes_box = WrapperBox(orientation="vertical", size_hint_x = 0.6)
-        main_data_column.add_widget(notes_box)
+        nutrients_title = FieldLabel(text="Nutrients", valign="bottom", halign="left")
+        nutrients_title.color = app.theme.nice_green
+        nutrients_title.font_size = app.theme.body_size
+        nutrients_title_box.add_widget(nutrients_title)
+
+        nutrients_data_box = ContentBox(orientation="horizontal", size_hint_y=0.8, spacing=0)
+        nutrients_box.add_widget(nutrients_data_box)
+        
+
+        for nutrient in ["n","p","k","ca","mg","s","fe","mn","zn","cu","b","mo"]:
+            box = GreenBox(orientation="vertical", spacing=0, padding=0, size_hint=(1, 1))
+            nutrients_data_box.add_widget(box)
+            for text in ["+", nutrient.capitalize(), "-"]:
+                if text == "+":
+                    if self.get_nutrient(plant, nutrient) == "excess":
+                        sub_box = YellowBox(orientation="vertical")
+                    else:
+                        sub_box = GreenBox(orientation="vertical")        
+                elif text == "-":
+                    if self.get_nutrient(plant, nutrient) == "deficient":
+                        sub_box = YellowBox(orientation="vertical")
+                    else:
+                        sub_box = GreenBox(orientation="vertical")        
+                else:
+                    sub_box = GreenBox(orientation="vertical", size_hint_x=1)
+                    label = NutrientLabel(text=nutrient.capitalize(), valign="middle", halign="center", size_hint_x=1)
+                    label.font_name = app.theme.font_logo_2
+                    label.color = app.theme.dark_green
+                    label.font_size = app.theme.subtitle_size
+                    label.text_size = label.size
+                    label.bind(size=lambda instance, value: setattr(instance, 'text_size', value))
+                    sub_box.add_widget(label)
+                box.add_widget(sub_box)
+
+        notes_box = WrapperBox(orientation="vertical", size_hint_y = 0.6)
+        right_column_box.add_widget(notes_box)
 
         notes_title_box = ContentBox(orientation="horizontal", size_hint_y=0.3)
         notes_box.add_widget(notes_title_box)
@@ -810,12 +705,7 @@ class PlantDetailsScreen(Screen):
         notes_text.color = app.theme.off_white
         notes_text_box.add_widget(notes_text)
 
-
-
-        
         self.info_box.add_widget(event_details)
 
 
-
-        
 

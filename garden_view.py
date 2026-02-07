@@ -1,4 +1,4 @@
-import sys
+import sys, os
 from datetime import date
 from kivy.config import Config
 from kivy.factory import Factory
@@ -20,6 +20,7 @@ from helpers import on_plant_seed, get_difference_days
 from boxes import TitleBox, WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox, SelectableBoxLayout, SelectableRecycleBoxLayout
 from buttons import ButtonRed, ButtonGreen, ButtonYellow
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
+from screens import BaseScreen
 class LeafIcon(Widget):
     source = StringProperty("")
     _svg = ObjectProperty(None, allownone=True)
@@ -74,12 +75,13 @@ class PlantListView(RecycleView):
         else:
             self.genes_icon = "?"
 
-class GardenViewScreen(Screen):
+class GardenViewScreen(BaseScreen):
     theme = ObjectProperty(None)
+
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        garden_view = WrapperBox(orientation="horizontal", size_hint_x=1)
+        garden_view_screen = WrapperBox(orientation="horizontal", size_hint_x=1)
         spacer_left = SpacerBox(size_hint_x=0.2)
         stripes_holder = ContentBox(orientation="horizontal")
         stripe_0 = ItemBox(size_hint_x=0.45)
@@ -99,17 +101,19 @@ class GardenViewScreen(Screen):
         spacer_left.add_widget(title)
         spacer_vertical = SpacerBox(size_hint_x=0.3)
         spacer_left.add_widget(spacer_vertical)
-        garden_view.add_widget(spacer_left)
+        garden_view_screen.add_widget(spacer_left)
 
         content_wrapper = ContentBox(orientation="vertical", size_hint=(1, 1))
 
         header = TitleBox(orientation="horizontal", size_hint_y=0.1)
+
         spacer = SpacerBox(size_hint_x=0.8)
         header.add_widget(spacer)
         side_menu = ItemBox(orientation='horizontal', size_hint_x=0.2)
-
-        exit_btn = Button(text="Exit\nGarden", size_hint_x=0.5)
-        exit_btn.bind(on_press=lambda instance: sys.exit(0))
+        option_btn = ButtonYellow(text="Options", size_hint_x=0.1)
+        side_menu.add_widget(option_btn)
+        exit_btn = ButtonRed(text="Exit\nGarden", size_hint_x=0.1)
+        exit_btn.bind(on_release=self.on_garden_exit)
         side_menu.add_widget(exit_btn)
 
         header.add_widget(side_menu)
@@ -142,19 +146,37 @@ class GardenViewScreen(Screen):
         add_plant_btn.bind(on_press=on_plant_seed)
         garden_footer.add_widget(add_plant_btn)
         view_selected_btn = ButtonYellow(text="View Selected Plant")
-        view_selected_btn.bind(on_press=self.on_details_button)
-        view_selected_btn.bind(on_press=self.on_view_selected)
+        view_selected_btn.bind(on_release=self.on_details_button)
+        view_selected_btn.bind(on_release=self.on_view_selected)
         garden_footer.add_widget(view_selected_btn)
         delete_selected_btn = ButtonRed(text="Delete Selected Plant")
-        delete_selected_btn.bind(on_press=self.on_delete_selected)
+        delete_selected_btn.bind(on_release=self.on_delete_pressed)
         garden_footer.add_widget(delete_selected_btn)
 
         content_wrapper.add_widget(garden_footer)
 
-        garden_view.add_widget(content_wrapper)
+        garden_view_screen.add_widget(content_wrapper)
 
-        self.add_widget(garden_view)
+        # Use add_content to ensure content is above the shader background
+        self.add_content(garden_view_screen)
         self.refresh_plants()
+
+        
+    def on_delete_pressed(self, instance):
+        app = App.get_running_app()
+        are_you_sure = app.screen.get_screen("are_you_sure")
+        are_you_sure.confirm_callback = lambda *_: self.on_delete_selected()
+        are_you_sure.prompt_text = "Are you sure you want to delete the selected plant?"
+        app.previous_screen = app.screen.current
+        app.screen.current = "are_you_sure"
+
+    def on_garden_exit(self, instance):
+        app = App.get_running_app()
+        are_you_sure = app.screen.get_screen("are_you_sure")
+        are_you_sure.confirm_callback =lambda *args, **kwargs: sys.exit(0)
+        are_you_sure.prompt_text = "Are you sure you want to quit?"
+        app.previous_screen = app.screen.current
+        app.screen.current = "are_you_sure"
 
     def refresh_plants(self):
         plants = load_plants()
@@ -265,6 +287,14 @@ class GardenViewScreen(Screen):
         plant_id = selected.get("id") 
 
         # 1) delete from storage
+        if plant_id:
+            json_path = os.path.join("usr", "db", "plants", f"{plant_id}.json")
+            if os.path.exists(json_path):
+                try:
+                    os.remove(json_path)
+                except Exception as e:
+                    print(f"Error deleting {json_path}: {e}")
+
         plants = load_plants()
         if plant_id:
             plants = [p for p in plants if isinstance(p, dict) and p.get("id") != plant_id]
@@ -273,13 +303,16 @@ class GardenViewScreen(Screen):
                 plants.pop(idx)
         save_plants(plants)
 
-        # 2) delete from RecycleView
+
+        # 3) delete from RecycleView
         self.plant_list.data.pop(idx)
 
         # clear selection in layout manager
         lm = self.plant_list.layout_manager
         if lm and idx in lm.selected_nodes:
             lm.deselect_node(idx)
+
+        App.get_running_app().screen.current = "garden_view"
 
     def on_details_button(self, *args):
         plant = self.get_selected_plant()  

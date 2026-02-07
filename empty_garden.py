@@ -5,8 +5,9 @@ from helpers import on_plant_seed, go_to_garden
 from labels import LogoLabel1, LogoLabel2, LogoLabel3
 from buttons import ButtonGreen, ButtonYellow
 from boxes import WrapperBox, ContentBox, ItemBox, TitleBox, RedBox, YellowBox, GreenBox
+from screens import BaseScreen
 
-class EmptyGardenScreen(Screen):
+class EmptyGardenScreen(BaseScreen):
     theme = ObjectProperty(None)
 
     def __init__(self, **kwargs):

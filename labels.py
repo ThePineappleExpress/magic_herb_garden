@@ -18,6 +18,8 @@ class ListTitleLabel(Label):
     pass
 class ListSubLabel(Label):
     pass
+class NutrientLabel(Label):
+    pass
 class TitleLabel(Label):
     highlight_color = StringProperty("")
     angle = NumericProperty(90)
@@ -37,6 +39,9 @@ class TitleLabel(Label):
 class FieldLabel(Label):
     pass
 class HintLabel(Label):
+    pass
+
+class PromptLabel(Label):
     pass
 class WarningTitleLabel(Label):
     pass

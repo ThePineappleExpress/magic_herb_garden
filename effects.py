@@ -20,10 +20,19 @@ def shake_and_flash(widget, use_bg=False, use_text=True, flash_color=(0.827, 0.2
         color_attr = "background_color"
     else:
         color_attr = "color"            # for Label/Button
-
+        hint_attr = "hint_text_color"  # for TextInput
     orig_color = getattr(widget, color_attr, None)
     anim = shake
-
+    hint_color = getattr(widget, hint_attr, None)
+    if use_text and hint_color is not None:
+        orig_hint_color = hint_color
+        hint_anim = (
+            Animation(**{hint_attr: flash_color}, duration=0.05) +
+            Animation(**{hint_attr: orig_hint_color}, duration=0.05) +
+            Animation(**{hint_attr: flash_color}, duration=0.05) +
+            Animation(**{hint_attr: orig_hint_color}, duration=0.05) 
+        )
+        anim &= hint_anim
     if orig_color is not None:
         color_anim = (
             Animation(**{color_attr: flash_color}, duration=0.05) +
