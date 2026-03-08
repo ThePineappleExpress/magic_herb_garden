@@ -18,7 +18,7 @@ from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from screens import BaseScreen
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from custom_dropdown import CustomDropdown
-from tmp_add_random_plant import load_plants
+from storage import load_plants
 
 
 class AddEventScreen(BaseScreen):

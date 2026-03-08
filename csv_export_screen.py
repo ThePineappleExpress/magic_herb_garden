@@ -274,7 +274,6 @@ class CsvExportScreen(BaseScreen):
 
         screen_wrapper.add_widget(layout)
         screen_wrapper.add_widget(SpacerBox(size_hint_x=0.1))
-        self.add_widget(screen_wrapper)
 
     # -- Lifecycle --------------------------------------------------------------
 

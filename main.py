@@ -1,4 +1,5 @@
-import uuid
+import logging
+
 from kivy.config import Config
 from kivy.factory import Factory
 from kivy.properties import ObjectProperty
@@ -14,8 +15,18 @@ from plant_details import PlantDetailsScreen
 from are_you_sure import AreYouSure
 from add_event import AddEventScreen
 from timeline_view import TimelineScreen
-from storage import load_plants
+from password_check import PasswordCheckScreen
+from settings_screen import SettingsScreen
+from add_garden import AddGardenScreen
+from select_garden import SelectGardenScreen
+from export_import_screen import ExportImportScreen
+from csv_export_screen import CsvExportScreen
+import lang
+import storage
+
 Window.allow_smooth_resize = False
+
+LOG = logging.getLogger(__name__)
 
 # initial window size
 Config.set("graphics", "width", "1280")
@@ -31,9 +42,13 @@ Config.set('input', 'mouse', 'mouse,disable_multitouch')
 class MagicHerbTracker(App):
     theme = ObjectProperty(None)
     previous_screen = None
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.pending_plant_data = {}
+        self.current_garden_id = None
+        self.post_garden_select_screen = "garden_view"
+        self.post_unlock_screen = None
 
     def build(self):
         self.theme = Factory.Theme()
@@ -41,9 +56,8 @@ class MagicHerbTracker(App):
         Window.size = (1920, 1080)
         Window.minimum_width = 1920
         Window.minimum_height = 1080
-        file = load_plants()
 
-        # add screens once
+        # Register all screens
         self.screen.add_widget(EmptyGardenScreen(name="empty_garden"))
         self.screen.add_widget(SowSeedScreen(name="sow_seed"))
         self.screen.add_widget(SetEnvironmentScreen(name="set_environment"))
@@ -52,18 +66,42 @@ class MagicHerbTracker(App):
         self.screen.add_widget(AreYouSure(name="are_you_sure"))
         self.screen.add_widget(AddEventScreen(name="add_event"))
         self.screen.add_widget(TimelineScreen(name="timeline_view"))
-        # start on empty garden
-        if file == []:
-            self.screen.current = "empty_garden"
+        self.screen.add_widget(PasswordCheckScreen(name="password_check"))
+        self.screen.add_widget(SettingsScreen(name="settings"))
+        self.screen.add_widget(AddGardenScreen(name="add_garden"))
+        self.screen.add_widget(SelectGardenScreen(name="select_garden"))
+        self.screen.add_widget(ExportImportScreen(name="export_import"))
+        self.screen.add_widget(CsvExportScreen(name="csv_export"))
+
+        # Bootstrap: password → garden selection → garden view
+        settings = storage.load_settings()
+        has_password = bool(settings.get("password"))
+        gardens = storage.load_gardens()
+
+        if has_password:
+            # Determine where to go after unlock
+            if len(gardens) == 1:
+                self.current_garden_id = gardens[0].get("id")
+                self.post_unlock_screen = "garden_view"
+            elif len(gardens) > 1:
+                self.post_unlock_screen = "select_garden"
+            else:
+                self.post_unlock_screen = "add_garden"
+            self.screen.current = "password_check"
+        elif len(gardens) == 1:
+            self.current_garden_id = gardens[0].get("id")
+            self.screen.current = "garden_view"
+        elif len(gardens) > 1:
+            self.screen.current = "select_garden"
         else:
-            self.screen.current = "garden_view" 
+            self.screen.current = "add_garden"
+
         return self.screen
 
     def go_back(self, instance=None):
-        # called from any cancel/back button 
         if self.previous_screen:
             self.screen.current = self.previous_screen
 
-    
+
 if __name__ == "__main__":
     MagicHerbTracker().run()

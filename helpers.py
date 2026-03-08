@@ -1,7 +1,14 @@
+import hashlib
+import logging
+import os
 from datetime import date, datetime
-from kivy.app import App
 
+from kivy.app import App
 from kivy.utils import get_color_from_hex
+
+LOG = logging.getLogger(__name__)
+
+_PBKDF2_ITERATIONS = 600_000
 
 def rgba_to_hex(rgba):
     r, g, b, a = rgba
@@ -90,3 +97,69 @@ def get_difference_days(first_day, second_day):
         return None
     delta = first - second
     return int(delta.days)
+
+
+def parse_ts_to_datetime(ts_str):
+    """Parse an ISO timestamp string to a datetime object."""
+    if not ts_str:
+        return None
+    try:
+        ts_str = ts_str.strip()
+        if ts_str.endswith("Z"):
+            ts_str = ts_str[:-1] + "+00:00"
+        return datetime.fromisoformat(ts_str)
+    except (ValueError, AttributeError):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# Password helpers (PBKDF2-HMAC-SHA256)
+# ---------------------------------------------------------------------------
+
+def hash_password(password: str) -> dict:
+    """Hash a password for storage. Returns dict with salt, hash, enc_salt, iterations.
+
+    Two independent PBKDF2 derivations are performed:
+    1. Verification hash (stored for login comparison)
+    2. Encryption salt (used to derive the AES key at unlock time)
+    """
+    verification_salt = os.urandom(16)
+    enc_salt = os.urandom(16)
+
+    verification_hash = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), verification_salt, _PBKDF2_ITERATIONS
+    )
+
+    return {
+        "salt": verification_salt.hex(),
+        "hash": verification_hash.hex(),
+        "enc_salt": enc_salt.hex(),
+        "iterations": _PBKDF2_ITERATIONS,
+    }
+
+
+def verify_password(password: str, stored: dict) -> bool:
+    """Verify a password against a stored hash dict.
+
+    Uses hmac.compare_digest for constant-time comparison.
+    """
+    import hmac
+
+    salt = bytes.fromhex(stored.get("salt", ""))
+    expected = stored.get("hash", "")
+    iterations = stored.get("iterations", _PBKDF2_ITERATIONS)
+
+    derived = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt, iterations
+    )
+    return hmac.compare_digest(derived.hex(), expected)
+
+
+def derive_encryption_key(password: str, stored: dict) -> bytes:
+    """Derive the 32-byte AES-256 encryption key from the password and stored enc_salt."""
+    enc_salt = bytes.fromhex(stored.get("enc_salt", ""))
+    iterations = stored.get("iterations", _PBKDF2_ITERATIONS)
+
+    return hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), enc_salt, iterations, dklen=32
+    )
