@@ -1,0 +1,178 @@
+[meta]
+name = "Forest Dark"
+author = "Magic Herb Tracker"
+
+[colors]
+color_gray = [0.18, 0.122, 0.153, 1.0]
+color_highlight = [0.831, 0.875, 0.62, 1.0]
+color_accent_1 = [0.827, 0.247, 0.286, 1.0]
+color_accent_2 = [0.945, 0.427, 0.196, 1.0]
+color_accent_3 = [1.0, 0.651, 0.188, 1.0]
+color_accent_4 = [0.289, 0.516, 0.353, 1.0]
+color_accent_5 = [0.235, 0.451, 0.686, 1.0]
+color_accent_6 = [0.392, 0.259, 0.416, 1.0]
+color_accent_7 = [0.545, 0.325, 0.196, 1.0]
+color_accent_highlight_1 = [0.84, 0.68, 0.35, 1.0]
+color_accent_highlight_2 = [0.196, 0.745, 0.325, 1.0]
+color_transparent = [0.0, 0.0, 0.0, 0.0]
+
+[fonts]
+font_logo_1 = "res/fonts/Quicksand-Light.ttf"
+font_logo_2 = "res/fonts/Quicksand-Bold.ttf"
+font_logo_3 = "res/fonts/Quicksand-Regular.ttf"
+font_title = "res/fonts/Quicksand-Light.ttf"
+font_subtitle = "res/fonts/SpaceGrotesk-Light.ttf"
+font_input = "res/fonts/Quicksand-Regular.ttf"
+font_body = "res/fonts/SpaceGrotesk-Regular.ttf"
+font_button = "res/fonts/Quicksand-Bold.ttf"
+
+[sizes]
+logo_size_1 = "72sp"
+logo_size_2 = "48sp"
+logo_size_3 = "24sp"
+title_size = "32sp"
+subtitle_size = "22sp"
+input_size = "18sp"
+body_size = "16sp"
+small_size = "14sp"
+
+[padding]
+padding_zero = [0, 0, 0, 0]
+padding_right = [0, 0, 20, 0]
+padding_left = [20, 0, 0, 0]
+padding_both = [20, 0, 20, 0]
+padding_both_half = [10, 0, 10, 0]
+padding_all = [20, 20, 20, 20]
+padding_all_half = [10, 10, 10, 10]
+
+[layout]
+array_4_10 = [10, 10, 10, 10]
+array_4_40 = [40, 40, 20, 40]
+array_4_100 = [100, 100, 1000, 100]
+array_4_200 = [200, 200, 200, 200]
+minimal_size = [1200, 800]
+small_button = [0.12, 0.7]
+med_button = [0.14, 0.8]
+big_button = [0.24, 0.9]
+
+[assets]
+leaf_sativa = "res/svg/leaf_sativa.svg"
+leaf_indica = "res/svg/leaf_indica.svg"
+leaf_hybrid = "res/svg/leaf_hybrid.svg"
+eye_open = "res/svg/eye_open.svg"
+eye_closed = "res/svg/eye_closed.svg"
+bg_image = "res/img/background.png"
+
+[element_colors]
+# --- Labels ---
+color_label_body = [0.773, 0.847, 0.427, 1.0] # Label, ListLabel
+color_label_title = [1.0, 0.651, 0.188, 1.0] # ListTitleLabel, TitleLabel, LogoLabel1/3, FieldLabel, HintLabel, WarningTitleLabel
+color_label_subtitle = [0.831, 0.875, 0.62, 1.0] # LogoLabel2, ListSubLabel, PromptLabel
+color_label_nutrient = [0.289, 0.516, 0.353, 1.0] # NutrientLabel
+color_label_warning = [0.84, 0.68, 0.35, 1.0] # WarningLabel
+
+# --- Buttons ---
+color_button_bg = [0.12, 0.172, 0.153, 1.0] # default Button background
+color_button_text = [0.289, 0.516, 0.353, 1.0] # default Button foreground text
+color_button_green_bg = [0.289, 0.516, 0.353, 1.0] # ButtonGreen, NutrientButton, EventToggleButton, ResetButton, SuggestionButton
+color_button_yellow_bg = [1.0, 0.651, 0.188, 1.0] # ButtonYellow
+color_button_red_bg = [0.827, 0.247, 0.286, 1.0] # ButtonRed
+color_button_on_color_text = [0.18, 0.122, 0.153, 1.0] # text drawn on a colored button background
+color_button_transparent_text = [1.0, 0.651, 0.188, 1.0] # ButtonTransparent, ToggleButton
+color_button_dark_green_text = [0.831, 0.875, 0.62, 1.0] # ButtonDarkGreen text
+
+# --- Inputs ---
+color_input_text = [0.831, 0.875, 0.62, 1.0] # TextInput / LargeTextInput foreground
+color_input_hint = [0.289, 0.516, 0.353, 1.0] # hint text
+color_input_cursor = [0.289, 0.516, 0.353, 1.0] # cursor & selection highlight
+
+# --- Dropdown / Spinner ---
+color_dropdown_text = [1.0, 0.651, 0.188, 1.0] # Spinner / CustomDropdown text
+
+# --- Boxes ---
+color_box_red = [0.827, 0.247, 0.286, 1.0]
+color_box_yellow = [1.0, 0.651, 0.188, 1.0]
+color_box_green = [0.289, 0.516, 0.353, 1.0]
+color_box_dark = [0.13, 0.15, 0.14, 1.0]
+color_stripe_1 = [0.827, 0.247, 0.286, 1.0]
+color_stripe_2 = [1.0, 0.651, 0.188, 1.0]
+color_stripe_3 = [0.289, 0.516, 0.353, 1.0]
+
+# --- Slider ---
+color_slider_track = [0.827, 0.247, 0.286, 1.0] # slider background track
+color_slider_cursor = [1.0, 0.651, 0.188, 1.0] # slider thumb cursor
+
+# --- Tabs ---
+color_tab_text = [1.0, 0.651, 0.188, 1.0] # TabbedPanel tab text and active indicator
+
+# --- Graphs ---
+color_graph_line = [1.0, 0.651, 0.188, 1.0] # Graph plot color
+color_graph_axis = [0.831, 0.875, 0.62, 1.0] # axis label color
+
+# --- Graph series palette (multi-series plots) ---
+color_graph_series_1 = [0.196, 0.745, 0.325, 1.0] # bright green
+color_graph_series_2 = [0.545, 0.325, 0.196, 1.0] # brown
+color_graph_series_3 = [0.945, 0.427, 0.196, 1.0] # orange
+color_graph_series_4 = [0.827, 0.247, 0.286, 1.0] # red
+color_graph_series_5 = [0.235, 0.451, 0.686, 1.0] # blue
+color_graph_series_6 = [1.0, 0.651, 0.188, 1.0] # yellow
+color_graph_series_7 = [0.392, 0.259, 0.416, 1.0] # purple
+
+# --- Timeline tab category colors ---
+color_tab_plant = [1.0, 0.651, 0.188, 1.0] # plant data tab
+color_tab_environment = [0.827, 0.247, 0.286, 1.0] # environment tab
+color_tab_water = [0.235, 0.451, 0.686, 1.0] # water tab
+color_tab_food = [0.392, 0.259, 0.416, 1.0] # food/feeding tab
+
+# --- Lists ---
+color_list_selected_bg = [0.392, 0.259, 0.416, 1.0] # selected row highlight (PlantListItem / GardenListItem)
+color_list_item_accent = [1.0, 0.651, 0.188, 1.0] # ItemBox selected accent (non-visual, kept for future use)
+
+# --- Screen ---
+color_screen_bg = [0.12, 0.172, 0.153, 1.0] # BaseScreen background rect
+
+# --- Garden filter / sort bar ---
+color_sort_indicator = [1.0, 0.651, 0.188, 1.0] # sort arrow triangle (SortButton)
+color_filter_label = [0.289, 0.516, 0.353, 1.0] # sort-by label + column legend labels
+
+# --- Strain / gene label colors ---
+color_strain_sativa = [0.773, 0.847, 0.427, 1.0]
+color_strain_indica = [0.289, 0.516, 0.353, 1.0]
+color_strain_hybrid = [0.84, 0.68, 0.35, 1.0]
+color_strain_unknown = [0.831, 0.875, 0.62, 1.0]
+
+# --- Event detail panel ---
+color_detail_label = [0.831, 0.875, 0.62, 1.0] # date / type / notes heading text
+color_detail_health = [0.289, 0.516, 0.353, 1.0] # health indicator label
+color_field_label = [0.289, 0.516, 0.353, 1.0] # plant / env / nutrient section field labels
+color_field_value = [0.831, 0.875, 0.62, 1.0] # plant / env field values
+color_water_label = [0.235, 0.451, 0.686, 1.0] # water sub-section field labels
+color_feed_label = [1.0, 0.651, 0.188, 1.0] # feeding sub-section field labels
+
+# --- Nutrient bars ---
+color_nutrient_good = [0.289, 0.516, 0.353, 1.0] # default / healthy bar
+color_nutrient_warn = [1.0, 0.651, 0.188, 1.0] # warn / excess bar
+color_nutrient_text = [0.12, 0.172, 0.153, 1.0] # text drawn over nutrient bar
+
+# --- Event type indicator colors ---
+color_event_watering = [0.235, 0.451, 0.686, 1.0]
+color_event_feeding = [1.0, 0.651, 0.188, 1.0]
+color_event_top = [0.945, 0.427, 0.196, 1.0]
+color_event_prune = [0.392, 0.259, 0.416, 1.0]
+color_event_flip = [0.827, 0.247, 0.286, 1.0]
+color_event_default = [0.289, 0.516, 0.353, 1.0] # fallback / log event
+
+# --- Health indicator colors ---
+color_health_healthy = [0.289, 0.516, 0.353, 1.0]
+color_health_minor = [1.0, 0.651, 0.188, 1.0]
+color_health_moderate = [0.827, 0.247, 0.286, 1.0]
+color_health_severe = [0.392, 0.259, 0.416, 1.0]
+color_health_default = [0.831, 0.875, 0.62, 1.0] # fallback / unknown health
+
+# --- EventBox hover states ---
+color_event_box_text = [1.0, 0.651, 0.188, 1.0]
+color_event_box_hover_bg = [0.289, 0.516, 0.353, 1.0]
+
+[shader_colors]
+color_a = [0.13, 0.15, 0.14]
+color_b = [0.22, 0.272, 0.253]

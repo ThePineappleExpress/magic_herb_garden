@@ -1,0 +1,178 @@
+[meta]
+name = "Water"
+author = "Magic Herb Tracker"
+
+[colors]
+color_gray = [0.08, 0.14, 0.22, 1.0]
+color_highlight = [0.56, 0.90, 0.94, 1.0]
+color_accent_1 = [0.22, 0.45, 0.82, 1.0]
+color_accent_2 = [0.15, 0.65, 0.78, 1.0]
+color_accent_3 = [0.30, 0.82, 0.86, 1.0]
+color_accent_4 = [0.18, 0.52, 0.62, 1.0]
+color_accent_5 = [0.38, 0.70, 0.90, 1.0]
+color_accent_6 = [0.20, 0.30, 0.60, 1.0]
+color_accent_7 = [0.12, 0.42, 0.55, 1.0]
+color_accent_highlight_1 = [0.56, 0.90, 0.94, 1.0]
+color_accent_highlight_2 = [0.25, 0.80, 0.85, 1.0]
+color_transparent = [0.0, 0.0, 0.0, 0.0]
+
+[fonts]
+font_logo_1 = "res/fonts/Quicksand-Light.ttf"
+font_logo_2 = "res/fonts/Quicksand-Bold.ttf"
+font_logo_3 = "res/fonts/Quicksand-Regular.ttf"
+font_title = "res/fonts/Quicksand-Light.ttf"
+font_subtitle = "res/fonts/SpaceGrotesk-Light.ttf"
+font_input = "res/fonts/Quicksand-Regular.ttf"
+font_body = "res/fonts/SpaceGrotesk-Regular.ttf"
+font_button = "res/fonts/Quicksand-Bold.ttf"
+
+[sizes]
+logo_size_1 = "72sp"
+logo_size_2 = "48sp"
+logo_size_3 = "24sp"
+title_size = "32sp"
+subtitle_size = "22sp"
+input_size = "18sp"
+body_size = "16sp"
+small_size = "14sp"
+
+[padding]
+padding_zero = [0, 0, 0, 0]
+padding_right = [0, 0, 20, 0]
+padding_left = [20, 0, 0, 0]
+padding_both = [20, 0, 20, 0]
+padding_both_half = [10, 0, 10, 0]
+padding_all = [20, 20, 20, 20]
+padding_all_half = [10, 10, 10, 10]
+
+[layout]
+array_4_10 = [10, 10, 10, 10]
+array_4_40 = [40, 40, 20, 40]
+array_4_100 = [100, 100, 1000, 100]
+array_4_200 = [200, 200, 200, 200]
+minimal_size = [1200, 800]
+small_button = [0.12, 0.7]
+med_button = [0.14, 0.8]
+big_button = [0.24, 0.9]
+
+[assets]
+leaf_sativa = "res/svg/leaf_sativa.svg"
+leaf_indica = "res/svg/leaf_indica.svg"
+leaf_hybrid = "res/svg/leaf_hybrid.svg"
+eye_open = "res/svg/eye_open.svg"
+eye_closed = "res/svg/eye_closed.svg"
+bg_image = "res/img/background.png"
+
+[element_colors]
+# --- Labels ---
+color_label_body = [0.60, 0.88, 0.92, 1.0]
+color_label_title = [0.30, 0.82, 0.86, 1.0]
+color_label_subtitle = [0.56, 0.90, 0.94, 1.0]
+color_label_nutrient = [0.18, 0.52, 0.62, 1.0]
+color_label_warning = [0.56, 0.90, 0.94, 1.0]
+
+# --- Buttons ---
+color_button_bg = [0.06, 0.13, 0.21, 1.0]
+color_button_text = [0.18, 0.52, 0.62, 1.0]
+color_button_green_bg = [0.18, 0.52, 0.62, 1.0]
+color_button_yellow_bg = [0.30, 0.82, 0.86, 1.0]
+color_button_red_bg = [0.22, 0.45, 0.82, 1.0]
+color_button_on_color_text = [0.04, 0.09, 0.15, 1.0]
+color_button_transparent_text = [0.30, 0.82, 0.86, 1.0]
+color_button_dark_green_text = [0.56, 0.90, 0.94, 1.0]
+
+# --- Inputs ---
+color_input_text = [0.56, 0.90, 0.94, 1.0]
+color_input_hint = [0.18, 0.52, 0.62, 1.0]
+color_input_cursor = [0.18, 0.52, 0.62, 1.0]
+
+# --- Dropdown / Spinner ---
+color_dropdown_text = [0.30, 0.82, 0.86, 1.0]
+
+# --- Boxes ---
+color_box_red = [0.22, 0.45, 0.82, 1.0]
+color_box_yellow = [0.30, 0.82, 0.86, 1.0]
+color_box_green = [0.18, 0.52, 0.62, 1.0]
+color_box_dark = [0.04, 0.09, 0.15, 1.0]
+color_stripe_1 = [0.22, 0.45, 0.82, 1.0]
+color_stripe_2 = [0.30, 0.82, 0.86, 1.0]
+color_stripe_3 = [0.18, 0.52, 0.62, 1.0]
+
+# --- Slider ---
+color_slider_track = [0.22, 0.45, 0.82, 1.0]
+color_slider_cursor = [0.30, 0.82, 0.86, 1.0]
+
+# --- Tabs ---
+color_tab_text = [0.30, 0.82, 0.86, 1.0]
+
+# --- Graphs ---
+color_graph_line = [0.30, 0.82, 0.86, 1.0]
+color_graph_axis = [0.56, 0.90, 0.94, 1.0]
+
+# --- Graph series palette ---
+color_graph_series_1 = [0.25, 0.80, 0.85, 1.0]
+color_graph_series_2 = [0.12, 0.42, 0.55, 1.0]
+color_graph_series_3 = [0.15, 0.65, 0.78, 1.0]
+color_graph_series_4 = [0.22, 0.45, 0.82, 1.0]
+color_graph_series_5 = [0.38, 0.70, 0.90, 1.0]
+color_graph_series_6 = [0.30, 0.82, 0.86, 1.0]
+color_graph_series_7 = [0.20, 0.30, 0.60, 1.0]
+
+# --- Timeline tab category colors ---
+color_tab_plant = [0.30, 0.82, 0.86, 1.0]
+color_tab_environment = [0.22, 0.45, 0.82, 1.0]
+color_tab_water = [0.38, 0.70, 0.90, 1.0]
+color_tab_food = [0.20, 0.30, 0.60, 1.0]
+
+# --- Lists ---
+color_list_selected_bg = [0.20, 0.30, 0.60, 1.0]
+color_list_item_accent = [0.30, 0.82, 0.86, 1.0]
+
+# --- Screen ---
+color_screen_bg = [0.06, 0.13, 0.21, 1.0]
+
+# --- Garden filter / sort bar ---
+color_sort_indicator = [0.30, 0.82, 0.86, 1.0]
+color_filter_label = [0.18, 0.52, 0.62, 1.0]
+
+# --- Strain / gene label colors ---
+color_strain_sativa = [0.60, 0.88, 0.92, 1.0]
+color_strain_indica = [0.18, 0.52, 0.62, 1.0]
+color_strain_hybrid = [0.56, 0.90, 0.94, 1.0]
+color_strain_unknown = [0.56, 0.90, 0.94, 1.0]
+
+# --- Event detail panel ---
+color_detail_label = [0.56, 0.90, 0.94, 1.0]
+color_detail_health = [0.18, 0.52, 0.62, 1.0]
+color_field_label = [0.18, 0.52, 0.62, 1.0]
+color_field_value = [0.56, 0.90, 0.94, 1.0]
+color_water_label = [0.38, 0.70, 0.90, 1.0]
+color_feed_label = [0.30, 0.82, 0.86, 1.0]
+
+# --- Nutrient bars ---
+color_nutrient_good = [0.18, 0.52, 0.62, 1.0]
+color_nutrient_warn = [0.30, 0.82, 0.86, 1.0]
+color_nutrient_text = [0.04, 0.09, 0.15, 1.0]
+
+# --- Event type indicator colors ---
+color_event_watering = [0.38, 0.70, 0.90, 1.0]
+color_event_feeding = [0.30, 0.82, 0.86, 1.0]
+color_event_top = [0.15, 0.65, 0.78, 1.0]
+color_event_prune = [0.20, 0.30, 0.60, 1.0]
+color_event_flip = [0.22, 0.45, 0.82, 1.0]
+color_event_default = [0.18, 0.52, 0.62, 1.0]
+
+# --- Health indicator colors ---
+color_health_healthy = [0.18, 0.52, 0.62, 1.0]
+color_health_minor = [0.30, 0.82, 0.86, 1.0]
+color_health_moderate = [0.22, 0.45, 0.82, 1.0]
+color_health_severe = [0.20, 0.30, 0.60, 1.0]
+color_health_default = [0.56, 0.90, 0.94, 1.0]
+
+# --- EventBox hover states ---
+color_event_box_text = [0.30, 0.82, 0.86, 1.0]
+color_event_box_hover_bg = [0.18, 0.52, 0.62, 1.0]
+
+[shader_colors]
+color_a = [0.04, 0.09, 0.15]
+color_b = [0.10, 0.20, 0.32]

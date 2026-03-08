@@ -1,0 +1,17 @@
+[package]
+name = "crypto_rs"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "crypto_rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3        = { version = "0.22", features = ["extension-module"] }
+aes-gcm     = { version = "0.10", features = ["aes", "alloc"] }
+pbkdf2      = { version = "0.12" }
+hmac        = "0.12"
+sha2        = "0.10"
+rand        = "0.8"
+subtle      = "2"
