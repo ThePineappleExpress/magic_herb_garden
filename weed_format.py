@@ -49,6 +49,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import crypto_rs
+import filetype
 
 __all__ = [
     "write_weed",
@@ -245,6 +246,13 @@ def read_weed(
         WeedWrongPassword Password given but AES-GCM decryption failed.
     """
     data = Path(path).read_bytes()
+
+    # -- reject files identified as a known non-.weed format ---------------
+    kind = filetype.guess(data)
+    if kind is not None:
+        raise WeedCorrupted(
+            f"Not a .weed file — detected as {kind.extension} ({kind.mime})"
+        )
 
     # -- structural minimum size check -------------------------------------
     min_size = _HDR.size + 32

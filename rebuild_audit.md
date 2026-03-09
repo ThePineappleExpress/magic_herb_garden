@@ -508,8 +508,8 @@ The duplicate `from text_inputs import ...` (was on both lines 17 and 19) was re
 | Package | Status | Action needed |
 |---|---|---|
 | `astral==3.2` | ✅ Wired | Used in `add_garden.py` + `add_event.py` for outdoor daylight calculation via `LocationInfo` + `sun()` |
-| `pandas==3.0.1` | ⚠️ Installed, not yet wired | Needed — wire into `csv_export_screen.py` for structured CSV/DataFrame export |
-| `filetype==1.2.0` | ⚠️ Installed, not yet wired | Needed — wire into `weed_format.py` to validate incoming `.weed` files before parsing |
+| `pandas==3.0.1` | ✅ Wired | `csv_export_screen.py` — `write_gardens_csv()` now uses `pd.DataFrame(rows, columns=CSV_COLUMNS).to_csv()` instead of `csv.DictWriter` |
+| `filetype==1.2.0` | ✅ Wired | `weed_format.py` — `read_weed()` now runs `filetype.guess()` early to reject known non-.weed formats (images, archives, etc.) before binary parsing |
 | `matplotlib==3.10.8` | ℹ️ Transitive, not directly needed | `timeline_view.py` uses native `kivy.garden.graph` (`Graph` / `LinePlot`), which does NOT require matplotlib. `kivy-garden-matplotlib` is installed but unused; can be kept as optional or dropped. matplotlib itself is never imported anywhere in the app. |
 | `numpy==2.4.2` | ℹ️ Transitive only | Pulled in by matplotlib; not imported in app code (fixed in #22). Do not add to `pyproject.toml`. |
 | `kaki==0.1.9` | ℹ️ Dev-only | `dev_main.py` hot-reload only; not needed in production |
@@ -649,7 +649,7 @@ The following are confirmed functional based on code review:
 16. **Issue #18** — Add double-click binds to garden list (`select_garden.py`) and plant list (`garden_view.py`) via `touch.is_double_tap` in `SelectableBoxLayout.on_touch_down`.
 17. **Issue #19** — Add seedbank autocomplete backed by `breeder_trie.json`; guard `_apply_catalog_for_strain` against overwriting a user-filled seedbank field.
 18. **Issue #21** — Build `bin/db/locations.json`; add continent/country/city dropdowns to `AddGardenScreen`; wire `astral` for outdoor light schedule; add `/x` live label for indoor schedule input.
-19. **Issue #23** — Wire `pandas` into `csv_export_screen.py`; wire `filetype` into `weed_format.py` import validation. ~~numpy fixed (#22)~~. matplotlib not needed directly (kivy.garden.graph is native).
+19. ~~**Issue #23** — Wire `pandas` into `csv_export_screen.py`; wire `filetype` into `weed_format.py` import validation.~~ ✅ Done. `pandas` replaces `csv.DictWriter` with DataFrame export; `filetype` validates incoming `.weed` files.
 20. **Issue #24** — Implement per-plant flip event → flowering status transition and light cycle inheritance logic for indoor/outdoor gardens.
 
 ---

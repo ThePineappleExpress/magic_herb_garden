@@ -1,9 +1,10 @@
 """csv_export_screen.py - Export selected gardens to a single flat CSV file."""
 
-import csv
 import logging
 from datetime import date
 from pathlib import Path
+
+import pandas as pd
 
 from kivy.app import App
 from kivy.properties import ObjectProperty
@@ -133,13 +134,13 @@ def _event_row(event: dict) -> dict:
         "ph": event.get("ph", ""),
         "ppm": event.get("ppm", ""),
         # nutrients
-        "feeding_veg": feeding.get("veg", ""),
-        "feeding_root": feeding.get("root", ""),
-        "feeding_soil": feeding.get("soil", ""),
-        "feeding_vit": feeding.get("vit", ""),
-        "feeding_flower": feeding.get("flower", ""),
-        "feeding_tops": feeding.get("tops", ""),
-        "feeding_calmag": feeding.get("calmag", ""),
+        "feeding_grow_mix": feeding.get("grow_mix", ""),
+        "feeding_root_mix": feeding.get("root_mix", ""),
+        "feeding_bloom_mix": feeding.get("bloom_mix", ""),
+        "feeding_bloom_boost": feeding.get("bloom_boost", ""),
+        "feeding_soil_boost": feeding.get("soil_boost", ""),
+        "feeding_vit_boost": feeding.get("vit_boost", ""),
+        "feeding_calmag": feeding.get("CalMag", ""),
         "feeding_myco_trico": feeding.get("myco_trico", ""),
         # plant observations
         "plant_height": plant_obs.get("plant_height", ""),
@@ -194,10 +195,8 @@ def write_gardens_csv(dest: Path, gardens_data: list) -> None:
         r.get("event_ts", ""),
     ))
 
-    with dest.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=CSV_COLUMNS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
+    df = pd.DataFrame(rows, columns=CSV_COLUMNS)
+    df.to_csv(dest, index=False, encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------

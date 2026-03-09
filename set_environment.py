@@ -315,7 +315,7 @@ class SetEnvironmentScreen(BaseScreen):
             "notes": str(pending.get("notes", "")),
             "genes": str(pending.get("genes", "")),
             "type": str(pending.get("type", "")),
-            "days_to_flower": int(pending.get("days_to_flower")),
+            "days_to_flower": int(pending.get("days_to_flower") or 0),
             "pot_size_l": int(self.pot_slider.value),
             "watering_profile": int(self.thirsty_slider.value),
             "feeding_profile": int(self.hunger_slider.value),

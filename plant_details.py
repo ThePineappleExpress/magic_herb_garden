@@ -8,9 +8,11 @@ from kivy.clock import Clock
 
 from helpers import get_difference_days, go_to_add_event, go_to_garden, go_to_timeline
 from storage import load_plant_events
-from constants import EVENT_HARVEST
+from constants import (
+    EVENT_WATERING, EVENT_FEEDING, EVENT_PLANTING, EVENT_HARVEST,
+)
 from labels import TitleLabel, FieldLabel, HintLabel, NutrientLabel, ListTitleLabel, LogoLabel2
-from boxes import ItemBox, WrapperBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
+from boxes import ItemBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
 from buttons import ButtonRed, ButtonGreen, ButtonYellow, ButtonTransparent
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from screens import BaseScreen
@@ -329,7 +331,7 @@ class PlantDetailsScreen(BaseScreen):
 
         # last event summary 
         last = events_sorted[-1]
-        if last.get("type") == "watering":
+        if last.get("type") == EVENT_WATERING:
             vol = last.get("volume_l")
             ph = last.get("ph")
             ppm = last.get("ppm")
@@ -423,39 +425,39 @@ class PlantDetailsScreen(BaseScreen):
         ph = event.get("ph", "")
         ppm = event.get("ppm", "")
 
-        if event.get("type") == "feeding" :
-            feeding = event.get("feeding", "")
-            grow_mix = float(feeding.get("grow_mix", ""))
-            root_mix = float(feeding.get("root_mix", ""))
-            bloom_mix = float(feeding.get("bloom_mix", ""))
-            bloom_boost = float(feeding.get("bloom_boost", ""))
-            soil_boost = float(feeding.get("soil_boost", ""))
-            vit_boost = float(feeding.get("vit_boost", ""))
-            CalMag = float(feeding.get("CalMag", ""))
-            myco_trico = bool(feeding.get("myco_trico", ""))
+        if event.get("type") == EVENT_FEEDING:
+            feeding = event.get("feeding") or {}
+            grow_mix = feeding.get("grow_mix", 0)
+            root_mix = feeding.get("root_mix", 0)
+            bloom_mix = feeding.get("bloom_mix", 0)
+            bloom_boost = feeding.get("bloom_boost", 0)
+            soil_boost = feeding.get("soil_boost", 0)
+            vit_boost = feeding.get("vit_boost", 0)
+            CalMag = feeding.get("CalMag", 0)
+            myco_trico = bool(feeding.get("myco_trico", False))
 
-        plant = event.get("plant", "")
-        stage = plant.get("stage", "")
-        plant_height = int(plant.get("plant_height", ""))
-        number_of_nodes = int(plant.get("num_nodes", ""))
-        node_spacing = float(plant.get("node_spacing", ""))
-        main_stems = int(plant.get("main_stem_number", ""))
-        coloration = plant.get("leaf_color", "")
-        morphology = plant.get("leaf_morphology", "")
+        plant_obs = event.get("plant") or {}
+        stage = plant_obs.get("stage", "")
+        plant_height = plant_obs.get("plant_height", "")
+        number_of_nodes = plant_obs.get("num_nodes", "")
+        node_spacing = plant_obs.get("node_spacing", "")
+        main_stems = plant_obs.get("main_stem_number", "")
+        coloration = plant_obs.get("leaf_color", "")
+        morphology = plant_obs.get("leaf_morphology", "")
 
         days_stage = stage
         self.days_stage_value.text = f"{days_stage}" if days_stage is not None else "–"
 
-        environment = event.get("environment", "")
+        environment = event.get("environment") or {}
         soil_moisture = environment.get("soil_moisture", "")
-        air_temperature = int(environment.get("air_temp_c",""))
-        soil_ph = float(environment.get("soil_ph",""))
-        humidity = int(environment.get("rh_percent",""))
-        vpd = float(environment.get("vpd_kpa",""))
-        light_schedule = environment.get("light_schedule","")
-        ppfd = int(environment.get("ppfd",""))
+        air_temperature = environment.get("air_temp_c", "")
+        soil_ph = environment.get("soil_ph", "")
+        humidity = environment.get("rh_percent", "")
+        vpd = environment.get("vpd_kpa", "")
+        light_schedule = environment.get("light_schedule", "")
+        ppfd = environment.get("ppfd", "")
             
-        health = self.get_health_indicator(plant)
+        health = self.get_health_indicator(plant_obs)
 
         event_details = WrapperBox(orientation="vertical")
 
@@ -475,9 +477,9 @@ class PlantDetailsScreen(BaseScreen):
         event_type_label_box = ContentBox(orientation="horizontal")
         date_and_type_box.add_widget(event_type_label_box)
         event_type_label = FieldLabel(text=f"{event_type}", valign="middle", halign="left")
-        if event_type == "water":
+        if event_type == EVENT_WATERING:
             event_type_label.color = app.theme.color_event_watering
-        elif event_type == "feeding":
+        elif event_type == EVENT_FEEDING:
             event_type_label.color = app.theme.color_event_feeding
         else:
             event_type_label.color = app.theme.color_event_default
@@ -572,7 +574,7 @@ class PlantDetailsScreen(BaseScreen):
         main_data_column.add_widget(water_and_food_box)
 
         # Watering/Feeding fields (no units, looped)
-        if event_type in ("watering", "feeding"):
+        if event_type in (EVENT_WATERING, EVENT_FEEDING):
             water_row = WrapperBox(orientation="horizontal", size_hint_y=0.2)
             water_and_food_box.add_widget(water_row)
             water_fields = [
@@ -601,7 +603,7 @@ class PlantDetailsScreen(BaseScreen):
             water_and_food_box.add_widget(spacer)
 
         # Feeding fields (looped, special logic for stage)
-        if event_type == "feeding":
+        if event_type == EVENT_FEEDING:
             # Row 1: Veg/Root/Soil/Vit
             feeding_row_1 = WrapperBox(orientation="horizontal", size_hint_y=0.2)
             water_and_food_box.add_widget(feeding_row_1)
@@ -690,12 +692,12 @@ class PlantDetailsScreen(BaseScreen):
             nutrients_data_box.add_widget(box)
             for text in ["+", nutrient.capitalize(), "-"]:
                 if text == "+":
-                    if self.get_nutrient(plant, nutrient) == "excess":
+                    if self.get_nutrient(plant_obs, nutrient) == "excess":
                         sub_box = YellowBox(orientation="vertical")
                     else:
                         sub_box = GreenBox(orientation="vertical")        
                 elif text == "-":
-                    if self.get_nutrient(plant, nutrient) == "deficient":
+                    if self.get_nutrient(plant_obs, nutrient) == "deficient":
                         sub_box = YellowBox(orientation="vertical")
                     else:
                         sub_box = GreenBox(orientation="vertical")        

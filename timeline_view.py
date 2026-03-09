@@ -9,6 +9,7 @@ from kivy.metrics import dp
 
 from kivy.garden.graph import Graph, LinePlot
 
+from constants import EVENT_WATERING, EVENT_FEEDING, EVENT_PLANTING
 from buttons import ButtonRed, NutrientButton, GraphButton
 from labels import TitleLabel, FieldLabel
 from screens import BaseScreen
@@ -1285,12 +1286,12 @@ class TimelineScreen(BaseScreen):
             candidates.update(env_vals)
             # include water-related top-level fields only for watering/planting events
             ev_type = (e.get("type") or "").lower()
-            if ev_type in ("watering", "planting", "feeding"):
+            if ev_type in (EVENT_WATERING, EVENT_PLANTING, EVENT_FEEDING):
                 for k in ("volume_l", "water_temp_c", "ph", "ppm"):
                     if k in e:
                         candidates[k] = e.get(k)
             # include feeding nested values only for feeding events
-            if ev_type == "feeding":
+            if ev_type == EVENT_FEEDING:
                 candidates.update(feeding if isinstance(feeding, dict) else {})
             for k, v in candidates.items():
                 if v is None:

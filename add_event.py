@@ -17,7 +17,7 @@ from constants import (
     EVENT_PRUNE, EVENT_FLIP, EVENT_HARVEST,
 )
 from labels import TitleLabel, FieldLabel, HintLabel, NutrientLabel, ListTitleLabel, LogoLabel2
-from boxes import ItemBox, WrapperBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
+from boxes import ItemBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
 from buttons import ButtonRed, ButtonGreen, ButtonYellow, NutrientButton, ResetButton
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from screens import BaseScreen
@@ -514,15 +514,15 @@ class AddEventScreen(BaseScreen):
                     invalid.append(w)
 
         # Validate watering fields for both watering and feeding
-        if event_type in ("watering", "feeding"):
+        if event_type in (EVENT_WATERING, EVENT_FEEDING):
             for attr in ["water_volume_input", "water_temp_input", "ph_input", "ppm_input"]:
                 w = getattr(self, attr, None)
                 if w and not (w.text or '').strip():
                     invalid.append(w)
 
         # Validate feeding fields only for feeding
-        if event_type == "feeding":
-            for attr in ["veg_input", "root_input", "soil_input", "vit_input", "flower_input", "tops_input", "calmag_input"]:
+        if event_type == EVENT_FEEDING:
+            for attr in ["grow_mix_input", "root_mix_input", "soil_boost_input", "vit_boost_input", "bloom_mix_input", "bloom_boost_input", "calmag_input"]:
                 w = getattr(self, attr, None)
                 if w and not (w.text or '').strip():
                     invalid.append(w)
@@ -766,8 +766,8 @@ class AddEventScreen(BaseScreen):
         # Clear previous references to ensure validation works
         for attr in [
             'water_volume_input', 'water_temp_input', 'ph_input', 'ppm_input',
-            'veg_input', 'root_input', 'soil_input', 'vit_input',
-            'flower_input', 'tops_input', 'calmag_input',
+            'grow_mix_input', 'root_mix_input', 'soil_boost_input', 'vit_boost_input',
+            'bloom_mix_input', 'bloom_boost_input', 'calmag_input',
         ]:
             if hasattr(self, attr):
                 delattr(self, attr)
@@ -783,7 +783,7 @@ class AddEventScreen(BaseScreen):
         box.clear_widgets()
         app = App.get_running_app()
 
-        if selection == "watering" or selection == "feeding":
+        if selection in (EVENT_WATERING, EVENT_FEEDING):
             water_row = WrapperBox(orientation="horizontal", size_hint_y=0.2)
             box.add_widget(water_row)
             water_fields = [
@@ -809,14 +809,14 @@ class AddEventScreen(BaseScreen):
                 water_row.add_widget(wbox)
                 setattr(self, attr, value_label)
 
-            if selection == "feeding":
+            if selection == EVENT_FEEDING:
                 feeding_row_1 = WrapperBox(orientation="horizontal", size_hint_y=0.33)
                 box.add_widget(feeding_row_1)
                 feeding_fields_1 = [
-                    ("Veg", "veg_input"),
-                    ("Root", "root_input"),
-                    ("Soil", "soil_input"),
-                    ("Vit", "vit_input"),
+                    ("Veg", "grow_mix_input"),
+                    ("Root", "root_mix_input"),
+                    ("Soil", "soil_boost_input"),
+                    ("Vit", "vit_boost_input"),
                 ]
                 for title, attr in feeding_fields_1:
                     wbox = WrapperBox(orientation="vertical")
@@ -838,8 +838,8 @@ class AddEventScreen(BaseScreen):
                 feeding_row_2 = WrapperBox(orientation="horizontal", size_hint_y=0.33)
                 box.add_widget(feeding_row_2)
                 feeding_fields_2 = [
-                    ("Flower", "flower_input"),
-                    ("Tops", "tops_input"),
+                    ("Flower", "bloom_mix_input"),
+                    ("Tops", "bloom_boost_input"),
                     ("CalMag", "calmag_input"),
                     ("Fungi", "fungi_dropdown"),
                 ]
@@ -971,12 +971,21 @@ class AddEventScreen(BaseScreen):
 
             # Feeding fields
             feeding = {}
-            if event_type == "feeding":
-                for key in ["veg", "root", "soil", "vit", "flower", "tops", "calmag"]:
-                    feeding[key] = get_num_input(f"{key}_input")
+            if event_type == EVENT_FEEDING:
+                feed_map = [
+                    ("grow_mix", "grow_mix_input"),
+                    ("root_mix", "root_mix_input"),
+                    ("bloom_mix", "bloom_mix_input"),
+                    ("bloom_boost", "bloom_boost_input"),
+                    ("soil_boost", "soil_boost_input"),
+                    ("vit_boost", "vit_boost_input"),
+                    ("CalMag", "calmag_input"),
+                ]
+                for data_key, input_attr in feed_map:
+                    feeding[data_key] = get_num_input(input_attr)
                 feeding["myco_trico"] = (self.fungi_dropdown.selected == "yes") if hasattr(self, "fungi_dropdown") else False
             else:
-                feeding = {k: 0.0 for k in ["veg", "root", "soil", "vit", "flower", "tops", "calmag"]}
+                feeding = {k: 0.0 for k in ["grow_mix", "root_mix", "bloom_mix", "bloom_boost", "soil_boost", "vit_boost", "CalMag"]}
                 feeding["myco_trico"] = False
 
             # Plant info
