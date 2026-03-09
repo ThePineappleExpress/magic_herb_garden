@@ -7,6 +7,7 @@ from labels import FieldLabel, PromptLabel
 from buttons import ButtonGreen, ButtonRed
 from boxes import WrapperBox, ContentBox, ItemBox, TitleBox, RedBox, YellowBox, GreenBox, SpacerBox
 from screens import BaseScreen
+import lang
 
 class AreYouSure(BaseScreen):
     theme = ObjectProperty(None)
@@ -35,10 +36,10 @@ class AreYouSure(BaseScreen):
         title_box = ItemBox(orientation="horizontal", size_hint_y=0.2)
         prompt_box.add_widget(title_box)
 
-        title_label = FieldLabel(text="Are you sure?", halign="center", valign="middle")
+        title_label = FieldLabel(text=lang.ARE_YOU_SURE_TITLE, halign="center", valign="middle")
         title_label.font_name = app.theme.font_logo_2
         title_label.font_size = app.theme.title_size
-        title_label.color = app.theme.nice_yellow
+        title_label.color = app.theme.color_label_title
         title_box.add_widget(title_label)
 
         spacer = SpacerBox(size_hint_y=0.01)
@@ -48,7 +49,7 @@ class AreYouSure(BaseScreen):
         text_label = PromptLabel(text=self.prompt_text, halign="left", valign="middle")
         self.bind(prompt_text=text_label.setter("text"))
         text_label.font_size = app.theme.body_size
-        text_label.color = app.theme.off_white
+        text_label.color = app.theme.color_label_subtitle
         text_box.add_widget(text_label)
         prompt_box.add_widget(text_box)
 
@@ -57,10 +58,10 @@ class AreYouSure(BaseScreen):
 
         button_box = ItemBox(orientation="horizontal", size_hint_y=0.3)
         prompt_box.add_widget(button_box)
-        confirm_button = ButtonGreen(text="Yes")
+        confirm_button = ButtonGreen(text=lang.YES)
         confirm_button.bind(on_release=self.on_confirm)
         button_box.add_widget(confirm_button)
-        cancel_button = ButtonRed(text="No")
+        cancel_button = ButtonRed(text=lang.NO)
         cancel_button.bind(on_release=app.go_back)
         button_box.add_widget(cancel_button)
 

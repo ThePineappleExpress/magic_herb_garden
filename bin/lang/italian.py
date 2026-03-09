@@ -17,6 +17,8 @@ LABEL_QUANTITY = "Quantità"
 
 # Messages
 MSG_CONFIRM_DELETE = "Sei sicuro di voler eliminare questo elemento?"
+MSG_CONFIRM_DELETE_PLANT = "Sei sicuro di voler eliminare la pianta selezionata?"
+MSG_CONFIRM_CANCEL_CHANGES = "Sei sicuro di voler annullare e perdere tutte le modifiche non salvate?"
 
 # Confirmation prompt title and variants
 ARE_YOU_SURE_TITLE = "Sei sicuro?"
@@ -84,13 +86,15 @@ LAST_WATER_TEMPLATE = "Ultima irrigazione: {vol} L, pH {ph}, {ppm} ppm @ {ts}"
 LAST_EVENT_TEMPLATE = "Ultimo evento: {type} @ {ts}"
 
 # Screen titles (used in various views)
-SCREEN_TITLE_GARDEN = "che [color={color}]BELLO[/color]"
+SCREEN_TITLE_GARDEN = "Il mio [color={color}]GIARDINO[/color] magico"
 SCREEN_TITLE_DETAILS = "Guarda che [color={color}]BELLEZZA[/color]"
 SCREEN_TITLE_GRAPH = "Guarda che [color={color}]BELLEZZA[/color]"
-SCREEN_TITLE_ENV = "Parliamo di [color={color}]AMBIENTE[/color]?"
+SCREEN_TITLE_ENV = "Dove lo [color={color}]COLTIVERÒ[/color]?"
+SCREEN_TITLE_SOW_SEED = "Racconta qualcosa sul tuo [color={color}]seme[/color]"
 SCREEN_TITLE_ADD_GARDEN = "Crea un nuovo [color={color}]GIARDINO[/color]"
-SCREEN_TITLE_SELECT_GARDEN = "I miei [color={color}]GIARDINI[/color] magici"
+SCREEN_TITLE_SELECT_GARDEN = "Seleziona un [color={color}]GIARDINO[/color]"
 SCREEN_SETTINGS_TITLE = "Modifichiamo le [color={color}]IMPOSTAZIONI[/color]"
+SCREEN_TITLE_PASSWORD = "Inserisci la tua [color={color}]PASSWORD[/color]"
 
 
 # Timeline tab labels
@@ -247,14 +251,24 @@ LEGEND_PLANT_COUNT = "Piante"
 # Garden / header buttons
 OPTIONS = "Opzioni"
 EXIT_APP = "Esci\ndall'app"
+EXIT_GARDEN = "Esci dal\ngiardino"
+ENTER_GARDEN = "Entra nel giardino"
 ADD_PLANT = "Aggiungi pianta"
-ADD_GARDEN = "Aggiungi\ngiardino"
+ADD_GARDEN = "Aggiungi giardino"
 SELECT_GARDEN = "Seleziona giardino"
 VIEW_GARDENS = "Vedi\ngiardini"
-DELETE_GARDEN = "Elimina\ngiardino"
+DELETE_GARDEN = "Elimina giardino"
 MSG_CONFIRM_DELETE_GARDEN = "Sei sicuro di voler eliminare il giardino selezionato e tutte le piante al suo interno?"
 VIEW_SELECTED_PLANT = "Vedi pianta selezionata"
 DELETE_SELECTED_PLANT = "Elimina pianta selezionata"
+
+# Password check screen
+PW_TOO_MANY_ATTEMPTS = "Troppi tentativi. Attendi {n}s."
+PW_WRONG_PASSWORD = "Password errata. Attendi {n}s prima di riprovare."
+PW_BUTTON_UNLOCK = "Sblocca"
+
+# Add event
+HINT_EVENT_NOTES = "Racconta cos'è successo oggi..."
 
 # Garden management screens
 GARDEN_NAME_LABEL = "Nome del giardino: "

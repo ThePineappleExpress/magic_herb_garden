@@ -60,7 +60,7 @@ class SettingsScreen(BaseScreen):
         theme_row = ContentBox(orientation="horizontal")
         theme_row.add_widget(FieldLabel(text=lang.SETTINGS_THEME, size_hint_x=0.3))
         theme_input = ItemBox(orientation="horizontal")
-        self.theme_spinner = Spinner(text="dark", values=[], size_hint_x=0.5)
+        self.theme_spinner = Spinner(text="", values=[], size_hint_x=0.5)
         self.theme_spinner.bind(text=self._on_theme_changed)
         theme_input.add_widget(self.theme_spinner)
         theme_row.add_widget(theme_input)
@@ -79,7 +79,7 @@ class SettingsScreen(BaseScreen):
         )
         shader_input.add_widget(self.shader_spinner)
 
-        self.shader_style_spinner = Spinner(text="smoke", values=[], size_hint_x=0.3)
+        self.shader_style_spinner = Spinner(text="", values=[], size_hint_x=0.3)
         shader_input.add_widget(self.shader_style_spinner)
 
         reload_btn = ButtonYellow(text=lang.SETTINGS_SHADER_RELOAD, size_hint_x=0.2)
@@ -193,25 +193,23 @@ class SettingsScreen(BaseScreen):
         if current_lang in self.lang_spinner.values:
             self.lang_spinner.text = current_lang
 
-        # Populate theme spinner
-        try:
-            from bin.themes import get_available_themes
-            self.theme_spinner.values = get_available_themes()
-        except Exception:
-            self.theme_spinner.values = ["dark"]
-        current_theme = settings.get("theme", "dark")
+        # Populate theme spinner (dynamically discovered)
+        from bin.themes import get_available_themes, get_default_theme
+        self.theme_spinner.values = get_available_themes()
+        current_theme = settings.get("theme") or get_default_theme()
         if current_theme in self.theme_spinner.values:
             self.theme_spinner.text = current_theme
+        elif self.theme_spinner.values:
+            self.theme_spinner.text = self.theme_spinner.values[0]
 
-        # Populate shader spinner
-        try:
-            from bin.shaders import get_available_shaders
-            self.shader_style_spinner.values = get_available_shaders()
-        except Exception:
-            self.shader_style_spinner.values = ["smoke"]
-        current_shader = settings.get("shader", "smoke")
+        # Populate shader spinner (dynamically discovered)
+        from bin.shaders import get_available_shaders, get_default_shader
+        self.shader_style_spinner.values = get_available_shaders()
+        current_shader = settings.get("shader") or get_default_shader() or ""
         if current_shader in self.shader_style_spinner.values:
             self.shader_style_spinner.text = current_shader
+        elif self.shader_style_spinner.values:
+            self.shader_style_spinner.text = self.shader_style_spinner.values[0]
 
         shader_on = settings.get("shader_enabled", True)
         self.shader_spinner.text = lang.SETTINGS_SHADER_ON if shader_on else lang.SETTINGS_SHADER_OFF
@@ -241,10 +239,27 @@ class SettingsScreen(BaseScreen):
 
     def _on_shader_reload(self, *args):
         app = App.get_running_app()
+        shader_name = self.shader_style_spinner.text
+        shader_enabled = self.shader_spinner.text == lang.SETTINGS_SHADER_ON
+
+        # Persist preference
         settings = storage.load_settings()
-        settings["shader"] = self.shader_style_spinner.text
-        settings["shader_enabled"] = self.shader_spinner.text == lang.SETTINGS_SHADER_ON
+        settings["shader"] = shader_name
+        settings["shader_enabled"] = shader_enabled
         storage.save_settings(settings)
+
+        # Load theme colors for the shader
+        from bin.themes import load_theme, get_shader_colors
+        theme_name = settings.get("theme") or "green"
+        theme_data = load_theme(theme_name)
+        color_a, color_b = get_shader_colors(theme_data, shader_name)
+
+        # Apply to all screens that have the shader API
+        for screen in app.screen.screens:
+            if hasattr(screen, 'toggle_shader'):
+                screen.toggle_shader(shader_enabled, shader_name, color_a, color_b)
+                if shader_enabled and hasattr(screen, 'set_shader'):
+                    screen.set_shader(shader_name, color_a, color_b)
 
     def _on_save(self, *args):
         settings = storage.load_settings()
@@ -296,6 +311,17 @@ class SettingsScreen(BaseScreen):
             settings["db_path"] = new_db_path
 
         storage.save_settings(settings)
+
+        # If theme changed, apply new theme colors and push shader colors
+        from bin.themes import load_theme, get_shader_colors, apply_theme
+        theme_data = load_theme(settings["theme"])
+        app = App.get_running_app()
+        apply_theme(app.theme, theme_data)
+        color_a, color_b = get_shader_colors(theme_data, settings.get("shader"))
+        for screen in app.screen.screens:
+            if hasattr(screen, 'update_shader_colors'):
+                screen.update_shader_colors(color_a, color_b)
+
         self._on_back()
 
     def _do_set_password(self, settings, password):

@@ -17,6 +17,8 @@ LABEL_QUANTITY = "Quantity"
 
 # Messages
 MSG_CONFIRM_DELETE = "Are you sure you want to delete this item?"
+MSG_CONFIRM_DELETE_PLANT = "Are you sure you want to delete the selected plant?"
+MSG_CONFIRM_CANCEL_CHANGES = "Are you sure you want to cancel and lose all unsaved changes?"
 
 # Confirmation prompt title and variants
 ARE_YOU_SURE_TITLE = "Are you sure?"
@@ -84,13 +86,15 @@ LAST_WATER_TEMPLATE = "Last water: {vol} L, pH {ph}, {ppm} ppm @ {ts}"
 LAST_EVENT_TEMPLATE = "Last event: {type} @ {ts}"
 
 # Screen titles (used in various views)
-SCREEN_TITLE_GARDEN = "looks [color={color}]NICE[/color]"
+SCREEN_TITLE_GARDEN = "My magical [color={color}]GARDEN[/color]"
 SCREEN_TITLE_DETAILS = "Just look at this [color={color}]BEAUTY[/color]"
 SCREEN_TITLE_GRAPH = "Just look at this [color={color}]BEAUTY[/color]"
-SCREEN_TITLE_ENV = "Let's talk [color={color}]ENVIRONMENT[/color] it?"
+SCREEN_TITLE_ENV = "Now, where will I [color={color}]GROW[/color] it?"
+SCREEN_TITLE_SOW_SEED = "Say something about your [color={color}]seed[/color]"
 SCREEN_TITLE_ADD_GARDEN = "Create a new [color={color}]GARDEN[/color]"
-SCREEN_TITLE_SELECT_GARDEN = "My magical [color={color}]GARDENS[/color]"
+SCREEN_TITLE_SELECT_GARDEN = "Select a [color={color}]GARDEN[/color]"
 SCREEN_SETTINGS_TITLE = "Let's tweak some [color={color}]SETTINGS[/color]"
+SCREEN_TITLE_PASSWORD = "Enter your [color={color}]PASSWORD[/color]"
 
 
 # Timeline tab labels
@@ -247,14 +251,24 @@ LEGEND_PLANT_COUNT = "Plants"
 # Garden / header buttons
 OPTIONS = "Options"
 EXIT_APP = "Exit\nApp"
+EXIT_GARDEN = "Exit\nGarden"
+ENTER_GARDEN = "Enter Garden"
 ADD_PLANT = "Add Plant"
-ADD_GARDEN = "Add\nGarden"
+ADD_GARDEN = "Add Garden"
 SELECT_GARDEN = "Select Garden"
 VIEW_GARDENS = "View\nGardens"
-DELETE_GARDEN = "Delete\nGarden"
+DELETE_GARDEN = "Delete Garden"
 MSG_CONFIRM_DELETE_GARDEN = "Are you sure you want to delete the selected garden and all plants in it?"
 VIEW_SELECTED_PLANT = "View Selected Plant"
 DELETE_SELECTED_PLANT = "Delete Selected Plant"
+
+# Password check screen
+PW_TOO_MANY_ATTEMPTS = "Too many attempts. Wait {n}s."
+PW_WRONG_PASSWORD = "Wrong password. Wait {n}s before retrying."
+PW_BUTTON_UNLOCK = "Unlock"
+
+# Add event
+HINT_EVENT_NOTES = "Say what happened today..."
 
 # Garden management screens
 GARDEN_NAME_LABEL = "Garden name: "

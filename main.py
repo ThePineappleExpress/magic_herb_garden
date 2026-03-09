@@ -21,6 +21,7 @@ from add_garden import AddGardenScreen
 from select_garden import SelectGardenScreen
 from export_import_screen import ExportImportScreen
 from csv_export_screen import CsvExportScreen
+from bin.themes import load_theme, apply_theme, get_default_theme, get_shader_colors
 import lang
 import storage
 
@@ -73,8 +74,20 @@ class MagicHerbTracker(App):
         self.screen.add_widget(ExportImportScreen(name="export_import"))
         self.screen.add_widget(CsvExportScreen(name="csv_export"))
 
-        # Bootstrap: password → garden selection → garden view
+        # Apply saved theme
         settings = storage.load_settings()
+        theme_name = settings.get("theme", get_default_theme())
+        theme_data = load_theme(theme_name)
+        apply_theme(self.theme, theme_data)
+
+        # Push shader colors to all screens
+        shader_name = settings.get("shader")
+        color_a, color_b = get_shader_colors(theme_data, shader_name)
+        for scr in self.screen.screens:
+            if hasattr(scr, 'update_shader_colors'):
+                scr.update_shader_colors(color_a, color_b)
+
+        # Bootstrap: password → garden selection → garden view
         has_password = bool(settings.get("password"))
         gardens = storage.load_gardens()
 

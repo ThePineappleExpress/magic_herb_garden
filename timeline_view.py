@@ -13,11 +13,40 @@ from buttons import ButtonRed, NutrientButton, GraphButton
 from labels import TitleLabel, FieldLabel
 from screens import BaseScreen
 from boxes import WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox
-from storage import load_plant_events, load_plants
+from storage import load_plant_events, get_plants_for_garden
 from are_you_sure import AreYouSure
 from datetime import datetime, timedelta
 import math
 import copy
+
+# Maps data keys to their theme color attribute names
+GRAPH_KEY_COLORS = {
+    # Plant
+    "plant_height": "color_graph_plant_height",
+    "num_nodes": "color_graph_nodes",
+    "node_spacing": "color_graph_node_spacing",
+    "main_stem_number": "color_graph_stem_count",
+    # Environment
+    "air_temp_c": "color_graph_air_temp",
+    "rh_percent": "color_graph_humidity",
+    "soil_moisture": "color_graph_soil_moisture",
+    "soil_ph": "color_graph_soil_ph",
+    "vpd_kpa": "color_graph_vpd",
+    "ppfd": "color_graph_ppfd",
+    # Water
+    "volume_l": "color_graph_water_volume",
+    "water_temp_c": "color_graph_water_temp",
+    "ph": "color_graph_water_ph",
+    "ppm": "color_graph_water_ppm",
+    # Food
+    "grow_mix": "color_graph_grow_mix",
+    "root_mix": "color_graph_root_mix",
+    "bloom_mix": "color_graph_bloom_mix",
+    "bloom_boost": "color_graph_bloom_boost",
+    "soil_boost": "color_graph_soil_boost",
+    "vit_boost": "color_graph_vit_boost",
+    "CalMag": "color_graph_calmag",
+}
 
 
 class SimpleGraph(BoxLayout):
@@ -61,7 +90,7 @@ class SimpleGraph(BoxLayout):
         else:
             legend_title = ""
         legend_label = FieldLabel(text=legend_title, halign="right", padding=app.theme.padding_right)
-        legend_label.color = app.theme.off_white
+        legend_label.color = app.theme.color_field_value
         legend_label.font_size = app.theme.body_size
         legend_row.add_widget(legend_label)
         self.add_widget(legend_row)
@@ -72,23 +101,15 @@ class SimpleGraph(BoxLayout):
         self.graph = Graph(xlabel="", ylabel="", x_ticks_minor=0, x_grid=True, y_grid=True, xmin=0, xmax=10, ymin=0, ymax=1, padding=5, x_ticks_major=1, y_ticks_major=1)
         self.graph.bind(on_touch_down=self._on_graph_touch)
         self.graph.bind(on_touch_move=self._on_graph_touch_move, on_touch_up=self._on_graph_touch_up)
-        self._bg_rect = Rectangle(pos=self.graph.pos, size=self.graph.size, color = app.theme.black_transparent)
+        self._bg_rect = Rectangle(pos=self.graph.pos, size=self.graph.size, color = app.theme.color_transparent)
         self.graph.bind(pos=self._update_bg_rect, size=self._update_bg_rect)
         self.plot = None
         self.plots = {}
         self._plot_visible = {}
         if self.multi_keys:
-            palette = [
-                app.theme.bright_green,
-                app.theme.nice_brown,
-                app.theme.nice_orange,
-                app.theme.nice_red,
-                app.theme.nice_blue,
-                app.theme.nice_yellow,
-                app.theme.nice_purple,
-            ]
-            for i, mk in enumerate(self.multi_keys):
-                col = palette[i % len(palette)]
+            for mk in self.multi_keys:
+                attr = GRAPH_KEY_COLORS.get(mk, "color_graph_line")
+                col = getattr(app.theme, attr, app.theme.color_graph_line)
                 lp = LinePlot(color=col)
                 lp.line_width = 2
                 self.graph.add_plot(lp)
@@ -105,12 +126,12 @@ class SimpleGraph(BoxLayout):
         self._grid_color = None
         self._scheduled_grid_update = None
         with self.graph.canvas.before:
-            self._grid_color = Color(*app.theme.dark_green)
+            self._grid_color = Color(*app.theme.color_button_bg)
         self._label_rects = []
         self._y_label_rects = []
         self._label_color = None
         with self.graph.canvas.after:
-            self._label_color = Color(*app.theme.off_white)
+            self._label_color = Color(*app.theme.color_field_value)
         # marker instruction group (recreated each redraw)
         self._marker_group = None
         self.graph.bind(
@@ -412,7 +433,7 @@ class SimpleGraph(BoxLayout):
                         d = dp(15)
                         r = d / 2.0
                         try:
-                            rawc = getattr(self.plot, 'color', None) or getattr(self, 'color', None) or app.theme.off_white
+                            rawc = getattr(self.plot, 'color', None) or getattr(self, 'color', None) or app.theme.color_field_value
                             cval = list(rawc) if isinstance(rawc, (list, tuple)) else list(rawc)
                             if len(cval) == 3:
                                 cval = [cval[0], cval[1], cval[2], 1.0]
@@ -451,7 +472,7 @@ class SimpleGraph(BoxLayout):
                             d = dp(15)
                             r = d / 2.0
                             try:
-                                rawc = getattr(lp, 'color', None) or app.theme.off_white
+                                rawc = getattr(lp, 'color', None) or app.theme.color_field_value
                                 cval = list(rawc) if isinstance(rawc, (list, tuple)) else list(rawc)
                                 if len(cval) == 3:
                                     cval = [cval[0], cval[1], cval[2], 1.0]
@@ -465,7 +486,7 @@ class SimpleGraph(BoxLayout):
             try:
                 app = App.get_running_app()
                 if getattr(self, '_label_color', None) is not None:
-                    self._label_color.rgba = list(app.theme.off_white)
+                    self._label_color.rgba = list(app.theme.color_field_value)
             except Exception:
                 pass
         except Exception:
@@ -911,14 +932,14 @@ class TimelineScreen(BaseScreen):
         name_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
         self.name_label = FieldLabel(text="", valign="middle", halign="left")
         self.name_label.font_size = app.theme.subtitle_size
-        self.name_label.color = app.theme.off_white
+        self.name_label.color = app.theme.color_field_value
         name_box.add_widget(self.name_label)
         title_box.add_widget(name_box)
 
         strain_box = ContentBox(orientation="horizontal", size_hint_y=0.3)
         self.strain_label = FieldLabel(text="", valign="middle", halign="left")
         self.strain_label.font_size = app.theme.logo_size_2
-        self.strain_label.color = app.theme.off_white
+        self.strain_label.color = app.theme.color_field_value
 
         strain_box.add_widget(self.strain_label)
         title_box.add_widget(strain_box)
@@ -926,10 +947,10 @@ class TimelineScreen(BaseScreen):
         # Tabbed panel
         self.tabbed_panel = TabbedPanel(do_default_tab=False, size_hint_y=0.8, size_hint_x=1.0)
 
-        self._create_tab("Plant", "plant", ["plant_height", "num_nodes", "node_spacing", "main_stem_number"], app.theme.nice_yellow)
-        self._create_tab("Environment", "environment", ["air_temp_c", "rh_percent", "soil_moisture", "soil_ph", "vpd_kpa", "ppfd"], app.theme.nice_red)
-        self._create_tab("Water", "water", ["volume_l", "water_temp_c", "ph", "ppm"], app.theme.nice_blue)
-        self._create_tab("Food", "food", ["grow_mix","root_mix","bloom_mix","bloom_boost","soil_boost","vit_boost","CalMag"], app.theme.nice_purple)
+        self._create_tab("Plant", "plant", ["plant_height", "num_nodes", "node_spacing", "main_stem_number"], app.theme.color_tab_plant)
+        self._create_tab("Environment", "environment", ["air_temp_c", "rh_percent", "soil_moisture", "soil_ph", "vpd_kpa", "ppfd"], app.theme.color_tab_environment)
+        self._create_tab("Water", "water", ["volume_l", "water_temp_c", "ph", "ppm"], app.theme.color_tab_water)
+        self._create_tab("Food", "food", ["grow_mix","root_mix","bloom_mix","bloom_boost","soil_boost","vit_boost","CalMag"], app.theme.color_tab_food)
 
         # compute initial heights so graphs fill the window reasonably
         self._update_graph_heights()
@@ -961,13 +982,13 @@ class TimelineScreen(BaseScreen):
         self.strain_label.text = plant.get("strain", "")
         genes = (self.genes or "").strip().lower()
         if genes == "sativa":
-            self.strain_label.color = app.theme.light_green
+            self.strain_label.color = app.theme.color_strain_sativa
         elif genes == "indica":
-            self.strain_label.color = app.theme.nice_green
+            self.strain_label.color = app.theme.color_strain_indica
         elif genes == "hybrid":
-            self.strain_label.color = app.theme.light_yellow
+            self.strain_label.color = app.theme.color_strain_hybrid
         else:
-            self.strain_label.color = app.theme.off_white
+            self.strain_label.color = app.theme.color_strain_unknown
     def _create_tab(self, title_text, tab_key, keys, color):
         app = App.get_running_app()
         tab = TabbedPanelItem(text=title_text)
@@ -987,13 +1008,13 @@ class TimelineScreen(BaseScreen):
                     if lp is not None and getattr(lp, 'color', None) is not None:
                         col = list(lp.color)
                     else:
-                        col = list(app.theme.nice_yellow)
+                        col = list(app.theme.color_label_title)
                 except Exception:
-                    col = list(app.theme.nice_yellow)
+                    col = list(app.theme.color_label_title)
 
                 # initial visuals
-                btn.background_color = app.theme.black_transparent
-                btn.color = app.theme.nice_yellow
+                btn.background_color = app.theme.color_transparent
+                btn.color = app.theme.color_label_title
 
                 # update visuals when toggled
                 # capture the color for this iteration in the default arg to avoid
@@ -1003,10 +1024,10 @@ class TimelineScreen(BaseScreen):
                     try:
                         if value == 'down':
                             inst.background_color = list(_col)
-                            inst.color = app.theme.dark_gray
+                            inst.color = app.theme.color_button_on_color_text
                         else:
-                            inst.background_color = list(app.theme.black_transparent)
-                            inst.color = app.theme.nice_yellow
+                            inst.background_color = list(app.theme.color_transparent)
+                            inst.color = app.theme.color_label_title
                     except Exception:
                         pass
 
@@ -1039,8 +1060,8 @@ class TimelineScreen(BaseScreen):
 
             # Add Relative/Absolute toggle on the right side
             rel_btn = GraphButton(text='Absolute', state='normal')
-            rel_btn.background_color = app.theme.black_transparent
-            rel_btn.color = app.theme.nice_yellow
+            rel_btn.background_color = app.theme.color_transparent
+            rel_btn.color = app.theme.color_label_title
             def _rel_state_cb(inst, value):
                 try:
                     if value == 'down':
@@ -1216,15 +1237,20 @@ class TimelineScreen(BaseScreen):
         if isinstance(plant, dict):
             self.load_plant(plant)
             return
-        plants = load_plants()
+        from kivy.app import App as _App
+        app = _App.get_running_app()
+        garden_id = getattr(app, 'current_garden_id', None)
+        plants = get_plants_for_garden(garden_id) if garden_id else []
         for p in plants:
             if str(p.get("id")) == str(plant):
                 self.load_plant(p)
                 return
 
     def update_timeline(self, plant_id):
-        from storage import load_plants
-        plants = load_plants()
+        from kivy.app import App as _App
+        app = _App.get_running_app()
+        garden_id = getattr(app, 'current_garden_id', None)
+        plants = get_plants_for_garden(garden_id) if garden_id else []
         for p in plants:
             if str(p.get("id")) == str(plant_id):
                 self.load_plant(p)

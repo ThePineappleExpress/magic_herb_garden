@@ -1,7 +1,6 @@
 import datetime
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.properties import ObjectProperty
 from kivy.app import App
-from kivy.uix.recycleview import RecycleView
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.screenmanager import Screen
@@ -9,19 +8,13 @@ from kivy.clock import Clock
 
 from helpers import get_difference_days, go_to_add_event, go_to_garden, go_to_timeline
 from storage import load_plant_events
+from constants import EVENT_HARVEST
 from labels import TitleLabel, FieldLabel, HintLabel, NutrientLabel, ListTitleLabel, LogoLabel2
 from boxes import ItemBox, WrapperBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
 from buttons import ButtonRed, ButtonGreen, ButtonYellow, ButtonTransparent
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from screens import BaseScreen
-
-class EventListView(RecycleView):
-    genes = StringProperty("")
-    genes_icon = StringProperty("")
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.viewclass = "PlantListItem"  # uses the kv rule above
-        self.data = []                    # will fill from GardenViewScreen
+import lang
 
 class HorizontalScrollView(ScrollView):
     def on_touch_down(self, touch):
@@ -70,7 +63,7 @@ class PlantDetailsScreen(BaseScreen):
         spacer_left.add_widget(stripes_holder)
         spacer_vertical = SpacerBox(size_hint_x=0.3)
         spacer_left.add_widget(spacer_vertical)
-        title = TitleLabel(text=f"Just look at this [color={TitleLabel().hex_color}]BEAUTY[/color]")
+        title = TitleLabel(text=lang.SCREEN_TITLE_DETAILS.format(color=TitleLabel().hex_color))
         spacer_left.add_widget(title)
         spacer_vertical = SpacerBox(size_hint_x=0.3)
         spacer_left.add_widget(spacer_vertical)
@@ -92,14 +85,14 @@ class PlantDetailsScreen(BaseScreen):
         name_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
         self.name_label = FieldLabel(text="", valign="middle", halign="left")
         self.name_label.font_size = app.theme.subtitle_size
-        self.name_label.color = app.theme.off_white
+        self.name_label.color = app.theme.color_field_value
         name_box.add_widget(self.name_label)
         title_box.add_widget(name_box)
 
         strain_box = ContentBox(orientation="horizontal", size_hint_y=0.3)
         self.strain_label = FieldLabel(text="", valign="middle", halign="left")
         self.strain_label.font_size = app.theme.logo_size_2
-        self.strain_label.color = app.theme.off_white
+        self.strain_label.color = app.theme.color_field_value
 
         strain_box.add_widget(self.strain_label)
         title_box.add_widget(strain_box)
@@ -107,7 +100,7 @@ class PlantDetailsScreen(BaseScreen):
         notes_box = ContentBox(orientation="horizontal", size_hint_y=0.15)
         self.notes_label = FieldLabel(text="", valign="middle", halign="left")
         self.notes_label.font_size = app.theme.body_size
-        self.notes_label.color = app.theme.off_white
+        self.notes_label.color = app.theme.color_field_value
 
         notes_box.add_widget(self.notes_label)
         title_box.add_widget(notes_box)
@@ -129,7 +122,7 @@ class PlantDetailsScreen(BaseScreen):
 
         days_passed_title_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
         days_passed_box.add_widget(days_passed_title_box)
-        days_passed_title = FieldLabel(text="Day", valign="middle", halign="right")
+        days_passed_title = FieldLabel(text=lang.DAY_LABEL, valign="middle", halign="right")
         days_passed_title.font_size = app.theme.subtitle_size        
         days_passed_title_box.add_widget(days_passed_title)
 
@@ -137,14 +130,14 @@ class PlantDetailsScreen(BaseScreen):
         days_passed_box.add_widget(days_passed_value_box)
         self.days_passed_value = FieldLabel(text="", valign="middle", halign="right")
         self.days_passed_value.font_size = app.theme.logo_size_1
-        self.days_passed_value.color = app.theme.off_white
+        self.days_passed_value.color = app.theme.color_field_value
         days_passed_value_box.add_widget(self.days_passed_value)
 
         days_stage_box = ContentBox(orientation="vertical", size_hint_y=0.1)
         days_passed_box.add_widget(days_stage_box)
         self.days_stage_value = FieldLabel(text="", valign="middle", halign="right")
         self.days_stage_value.font_size = app.theme.body_size
-        self.days_stage_value.color = app.theme.off_white
+        self.days_stage_value.color = app.theme.color_field_value
         days_stage_box.add_widget(self.days_stage_value)
 
         spacer_box = SpacerBox(size_hint_y=0.02)
@@ -159,7 +152,7 @@ class PlantDetailsScreen(BaseScreen):
 
         # events scroll 
         scroll_events = ContentBox(orientation="horizontal", size_hint_y=0.3)
-        view_timeline_button = ButtonTransparent(text="View\nTimeline", size_hint_x=0.2)
+        view_timeline_button = ButtonTransparent(text=lang.VIEW_TIMELINE, size_hint_x=0.2)
         view_timeline_button.bind(on_release=lambda instance: go_to_timeline(instance, self.plant))
         scroll_events.add_widget(view_timeline_button)
         self.events_scroll = HorizontalScrollView(do_scroll_x=True, do_scroll_y=False, scroll_distance=0.1, scroll_timeout=250,)
@@ -170,7 +163,7 @@ class PlantDetailsScreen(BaseScreen):
         scroll_events.add_widget(self.events_scroll)
         add_event_box = WrapperBox(orientation="horizontal", size_hint_x=0.1)
         scroll_events.add_widget(add_event_box)
-        add_event_button = ButtonYellow(text="+")
+        add_event_button = ButtonYellow(text=lang.BUTTON_PLUS)
         add_event_button.font_size = app.theme.logo_size_1
         add_event_button.font_name = app.theme.font_logo_1
         def safe_go_to_add_event(instance):
@@ -180,14 +173,20 @@ class PlantDetailsScreen(BaseScreen):
                 plant = dict(plant)
                 plant['plant_id'] = plant['id']
             go_to_add_event(self, plant)
+            # If we have a last-event-today, pass it to AddEventScreen for editing
+            if self._last_event_today:
+                add_event_screen = app.screen.get_screen('add_event')
+                add_event_screen._selected_event_data = self._last_event_today
         add_event_button.bind(on_release=safe_go_to_add_event)
+        self.add_event_button = add_event_button
+        self._last_event_today = None
         add_event_box.add_widget(add_event_button)
         content_wrapper.add_widget(scroll_events)
         spacer_box = SpacerBox(size_hint_y=0.02)
         content_wrapper.add_widget(spacer_box)
 
         buttons = ContentBox(size_hint_y=0.1)
-        go_back_btn = ButtonRed(text="Back")
+        go_back_btn = ButtonRed(text=lang.BACK)
         go_back_btn.bind(on_release=go_to_garden)
         buttons.add_widget(go_back_btn)
         content_wrapper.add_widget(buttons)
@@ -213,14 +212,14 @@ class PlantDetailsScreen(BaseScreen):
         self.strain_label.text = plant.get("strain", "")
         genes = (self.genes or "").strip().lower()
         if genes == "sativa":
-            self.strain_label.color = app.theme.light_green
+            self.strain_label.color = app.theme.color_strain_sativa
         elif genes == "indica":
-            self.strain_label.color = app.theme.nice_green
+            self.strain_label.color = app.theme.color_strain_indica
         elif genes == "hybrid":
-            self.strain_label.color = app.theme.light_yellow
+            self.strain_label.color = app.theme.color_strain_hybrid
         else:
-            self.strain_label.color = app.theme.off_white
-        self.notes_label.text = plant.get("notes")
+            self.strain_label.color = app.theme.color_strain_unknown
+        self.notes_label.text = plant.get("notes") or ""
         days_passed = get_difference_days(datetime.datetime.now(), plant.get("date_planted", ""))
         self.days_passed_value.text = str(days_passed) if days_passed is not None else "–"
         self._load_and_display_events()
@@ -286,32 +285,29 @@ class PlantDetailsScreen(BaseScreen):
             box.add_widget(info_box)
             
             if days_ago == 0:
-                info_box.add_widget(HintLabel(text="Today", font_size="12sp", valign="bottom"))
+                info_box.add_widget(HintLabel(text=lang.TODAY, font_size="12sp", valign="bottom"))
             elif days_ago == 1:
-                info_box.add_widget(HintLabel(text="Yesterday", font_size="12sp", valign="bottom"))
+                info_box.add_widget(HintLabel(text=lang.YESTERDAY, font_size="12sp", valign="bottom"))
             elif days_ago > 1 and days_ago < 7:
-                info_box.add_widget(HintLabel(text=f"{days_ago} days ago", font_size="12sp", valign="bottom"))
+                info_box.add_widget(HintLabel(text=lang.DAYS_AGO.format(n=days_ago), font_size="12sp", valign="bottom"))
             elif days_ago >= 7 and days_ago < 30:
                 weeks = days_ago // 7
                 if days_ago < 14:
-                    s = ""
+                    info_box.add_widget(HintLabel(text=lang.WEEK_AGO_ONE.format(n=weeks), font_size="12sp", valign="bottom"))
                 else:
-                    s = "s"
-                info_box.add_widget(HintLabel(text=f"{weeks} week{s} ago", font_size="12sp", valign="bottom"))
+                    info_box.add_widget(HintLabel(text=lang.WEEK_AGO_PLURAL.format(n=weeks), font_size="12sp", valign="bottom"))
             elif days_ago >= 30 and days_ago < 365:
                 months = days_ago // 30
                 if days_ago < 60:
-                    s = ""
+                    info_box.add_widget(HintLabel(text=lang.MONTH_AGO_ONE.format(n=months), font_size="12sp", valign="bottom"))
                 else:
-                    s = "s"
-                info_box.add_widget(HintLabel(text=f"{months} month{s} ago", font_size="12sp", valign="bottom"))
+                    info_box.add_widget(HintLabel(text=lang.MONTH_AGO_PLURAL.format(n=months), font_size="12sp", valign="bottom"))
             elif days_ago >= 365:
                 years = days_ago // 365
                 if days_ago < 730:
-                    s = ""
+                    info_box.add_widget(HintLabel(text=lang.YEAR_AGO_ONE.format(n=years), font_size="12sp", valign="bottom"))
                 else:
-                    s = "s"
-                info_box.add_widget(HintLabel(text=f"{years} year{s} ago", font_size="12sp", valign="bottom"))
+                    info_box.add_widget(HintLabel(text=lang.YEAR_AGO_PLURAL.format(n=years), font_size="12sp", valign="bottom"))
             else:
                 info_box.add_widget(SpacerBox())
             
@@ -346,6 +342,32 @@ class PlantDetailsScreen(BaseScreen):
         if event_boxes:
             last_box, last_event = event_boxes[-1]
             Clock.schedule_once(lambda *_: self._select_event_item(last_box, last_event), 0)
+
+        # Edit-last-event: if last event was today, change + to "Edit"
+        app = App.get_running_app()
+        last_ts = last.get("ts", "")
+        last_date_str = str(last_ts)[:10] if last_ts else ""
+        today_str = datetime.date.today().isoformat()
+        if last_date_str == today_str and last.get("type") != EVENT_HARVEST:
+            self._last_event_today = last
+            if hasattr(self, 'add_event_button'):
+                self.add_event_button.text = lang.BUTTON_EDIT if hasattr(lang, 'BUTTON_EDIT') else "Edit"
+                self.add_event_button.font_size = app.theme.body_size
+                self.add_event_button.font_name = app.theme.font_body
+        else:
+            self._last_event_today = None
+            if hasattr(self, 'add_event_button'):
+                self.add_event_button.text = lang.BUTTON_PLUS
+                self.add_event_button.font_size = app.theme.logo_size_1
+                self.add_event_button.font_name = app.theme.font_logo_1
+
+        # Disable add-event if plant has been harvested
+        has_harvest = any(
+            isinstance(e, dict) and e.get("type") == EVENT_HARVEST
+            for e in events
+        )
+        if hasattr(self, 'add_event_button'):
+            self.add_event_button.disabled = has_harvest
 
     def get_nutrient(self, plant_dict, key):
         deficiencies = plant_dict.get("deficiencies", {})
@@ -446,7 +468,7 @@ class PlantDetailsScreen(BaseScreen):
         event_date_label_box =  ContentBox(orientation="horizontal")
         date_and_type_box.add_widget(event_date_label_box)
         event_date_value = FieldLabel(text=f"{formatted_date}", valign="middle", halign="left")
-        event_date_value.color = app.theme.off_white
+        event_date_value.color = app.theme.color_field_value
         event_date_value.font_size = app.theme.title_size
         event_date_label_box.add_widget(event_date_value)
 
@@ -454,11 +476,11 @@ class PlantDetailsScreen(BaseScreen):
         date_and_type_box.add_widget(event_type_label_box)
         event_type_label = FieldLabel(text=f"{event_type}", valign="middle", halign="left")
         if event_type == "water":
-            event_type_label.color = app.theme.nice_blue
+            event_type_label.color = app.theme.color_event_watering
         elif event_type == "feeding":
-            event_type_label.color = app.theme.nice_yellow
+            event_type_label.color = app.theme.color_event_feeding
         else:
-            event_type_label.color = app.theme.nice_green
+            event_type_label.color = app.theme.color_event_default
         event_type_label.font_size = app.theme.subtitle_size
         event_type_label_box.add_widget(event_type_label)
 
@@ -466,13 +488,13 @@ class PlantDetailsScreen(BaseScreen):
         date_and_type_box.add_widget(health_indicator_box)
         health_indicator_label = FieldLabel(text=f"{health}", valign="middle", halign="left")
         if health == "Healthy":
-            health_indicator_label.color = app.theme.nice_green
+            health_indicator_label.color = app.theme.color_health_healthy
         elif health == "Minor issues":
-            health_indicator_label.color = app.theme.nice_yellow
+            health_indicator_label.color = app.theme.color_health_minor
         elif health == "Moderate issues":
-            health_indicator_label.color = app.theme.nice_red
+            health_indicator_label.color = app.theme.color_health_moderate
         elif health == "Severe issues":
-            health_indicator_label.color = app.theme.nice_purple  
+            health_indicator_label.color = app.theme.color_health_severe  
         health_indicator_label.font_size = app.theme.body_size
         health_indicator_box.add_widget(health_indicator_label)
         
@@ -520,7 +542,7 @@ class PlantDetailsScreen(BaseScreen):
             # Title
             title_box = ContentBox(orientation="horizontal")
             label = FieldLabel(text=title, valign="bottom", halign="left")
-            label.color = app.theme.nice_green
+            label.color = app.theme.color_field_label
             label.font_size = app.theme.small_size
             title_box.add_widget(label)
             box.add_widget(title_box)
@@ -530,9 +552,9 @@ class PlantDetailsScreen(BaseScreen):
             value_label = FieldLabel(text=value, valign="top", halign="left")
             value_label.font_size = app.theme.subtitle_size
             if special:
-                value_label.color = app.theme.nice_green if value == "Yes" else app.theme.light_green
+                value_label.color = app.theme.color_field_label if value == "Yes" else app.theme.color_label_body
             else:
-                value_label.color = app.theme.off_white
+                value_label.color = app.theme.color_field_value
             value_box.add_widget(value_label)
             box.add_widget(value_box)
             # Add to row
@@ -563,14 +585,14 @@ class PlantDetailsScreen(BaseScreen):
                 box = WrapperBox(orientation="vertical")
                 title_box = ContentBox(orientation="horizontal")
                 label = FieldLabel(text=title, valign="bottom", halign="left")
-                label.color = app.theme.nice_blue
+                label.color = app.theme.color_water_label
                 label.font_size = app.theme.small_size
                 title_box.add_widget(label)
                 box.add_widget(title_box)
                 value_box = ContentBox(orientation="horizontal")
                 value_label = FieldLabel(text=str(value) if value not in (None, "") else "–", valign="top", halign="left")
                 value_label.font_size = app.theme.subtitle_size
-                value_label.color = app.theme.off_white
+                value_label.color = app.theme.color_field_value
                 value_box.add_widget(value_label)
                 box.add_widget(value_box)
                 water_row.add_widget(box)
@@ -597,14 +619,14 @@ class PlantDetailsScreen(BaseScreen):
                 box = WrapperBox(orientation="vertical")
                 title_box = ContentBox(orientation="horizontal")
                 label = FieldLabel(text=title, valign="bottom", halign="left")
-                label.color = app.theme.nice_yellow
+                label.color = app.theme.color_feed_label
                 label.font_size = app.theme.small_size
                 title_box.add_widget(label)
                 box.add_widget(title_box)
                 value_box = ContentBox(orientation="horizontal")
                 value_label = FieldLabel(text=str(value) if value not in (None, "") else "–", valign="top", halign="left")
                 value_label.font_size = app.theme.subtitle_size
-                value_label.color = app.theme.off_white
+                value_label.color = app.theme.color_field_value
                 value_box.add_widget(value_label)
                 box.add_widget(value_box)
                 feeding_row_1.add_widget(box)
@@ -627,7 +649,7 @@ class PlantDetailsScreen(BaseScreen):
                 box = WrapperBox(orientation="vertical")
                 title_box = ContentBox(orientation="horizontal")
                 label = FieldLabel(text=title, valign="bottom", halign="left")
-                label.color = app.theme.nice_yellow
+                label.color = app.theme.color_feed_label
                 label.font_size = app.theme.small_size
                 title_box.add_widget(label)
                 box.add_widget(title_box)
@@ -635,9 +657,9 @@ class PlantDetailsScreen(BaseScreen):
                 value_label = FieldLabel(text=str(value) if value not in (None, "") else "–", valign="top", halign="left")
                 value_label.font_size = app.theme.subtitle_size
                 if title == "Fungi":
-                    value_label.color = app.theme.nice_green if value == "Yes" else app.theme.light_green
+                    value_label.color = app.theme.color_field_label if value == "Yes" else app.theme.color_label_body
                 else:
-                    value_label.color = app.theme.off_white
+                    value_label.color = app.theme.color_field_value
                 value_box.add_widget(value_label)
                 box.add_widget(value_box)
                 feeding_row_2.add_widget(box)
@@ -654,8 +676,8 @@ class PlantDetailsScreen(BaseScreen):
         nutrients_title_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
         nutrients_box.add_widget(nutrients_title_box)
 
-        nutrients_title = FieldLabel(text="Nutrients", valign="bottom", halign="left")
-        nutrients_title.color = app.theme.nice_green
+        nutrients_title = FieldLabel(text=lang.NUTRIENTS, valign="bottom", halign="left")
+        nutrients_title.color = app.theme.color_field_label
         nutrients_title.font_size = app.theme.body_size
         nutrients_title_box.add_widget(nutrients_title)
 
@@ -681,7 +703,7 @@ class PlantDetailsScreen(BaseScreen):
                     sub_box = GreenBox(orientation="vertical", size_hint_x=1)
                     label = NutrientLabel(text=nutrient.capitalize(), valign="middle", halign="center", size_hint_x=1)
                     label.font_name = app.theme.font_logo_2
-                    label.color = app.theme.dark_green
+                    label.color = app.theme.color_button_bg
                     label.font_size = app.theme.subtitle_size
                     label.text_size = label.size
                     label.bind(size=lambda instance, value: setattr(instance, 'text_size', value))
@@ -693,8 +715,8 @@ class PlantDetailsScreen(BaseScreen):
 
         notes_title_box = ContentBox(orientation="horizontal", size_hint_y=0.3)
         notes_box.add_widget(notes_title_box)
-        notes_title = FieldLabel(text="Notes", valign="bottom", halign="left")
-        notes_title.color = app.theme.nice_green
+        notes_title = FieldLabel(text=lang.LABEL_NOTES, valign="bottom", halign="left")
+        notes_title.color = app.theme.color_field_label
         notes_title.font_size = app.theme.subtitle_size
         notes_title_box.add_widget(notes_title)
         
@@ -702,7 +724,7 @@ class PlantDetailsScreen(BaseScreen):
         notes_box.add_widget(notes_text_box)
         notes_text = FieldLabel(text=f"{notes}", valign="top", halign="left")
         notes_text.font_size = app.theme.small_size
-        notes_text.color = app.theme.off_white
+        notes_text.color = app.theme.color_field_value
         notes_text_box.add_widget(notes_text)
 
         self.info_box.add_widget(event_details)

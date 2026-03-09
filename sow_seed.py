@@ -14,7 +14,9 @@ from kivy.uix.screenmanager import Screen
 from kivy.core.window import Window
 
 from strain_trie import trie_search
-from storage import save_plant, load_plants
+from breeder_trie import breeder_search
+import lang
+import storage
 from effects import shake_and_flash
 from labels import FieldLabel, TitleLabel, WarningLabel, HintLabel, WarningTitleLabel
 from kivy.metrics import dp
@@ -57,7 +59,7 @@ class SowSeedScreen(BaseScreen):
         spacer_left.add_widget(stripes_holder)
         spacer_vertical = SpacerBox(size_hint_x=0.3)
         spacer_left.add_widget(spacer_vertical)
-        title = TitleLabel(text = f"Say something about your [color={TitleLabel().hex_color}]seed[/color]")
+        title = TitleLabel(text=lang.SCREEN_TITLE_SOW_SEED.format(color=TitleLabel().hex_color))
         spacer_left.add_widget(title)
         spacer_vertical = SpacerBox(size_hint_x=0.3)
         spacer_left.add_widget(spacer_vertical)
@@ -74,25 +76,33 @@ class SowSeedScreen(BaseScreen):
         # Inputs
 
         plant_name = ContentBox(orientation="horizontal")
-        label_plant_name = FieldLabel(text="Seedbank: ", size_hint_x=0.3)
+        label_plant_name = FieldLabel(text=lang.SEEDBANK_LABEL, size_hint_x=0.3)
         plant_name.add_widget(label_plant_name)
-        self.input_plant_name = MedTextInput(hint_text="Select a name for your plant")
+        self.input_plant_name = MedTextInput(hint_text=lang.HINT_SELECT_NAME)
         plant_name.add_widget(self.input_plant_name)
         layout.add_widget(plant_name)
 
 
         plant_strain = ContentBox(orientation="horizontal")
-        label_plant_strain = FieldLabel(text="Strain: ", size_hint_x=0.3)
+        label_plant_strain = FieldLabel(text=lang.STRAIN_LABEL, size_hint_x=0.3)
         plant_strain.add_widget(label_plant_strain)
-        self.input_plant_strain = MedTextInput(hint_text="What's on the box?")
+        self.input_plant_strain = MedTextInput(hint_text=lang.HINT_WHATS_ON_BOX)
         plant_strain.add_widget(self.input_plant_strain)
         layout.add_widget(plant_strain)
 
-        # dropdown for suggestions
+        # dropdown for strain suggestions
         self.strain_dropdown = DropDown(auto_width=False, width=400)
         self.dropdown_open = False
         self.suggestion_index = -1
         self.input_plant_strain.bind(text=self.on_strain_text)
+
+        # dropdown for breeder/seedbank suggestions
+        self.breeder_dropdown = DropDown(auto_width=False, width=400)
+        self.breeder_dropdown_open = False
+        self.breeder_suggestion_index = -1
+        self.breeder_suggestion = ""
+        self.input_plant_name.bind(text=self.on_breeder_text)
+
         # listen for keyboard
         Window.bind(on_key_down=self.on_key_down)
 
@@ -100,9 +110,9 @@ class SowSeedScreen(BaseScreen):
         # reserve vertical space so multi-line input is visible
         plant_description.size_hint_y = None
         plant_description.height = dp(140)
-        label_plant_description = FieldLabel(text="Info: ", size_hint_x=0.3)
+        label_plant_description = FieldLabel(text=lang.INFO_LABEL, size_hint_x=0.3)
         plant_description.add_widget(label_plant_description)
-        self.input_plant_description = LargeTextInput(hint_text="Say something about your plant", multiline=True)
+        self.input_plant_description = LargeTextInput(hint_text=lang.HINT_SAY_SOMETHING, multiline=True)
         self.input_plant_description.size_hint_y = None
         self.input_plant_description.height = dp(120)
         plant_description.add_widget(self.input_plant_description)
@@ -110,36 +120,36 @@ class SowSeedScreen(BaseScreen):
 
 
         plant_genes = ContentBox(orientation="horizontal")
-        label_plant_genes = FieldLabel(text="Heritage: ", size_hint_x=0.3)
+        label_plant_genes = FieldLabel(text=lang.HERITAGE_LABEL, size_hint_x=0.3)
         plant_genes.add_widget(label_plant_genes)
         input_plant_genes = ItemBox(orientation="horizontal")
-        self.sati_btn = ToggleButton(text="Sativa", group="genes")
+        self.sati_btn = ToggleButton(text=lang.GENES_SATIVA, group="genes")
         input_plant_genes.add_widget(self.sati_btn)
-        self.indi_btn = ToggleButton(text="Indica", group="genes")
+        self.indi_btn = ToggleButton(text=lang.GENES_INDICA, group="genes")
         input_plant_genes.add_widget(self.indi_btn)
-        self.hybrid_btn = ToggleButton(text="Hybrid", group="genes")
+        self.hybrid_btn = ToggleButton(text=lang.GENES_HYBRID, group="genes")
         input_plant_genes.add_widget(self.hybrid_btn)
         plant_genes.add_widget(input_plant_genes)
         layout.add_widget(plant_genes)
 
 
         plant_type = ContentBox(orientation="horizontal")
-        label_plant_type = FieldLabel(text="Type: ", size_hint_x=0.3)
+        label_plant_type = FieldLabel(text=lang.TYPE_LABEL, size_hint_x=0.3)
         plant_type.add_widget(label_plant_type)
         input_plant_type = ItemBox(orientation="horizontal")
-        self.auto_btn = ToggleButton(text="Automatic", group="type")
+        self.auto_btn = ToggleButton(text=lang.TYPE_AUTOMATIC, group="type")
         input_plant_type.add_widget(self.auto_btn)
-        self.photo_btn = ToggleButton(text="Photoperiodic", group="type")
+        self.photo_btn = ToggleButton(text=lang.TYPE_PHOTOPERIODIC, group="type")
         input_plant_type.add_widget(self.photo_btn)
         plant_type.add_widget(input_plant_type)
         layout.add_widget(plant_type)
 
 
         to_flower = ContentBox(orientation="horizontal")
-        label_to_flower = FieldLabel(text="Flowering period: ", size_hint_x=0.3)
+        label_to_flower = FieldLabel(text=lang.FLOWERING_PERIOD_LABEL, size_hint_x=0.3)
         to_flower.add_widget(label_to_flower)
         input_to_flower = ItemBox(orientation="horizontal")
-        self.days_to_flower = DaysTextInput(hint_text="Days to flower")
+        self.days_to_flower = DaysTextInput(hint_text=lang.HINT_DAYS_TO_FLOWER)
         input_to_flower.add_widget(self.days_to_flower)
         to_flower.add_widget(input_to_flower)
         layout.add_widget(to_flower)
@@ -159,11 +169,11 @@ class SowSeedScreen(BaseScreen):
         vert_spacer = WrapperBox()
         buttons.add_widget(vert_spacer)
 
-        cancel_btn = ButtonRed(text="Cancel")
+        cancel_btn = ButtonRed(text=lang.BUTTON_CANCEL)
         cancel_btn.bind(on_press=self.on_cancel)
         buttons.add_widget(cancel_btn)
 
-        save_btn = ButtonGreen(text="Next")
+        save_btn = ButtonGreen(text=lang.NEXT)
         save_btn.bind(on_press=self.next_screen)
         buttons.add_widget(save_btn)
 
@@ -194,16 +204,24 @@ class SowSeedScreen(BaseScreen):
         # Toggle buttons (type)
         self.auto_btn.state = "normal"
         self.photo_btn.state = "normal"
+        # Autocomplete state
+        self.current_suggestion = ""
+        self.current_prefix = ""
+        self.suggestion_index = -1
+        self.breeder_suggestion = ""
+        self.breeder_suggestion_index = -1
+        if self.dropdown_open:
+            self.strain_dropdown.dismiss()
+            self.dropdown_open = False
+        if self.breeder_dropdown_open:
+            self.breeder_dropdown.dismiss()
+            self.breeder_dropdown_open = False
 
 
     def confirm_action(self):
-        file = load_plants()
         app = App.get_running_app()
         self.clear_fields()
-        if file == []:
-            app.screen.current = "empty_garden"
-        else:
-            app.screen.current = "garden_view"
+        app.screen.current = "garden_view"
         return app.screen
 
 
@@ -247,7 +265,7 @@ class SowSeedScreen(BaseScreen):
         app = App.get_running_app()
         are_you_sure = app.screen.get_screen("are_you_sure")
         are_you_sure.confirm_callback = lambda *_: self.confirm_action()
-        are_you_sure.prompt_text = "Are you sure you want to cancel and lose all unsaved changes?"
+        are_you_sure.prompt_text = lang.MSG_CONFIRM_CANCEL_CHANGES
         app.previous_screen = app.screen.current
         app.screen.current = "are_you_sure"
     
@@ -302,11 +320,74 @@ class SowSeedScreen(BaseScreen):
 
         self._update_suggestion_highlight()
 
+    def on_breeder_text(self, instance, value):
+        text = value.strip()
+
+        if len(text) < 1:
+            self.breeder_suggestion = ""
+            if self.breeder_dropdown_open:
+                self.breeder_dropdown.dismiss()
+                self.breeder_dropdown_open = False
+            self.breeder_suggestion_index = -1
+            return
+
+        try:
+            matches = breeder_search(text)
+        except Exception:
+            self.breeder_suggestion = ""
+            if self.breeder_dropdown_open:
+                self.breeder_dropdown.dismiss()
+                self.breeder_dropdown_open = False
+            self.breeder_suggestion_index = -1
+            return
+
+        if not matches:
+            self.breeder_suggestion = ""
+            if self.breeder_dropdown_open:
+                self.breeder_dropdown.dismiss()
+                self.breeder_dropdown_open = False
+            self.breeder_suggestion_index = -1
+            return
+
+        self.breeder_suggestion = matches[0]
+
+        self.breeder_dropdown.clear_widgets()
+        self.breeder_suggestion_index = -1
+
+        for name in matches:
+            btn = Factory.SuggestionButton(text=name.title())
+            btn.bind(on_release=self.on_breeder_pick)
+            self.breeder_dropdown.add_widget(btn)
+
+        if not self.breeder_dropdown_open:
+            self.breeder_dropdown.open(self.input_plant_name)
+            self.breeder_dropdown_open = True
+
+        self._update_breeder_highlight()
+
+    def on_breeder_pick(self, button):
+        self.input_plant_name.text = button.text
+        self.breeder_suggestion = button.text
+        self.input_plant_name.cursor = (len(button.text), 0)
+        self.breeder_dropdown.dismiss()
+        self.breeder_dropdown_open = False
+        self.breeder_suggestion_index = -1
+        self.input_plant_name.hint_text = ""
+
     def _get_suggestion_buttons(self):
         if not self.strain_dropdown.children:
             return []
 
         container = self.strain_dropdown.children[0]  
+        btns = [w for w in container.children if isinstance(w, Button)]
+        btns.sort(key=lambda b: b.y, reverse=True)
+        return btns
+
+    def _get_breeder_buttons(self):
+        if not self.breeder_dropdown.children:
+            return []
+
+        container = self.breeder_dropdown.children[0]
         btns = [w for w in container.children if isinstance(w, Button)]
         btns.sort(key=lambda b: b.y, reverse=True)
         return btns
@@ -348,15 +429,52 @@ class SowSeedScreen(BaseScreen):
         self._apply_catalog_for_strain(button.text)
 
     def on_key_down(self, window, key, scancode, codepoint, modifiers):
-        if not self.input_plant_strain.focus:
-            return False
-
         TAB = 9
         ENTER = 13
         RIGHT = 275
         UP = 273
         DOWN = 274
         ESC = 27
+
+        # --- Breeder dropdown handling ---
+        if self.input_plant_name.focus:
+            if key == ESC and self.breeder_dropdown_open:
+                self.breeder_dropdown.dismiss()
+                self.breeder_dropdown_open = False
+                self.breeder_suggestion_index = -1
+                return True
+
+            if self.breeder_dropdown_open and key in (UP, DOWN):
+                btns = self._get_breeder_buttons()
+                if not btns:
+                    return False
+                if self.breeder_suggestion_index == -1:
+                    self.breeder_suggestion_index = 0 if key == DOWN else len(btns) - 1
+                else:
+                    if key == DOWN:
+                        self.breeder_suggestion_index = (self.breeder_suggestion_index + 1) % len(btns)
+                    else:
+                        self.breeder_suggestion_index = (self.breeder_suggestion_index - 1) % len(btns)
+                self._update_breeder_highlight()
+                return True
+
+            if key in (TAB, ENTER, RIGHT) and self.breeder_dropdown_open and self.breeder_suggestion_index != -1:
+                btns = self._get_breeder_buttons()
+                if 0 <= self.breeder_suggestion_index < len(btns):
+                    self.on_breeder_pick(btns[self.breeder_suggestion_index])
+                    return True
+
+            if key in (TAB, ENTER, RIGHT) and self.breeder_suggestion and not self.breeder_dropdown_open:
+                self.input_plant_name.text = self.breeder_suggestion
+                self.input_plant_name.cursor = (len(self.breeder_suggestion), 0)
+                self.input_plant_name.hint_text = ""
+                return True
+
+            return False
+
+        # --- Strain dropdown handling ---
+        if not self.input_plant_strain.focus:
+            return False
 
         # ESC: close dropdown and clear selection
         if key == ESC and self.dropdown_open:
@@ -403,11 +521,21 @@ class SowSeedScreen(BaseScreen):
         btns = self._get_suggestion_buttons()
         for i, btn in enumerate(btns):
             if i == self.suggestion_index:
-                btn.background_color = App.get_running_app().theme.nice_yellow
-                btn.color = App.get_running_app().theme.dark_gray
+                btn.background_color = App.get_running_app().theme.color_label_title
+                btn.color = App.get_running_app().theme.color_button_on_color_text
             else:
-                btn.background_color = App.get_running_app().theme.nice_green
-                btn.color = App.get_running_app().theme.off_white
+                btn.background_color = App.get_running_app().theme.color_button_green_bg
+                btn.color = App.get_running_app().theme.color_label_subtitle
+
+    def _update_breeder_highlight(self):
+        btns = self._get_breeder_buttons()
+        for i, btn in enumerate(btns):
+            if i == self.breeder_suggestion_index:
+                btn.background_color = App.get_running_app().theme.color_label_title
+                btn.color = App.get_running_app().theme.color_button_on_color_text
+            else:
+                btn.background_color = App.get_running_app().theme.color_button_green_bg
+                btn.color = App.get_running_app().theme.color_label_subtitle
     
     def _apply_catalog_for_strain(self, strain_name):
         raw = strain_name.strip()
@@ -423,7 +551,9 @@ class SowSeedScreen(BaseScreen):
         genes = rec.get("genes", "")
         stype = rec.get("type", "")
         days_to_flower = rec.get("days_to_flower", "")
-        self.input_plant_name.text = name
+        # only fill seedbank if user hasn't typed one already
+        if not self.input_plant_name.text.strip():
+            self.input_plant_name.text = name
         # reset gene buttons
         for btn in (self.sati_btn, self.indi_btn, self.hybrid_btn):
             btn.state = "normal"

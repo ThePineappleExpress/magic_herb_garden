@@ -58,7 +58,7 @@ class GardenRepository:
 
 
 class PlantRepository:
-    """Plant CRUD for the legacy flat-file and per-garden plants."""
+    """Plant CRUD via per-garden storage."""
 
     _plants_cache = {}  # garden_id -> list of plants
 
@@ -67,25 +67,25 @@ class PlantRepository:
         """Return plants list for a garden."""
         if garden_id in cls._plants_cache:
             return list(cls._plants_cache[garden_id])
-        garden = storage.load_garden(garden_id)
-        plants = garden.get("plants", []) if garden else []
+        plants = storage.get_plants_for_garden(garden_id)
         cls._plants_cache[garden_id] = plants
         return list(plants)
 
     @classmethod
-    def list_all_legacy(cls) -> list:
-        """Load from the legacy flat plants.json."""
-        return storage.load_plants()
+    def add(cls, garden_id: str, plant: dict) -> bool:
+        """Add a plant to a garden."""
+        ok = storage.add_plant_to_garden(garden_id, plant)
+        if ok:
+            cls._plants_cache.pop(garden_id, None)
+        return ok
 
     @classmethod
-    def save_all_legacy(cls, plants: list):
-        """Save to the legacy flat plants.json."""
-        storage.save_plants(plants)
-
-    @classmethod
-    def add_legacy(cls, plant: dict):
-        """Add a plant via the legacy flat-file API."""
-        storage.save_plant(plant)
+    def remove(cls, garden_id: str, plant_id: str) -> bool:
+        """Remove a plant from a garden."""
+        ok = storage.remove_plant_from_garden(garden_id, plant_id)
+        if ok:
+            cls._plants_cache.pop(garden_id, None)
+        return ok
 
     @classmethod
     def invalidate(cls, garden_id: str = None):

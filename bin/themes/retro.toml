@@ -94,6 +94,7 @@ color_box_red = [0.86, 0.38, 0.28, 1.0]
 color_box_yellow = [0.96, 0.80, 0.24, 1.0]
 color_box_green = [0.14, 0.55, 0.52, 1.0]
 color_box_dark = [0.04, 0.16, 0.16, 1.0]
+color_box_light = [0.94, 0.86, 0.66, 1.0]
 color_stripe_1 = [0.86, 0.38, 0.28, 1.0]
 color_stripe_2 = [0.96, 0.80, 0.24, 1.0]
 color_stripe_3 = [0.22, 0.72, 0.68, 1.0]
@@ -109,14 +110,32 @@ color_tab_text = [0.96, 0.80, 0.24, 1.0]
 color_graph_line = [0.96, 0.80, 0.24, 1.0]
 color_graph_axis = [0.84, 0.68, 0.44, 1.0]
 
-# --- Graph series palette ---
-color_graph_series_1 = [0.22, 0.72, 0.68, 1.0]
-color_graph_series_2 = [0.72, 0.50, 0.28, 1.0]
-color_graph_series_3 = [0.96, 0.80, 0.24, 1.0]
-color_graph_series_4 = [0.86, 0.38, 0.28, 1.0]
-color_graph_series_5 = [0.14, 0.55, 0.52, 1.0]
-color_graph_series_6 = [0.84, 0.68, 0.44, 1.0]
-color_graph_series_7 = [0.68, 0.28, 0.20, 1.0]
+# --- Per-data-key graph colors ---
+# Plant graph data
+color_graph_plant_height = [0.22, 0.72, 0.68, 1.0] # plant height line
+color_graph_nodes = [0.72, 0.50, 0.28, 1.0] # node count line
+color_graph_node_spacing = [0.96, 0.80, 0.24, 1.0] # node spacing line
+color_graph_stem_count = [0.86, 0.38, 0.28, 1.0] # main stem number line
+# Environment graph data
+color_graph_air_temp = [0.86, 0.38, 0.28, 1.0] # air temperature line
+color_graph_humidity = [0.14, 0.55, 0.52, 1.0] # relative humidity line
+color_graph_soil_moisture = [0.22, 0.72, 0.68, 1.0] # soil moisture line
+color_graph_soil_ph = [0.96, 0.80, 0.24, 1.0] # soil pH line
+color_graph_vpd = [0.84, 0.68, 0.44, 1.0] # VPD line
+color_graph_ppfd = [0.68, 0.28, 0.20, 1.0] # PPFD / light line
+# Water graph data
+color_graph_water_volume = [0.14, 0.55, 0.52, 1.0] # water volume line
+color_graph_water_temp = [0.86, 0.38, 0.28, 1.0] # water temperature line
+color_graph_water_ph = [0.22, 0.72, 0.68, 1.0] # water pH line
+color_graph_water_ppm = [0.84, 0.68, 0.44, 1.0] # water PPM line
+# Food graph data
+color_graph_grow_mix = [0.22, 0.72, 0.68, 1.0] # grow mix line
+color_graph_root_mix = [0.72, 0.50, 0.28, 1.0] # root mix line
+color_graph_bloom_mix = [0.96, 0.80, 0.24, 1.0] # bloom mix line
+color_graph_bloom_boost = [0.86, 0.38, 0.28, 1.0] # bloom boost line
+color_graph_soil_boost = [0.14, 0.55, 0.52, 1.0] # soil boost line
+color_graph_vit_boost = [0.84, 0.68, 0.44, 1.0] # vit boost line
+color_graph_calmag = [0.68, 0.28, 0.20, 1.0] # CalMag line
 
 # --- Timeline tab category colors ---
 color_tab_plant = [0.96, 0.80, 0.24, 1.0]
@@ -172,6 +191,20 @@ color_health_default = [0.84, 0.68, 0.44, 1.0]
 # --- EventBox hover states ---
 color_event_box_text = [0.96, 0.80, 0.24, 1.0]
 color_event_box_hover_bg = [0.18, 0.52, 0.48, 1.0]
+
+# --- Hover / pressed button states ---
+color_button_hover_bg = [0.14, 0.55, 0.52, 1.0]
+color_button_pressed_bg = [0.96, 0.8, 0.24, 1.0]
+color_button_pressed_text = [0.04, 0.16, 0.16, 1.0]
+color_button_blue_bg = [0.72, 0.5, 0.28, 1.0]
+color_button_purple_bg = [0.18, 0.52, 0.48, 1.0]
+
+# --- EventBox text states ---
+color_event_box_hover_text = [0.04, 0.16, 0.16, 1.0]
+
+# --- SelectableEventBox states ---
+color_selectable_selected_bg = [0.14, 0.55, 0.52, 1.0]
+color_selectable_selected_text = [0.04, 0.16, 0.16, 1.0]
 
 [shader_colors]
 color_a = [0.04, 0.16, 0.16]

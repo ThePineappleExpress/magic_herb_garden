@@ -32,10 +32,10 @@ class EventBox(BoxLayout):
         super().__init__(**kwargs)
         app = App.get_running_app()
         if app and hasattr(app, "theme"):
-            self.normal_text_color = app.theme.nice_yellow
-            self.hover_text_color = app.theme.dark_gray
-            self.normal_bg_color = app.theme.black_transparent
-            self.hover_bg_color = app.theme.nice_green
+            self.normal_text_color = app.theme.color_event_box_text
+            self.hover_text_color = app.theme.color_event_box_hover_text
+            self.normal_bg_color = app.theme.color_transparent
+            self.hover_bg_color = app.theme.color_event_box_hover_bg
         Window.bind(mouse_pos=self._on_mouse_pos)
         self.bind(hovered=self._apply_hover_state)
 
@@ -87,6 +87,8 @@ class SelectableBoxLayout(RecycleDataViewBehavior, BoxLayout):
             rv = self.parent.parent 
             if rv.layout_manager:
                 rv.layout_manager.select_node(self.index)
+            if touch.is_double_tap and hasattr(rv, 'on_double_tap'):
+                rv.on_double_tap(self.index)
             return True
 
     def apply_selection(self, rv, index, is_selected):
@@ -103,10 +105,10 @@ class SelectableEventBox(ButtonBehavior, BoxLayout):
         super().__init__(**kwargs)
         app = App.get_running_app()
         if app and hasattr(app, "theme"):
-            self.normal_bg_color = app.theme.black_transparent
-            self.selected_bg_color = app.theme.nice_green
-            self.normal_text_color = app.theme.off_white
-            self.selected_text_color = app.theme.dark_gray
+            self.normal_bg_color = app.theme.color_transparent
+            self.selected_bg_color = app.theme.color_selectable_selected_bg
+            self.normal_text_color = app.theme.color_label_subtitle
+            self.selected_text_color = app.theme.color_selectable_selected_text
 
         with self.canvas.before:
             self._bg_color = Color(*self.normal_bg_color)

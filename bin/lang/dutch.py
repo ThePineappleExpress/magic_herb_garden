@@ -17,6 +17,8 @@ LABEL_QUANTITY = "Hoeveelheid"
 
 # Messages
 MSG_CONFIRM_DELETE = "Weet je zeker dat je dit item wilt verwijderen?"
+MSG_CONFIRM_DELETE_PLANT = "Weet je zeker dat je de geselecteerde plant wilt verwijderen?"
+MSG_CONFIRM_CANCEL_CHANGES = "Weet je zeker dat je wilt annuleren en alle niet-opgeslagen wijzigingen wilt verliezen?"
 
 # Confirmation prompt title and variants
 ARE_YOU_SURE_TITLE = "Weet je het zeker?"
@@ -84,13 +86,15 @@ LAST_WATER_TEMPLATE = "Laatste water: {vol} L, pH {ph}, {ppm} ppm @ {ts}"
 LAST_EVENT_TEMPLATE = "Laatste gebeurtenis: {type} @ {ts}"
 
 # Screen titles (used in various views)
-SCREEN_TITLE_GARDEN = "ziet er [color={color}]MOOI[/color] uit"
+SCREEN_TITLE_GARDEN = "Mijn magische [color={color}]TUIN[/color]"
 SCREEN_TITLE_DETAILS = "Kijk eens naar deze [color={color}]SCHOONHEID[/color]"
 SCREEN_TITLE_GRAPH = "Kijk eens naar deze [color={color}]SCHOONHEID[/color]"
-SCREEN_TITLE_ENV = "Laten we het over de [color={color}]OMGEVING[/color] hebben"
+SCREEN_TITLE_ENV = "Waar ga ik het [color={color}]KWEKEN[/color]?"
+SCREEN_TITLE_SOW_SEED = "Vertel iets over je [color={color}]zaadje[/color]"
 SCREEN_TITLE_ADD_GARDEN = "Maak een nieuwe [color={color}]TUIN[/color]"
-SCREEN_TITLE_SELECT_GARDEN = "Mijn magische [color={color}]TUINEN[/color]"
+SCREEN_TITLE_SELECT_GARDEN = "Selecteer een [color={color}]TUIN[/color]"
 SCREEN_SETTINGS_TITLE = "Laten we de [color={color}]INSTELLINGEN[/color] aanpassen"
+SCREEN_TITLE_PASSWORD = "Voer je [color={color}]WACHTWOORD[/color] in"
 
 
 # Timeline tab labels
@@ -247,14 +251,24 @@ LEGEND_PLANT_COUNT = "Planten"
 # Garden / header buttons
 OPTIONS = "Opties"
 EXIT_APP = "App\nafsluiten"
+EXIT_GARDEN = "Tuin\nverlaten"
+ENTER_GARDEN = "Tuin betreden"
 ADD_PLANT = "Plant toevoegen"
-ADD_GARDEN = "Tuin\ntoevoegen"
+ADD_GARDEN = "Tuin toevoegen"
 SELECT_GARDEN = "Tuin selecteren"
 VIEW_GARDENS = "Tuinen\nbekijken"
-DELETE_GARDEN = "Tuin\nverwijderen"
+DELETE_GARDEN = "Tuin verwijderen"
 MSG_CONFIRM_DELETE_GARDEN = "Weet je zeker dat je de geselecteerde tuin en alle planten erin wilt verwijderen?"
 VIEW_SELECTED_PLANT = "Geselecteerde plant bekijken"
 DELETE_SELECTED_PLANT = "Geselecteerde plant verwijderen"
+
+# Password check screen
+PW_TOO_MANY_ATTEMPTS = "Te veel pogingen. Wacht {n}s."
+PW_WRONG_PASSWORD = "Verkeerd wachtwoord. Wacht {n}s voordat je het opnieuw probeert."
+PW_BUTTON_UNLOCK = "Ontgrendelen"
+
+# Add event
+HINT_EVENT_NOTES = "Vertel wat er vandaag is gebeurd..."
 
 # Garden management screens
 GARDEN_NAME_LABEL = "Tuinnaam: "

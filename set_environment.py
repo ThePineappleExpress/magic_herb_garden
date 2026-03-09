@@ -13,8 +13,9 @@ from kivy.uix.dropdown import DropDown
 from kivy.uix.screenmanager import Screen
 from kivy.core.window import Window
 
-from storage import save_plant, load_plants
+from storage import add_plant_to_garden
 from effects import shake_and_flash
+import lang
 from labels import FieldLabel, TitleLabel, WarningLabel, HintLabel, WarningTitleLabel
 from boxes import WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox, DarkBox
 from buttons import ButtonRed, ButtonGreen, ButtonYellow
@@ -55,7 +56,7 @@ class SetEnvironmentScreen(BaseScreen):
         spacer_left.add_widget(stripes_holder)
         spacer_vertical = SpacerBox(size_hint_x=0.3)
         spacer_left.add_widget(spacer_vertical)
-        title = TitleLabel(text = f"Now, where will I [color={TitleLabel().hex_color}]GROW[/color] it?")
+        title = TitleLabel(text=lang.SCREEN_TITLE_ENV.format(color=TitleLabel().hex_color))
         spacer_left.add_widget(title)
         spacer_vertical = SpacerBox(size_hint_x=0.3)
         spacer_left.add_widget(spacer_vertical)
@@ -78,20 +79,20 @@ class SetEnvironmentScreen(BaseScreen):
         warning_spacer = SpacerBox(size_hint_x=0.3)
         warning_layout.add_widget(warning_spacer)
         warning_box = DarkBox(orientation="vertical")
-        warning_title = WarningTitleLabel(text="Watering and feeding:", halign="left")
+        warning_title = WarningTitleLabel(text=lang.SET_ENV_WARNING_TITLE, halign="left")
         warning_box.add_widget(warning_title)
-        warning_label = WarningLabel(text="Consult the packaging or the breeder for estimated profiles.\nValues will adjust automatically during your plants life.\nIf you are not sure just leave both sliders in the default position.")
+        warning_label = WarningLabel(text=lang.SET_ENV_WARNING_BODY)
         warning_box.add_widget(warning_label)
         warning_layout.add_widget(warning_box)
         layout.add_widget(warning_layout)
 
 
         plant_thirst = ContentBox(orientation="horizontal")
-        label_plant_thirst = FieldLabel(text="Watering: ", size_hint_x=0.3)
+        label_plant_thirst = FieldLabel(text=lang.WATERING_LABEL, size_hint_x=0.3)
         plant_thirst.add_widget(label_plant_thirst)
         input_plant_thirst = DarkBox(orientation="horizontal")
         self.thirsty_slider = Slider(min=1, max=3, step=1, value=2)
-        self.thirsty_label = HintLabel(text="Every 3 days", size_hint_x=0.3, halign="left", valign="middle")
+        self.thirsty_label = HintLabel(text=lang.EVERY_3_DAYS, size_hint_x=0.3, halign="left", valign="middle")
         self.thirsty_slider.bind(value=self.on_thirst_change)
         input_plant_thirst.add_widget(self.thirsty_slider)
         input_plant_thirst.add_widget(self.thirsty_label)
@@ -100,37 +101,37 @@ class SetEnvironmentScreen(BaseScreen):
 
 
         plant_hunger = ContentBox(orientation="horizontal")
-        label_plant_hunger = FieldLabel(text="Feeding: ", size_hint_x=0.3)
+        label_plant_hunger = FieldLabel(text=lang.FEEDING_LABEL, size_hint_x=0.3)
         plant_hunger.add_widget(label_plant_hunger)
         input_plant_hunger = DarkBox(orientation="horizontal")
         self.hunger_slider = Slider(min=1, max=3, step=1, value=2)
         self.hunger_slider.bind(value=self.on_hunger_change)
         input_plant_hunger.add_widget(self.hunger_slider)
-        self.hunger_label = HintLabel(text="Every 2nd Watering", size_hint_x=0.3, halign="left", valign="middle")
+        self.hunger_label = HintLabel(text=lang.EVERY_2ND_WATERING, size_hint_x=0.3, halign="left", valign="middle")
         input_plant_hunger.add_widget(self.hunger_label)
         plant_hunger.add_widget(input_plant_hunger)
         layout.add_widget(plant_hunger)
 
         pot_size = ContentBox(orientation="horizontal")
-        label_pot_size = FieldLabel(text="Pot size: ", size_hint_x=0.3)
+        label_pot_size = FieldLabel(text=lang.POT_SIZE_LABEL, size_hint_x=0.3)
         pot_size.add_widget(label_pot_size)
         input_pot_size = ItemBox(orientation="horizontal")
         self.pot_slider = Slider(min=1, max=30, step=1, value=9)
         self.pot_slider.bind(value=self.on_pot_change)
         input_pot_size.add_widget(self.pot_slider)
-        self.pot_label = HintLabel(text="9L", valign="middle", halign="left", size_hint_x=0.3)
+        self.pot_label = HintLabel(text=lang.POT_LABEL_DEFAULT, valign="middle", halign="left", size_hint_x=0.3)
         input_pot_size.add_widget(self.pot_label)
         pot_size.add_widget(input_pot_size)
         layout.add_widget(pot_size)
 
         medium_type = ContentBox(orientation="horizontal")
-        label_medium_type = FieldLabel(text="Medium: ", size_hint_x=0.3)
+        label_medium_type = FieldLabel(text=lang.MEDIUM_LABEL, size_hint_x=0.3)
         medium_type.add_widget(label_medium_type)
         input_medium_type = ItemBox(orientation="horizontal")
-        self.type_soil = ToggleButton(text="Soil", group="medium_type")
-        self.type_coco = ToggleButton(text="Coco", group="medium_type")
-        self.type_mineral = ToggleButton(text="Mineral", group="medium_type")
-        self.type_hydro = ToggleButton(text="Hydro", group="medium_type")
+        self.type_soil = ToggleButton(text=lang.MEDIUM_SOIL, group="medium_type")
+        self.type_coco = ToggleButton(text=lang.MEDIUM_COCO, group="medium_type")
+        self.type_mineral = ToggleButton(text=lang.MEDIUM_MINERAL, group="medium_type")
+        self.type_hydro = ToggleButton(text=lang.MEDIUM_HYDRO, group="medium_type")
         input_medium_type.add_widget(self.type_soil)
         input_medium_type.add_widget(self.type_coco)
         input_medium_type.add_widget(self.type_mineral)
@@ -140,11 +141,11 @@ class SetEnvironmentScreen(BaseScreen):
         
 
         medium_nutrients = ContentBox(orientation="horizontal")
-        label_medium_nutrients = FieldLabel(text="Fertilized: ", size_hint_x=0.3)
+        label_medium_nutrients = FieldLabel(text=lang.FERTILIZED_LABEL, size_hint_x=0.3)
         medium_nutrients.add_widget(label_medium_nutrients)
         input_medium_nutrients = ItemBox(orientation="horizontal")
-        self.fert_btn = ToggleButton(text="Fertilized", group="medium_nutrients")
-        self.unfert_btn = ToggleButton(text="Bare", group="medium_nutrients")
+        self.fert_btn = ToggleButton(text=lang.FERTILIZED, group="medium_nutrients")
+        self.unfert_btn = ToggleButton(text=lang.BARE, group="medium_nutrients")
         input_medium_nutrients.add_widget(self.fert_btn)
         input_medium_nutrients.add_widget(self.unfert_btn)
         medium_nutrients.add_widget(input_medium_nutrients)
@@ -152,12 +153,12 @@ class SetEnvironmentScreen(BaseScreen):
 
 
         fertilizer_type = ContentBox(orientation="horizontal")
-        label_fertilizer_type = FieldLabel(text="Your fertilizer: ", size_hint_x=0.3)
+        label_fertilizer_type = FieldLabel(text=lang.YOUR_FERTILIZER_LABEL, size_hint_x=0.3)
         fertilizer_type.add_widget(label_fertilizer_type)
         input_fertilizer_type = ItemBox(orientation="horizontal")
-        self.org_btn = ToggleButton(text="Organic", group="fertilizer_type")
+        self.org_btn = ToggleButton(text=lang.FERTILIZER_ORGANIC, group="fertilizer_type")
         input_fertilizer_type.add_widget(self.org_btn)
-        self.min_btn = ToggleButton(text="Mineral", group="fertilizer_type")
+        self.min_btn = ToggleButton(text=lang.FERTILIZER_MINERAL, group="fertilizer_type")
         input_fertilizer_type.add_widget(self.min_btn)
         fertilizer_type.add_widget(input_fertilizer_type)
         layout.add_widget(fertilizer_type)
@@ -173,11 +174,11 @@ class SetEnvironmentScreen(BaseScreen):
         vert_spacer = WrapperBox()
         buttons.add_widget(vert_spacer)
 
-        cancel_btn = ButtonRed(text="Cancel")
+        cancel_btn = ButtonRed(text=lang.BUTTON_CANCEL)
         cancel_btn.bind(on_press=self.on_back_pressed)
         buttons.add_widget(cancel_btn)
 
-        save_btn = ButtonGreen(text="Save")
+        save_btn = ButtonGreen(text=lang.BUTTON_SAVE)
         save_btn.bind(on_press=self.on_save_plant)
         buttons.add_widget(save_btn)
 
@@ -213,18 +214,14 @@ class SetEnvironmentScreen(BaseScreen):
         self.org_btn.state = "normal"
         self.min_btn.state = "normal"
         # Reset labels if needed
-        self.thirsty_label.text = "Every 3 days"
-        self.hunger_label.text = "Every 2nd Watering"
-        self.pot_label.text = "9L"
+        self.thirsty_label.text = lang.EVERY_3_DAYS
+        self.hunger_label.text = lang.EVERY_2ND_WATERING
+        self.pot_label.text = lang.POT_LABEL_DEFAULT
 
     def confirm_action(self):
-        file = load_plants()
         app = App.get_running_app()
         self.clear_fields()
-        if file == []:
-            app.screen.current = "empty_garden"
-        else:
-            app.screen.current = "garden_view"
+        app.screen.current = "garden_view"
         return app.screen
 
     def on_back_pressed(self, instance):
@@ -273,20 +270,20 @@ class SetEnvironmentScreen(BaseScreen):
             return "mineral"
     
     def on_pot_change(self, slider, value):
-        self.pot_label.text = f"{int(value)}L"
+        self.pot_label.text = lang.POT_SIZE_FMT.format(n=int(value))
 
     def on_thirst_change(self, slider, value):
         display = 5 - int(value)
-        self.thirsty_label.text = f"Every {display} days"
+        self.thirsty_label.text = lang.EVERY_N_DAYS.format(n=display)
 
     def on_hunger_change(self, slider, value):
         display = 4 - int(value)
         if display == 1:
-            self.hunger_label.text = f"Every watering"
+            self.hunger_label.text = lang.EVERY_WATERING
         elif display == 2:
-            self.hunger_label.text = f"Every 2nd watering"
+            self.hunger_label.text = lang.EVERY_2ND_WATERING
         else:
-            self.hunger_label.text = f"Every 3rd watering"
+            self.hunger_label.text = lang.EVERY_3RD_WATERING
 
     def on_save_plant(self, instance):
         # if we’re already shaking things, ignore extra clicks
@@ -327,11 +324,13 @@ class SetEnvironmentScreen(BaseScreen):
             "fertilizer_type": str(self.save_fertilizer_type()),
             "date_planted": date.today().isoformat(),
         }
-        save_plant(plant)
+        garden_id = getattr(app, 'current_garden_id', None)
+        if garden_id:
+            add_plant_to_garden(garden_id, plant)
         self.clear_fields()
-        app.pending_plant_data = {}  # Clear after saving
-        garden = app.screen.get_screen("garden_view")
-        garden.refresh_plants()
+        app.pending_plant_data = {}
+        garden_screen = app.screen.get_screen("garden_view")
+        garden_screen.refresh_plants()
         app.screen.current = "garden_view"
 
     def _end_validation(self, dt):

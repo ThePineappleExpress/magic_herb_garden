@@ -36,7 +36,7 @@ class PasswordCheckScreen(BaseScreen):
         self._locked_until = 0
 
         app = App.get_running_app()
-        title_text = f"Enter your [color={TitleLabel().hex_color}]PASSWORD[/color]"
+        title_text = lang.SCREEN_TITLE_PASSWORD.format(color=TitleLabel().hex_color)
         screen_wrapper, layout = create_initial_layout(
             self, app, title_text=title_text, left_size=0.2,
             show_day_box=False, show_info_header=False,
@@ -68,7 +68,7 @@ class PasswordCheckScreen(BaseScreen):
         # Buttons
         btn_row = WrapperBox(orientation="horizontal")
         btn_row.add_widget(WrapperBox())
-        unlock_btn = ButtonGreen(text=lang.BUTTON_CONFIRM)
+        unlock_btn = ButtonGreen(text=lang.PW_BUTTON_UNLOCK)
         unlock_btn.bind(on_press=self._on_unlock)
         btn_row.add_widget(unlock_btn)
         layout.add_widget(btn_row)
@@ -91,7 +91,7 @@ class PasswordCheckScreen(BaseScreen):
         now = time.time()
         if now < self._locked_until:
             remaining = int(self._locked_until - now) + 1
-            self.status_label.text = f"Too many attempts. Wait {remaining}s."
+            self.status_label.text = lang.PW_TOO_MANY_ATTEMPTS.format(n=remaining)
             shake_and_flash(self.pw_input)
             return
 
@@ -112,7 +112,7 @@ class PasswordCheckScreen(BaseScreen):
             settings["pw_locked_until"] = self._locked_until
             storage.save_settings(settings)
 
-            self.status_label.text = f"Wrong password. Wait {backoff}s before retrying."
+            self.status_label.text = lang.PW_WRONG_PASSWORD.format(n=backoff)
             shake_and_flash(self.pw_input)
             LOG.warning("Failed password attempt #%d", self._fail_count)
             return

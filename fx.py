@@ -1,129 +1,91 @@
+import logging
 from kivy.uix.widget import Widget
 from kivy.graphics import RenderContext, Rectangle, Callback
 from kivy.clock import Clock
 from kivy.properties import StringProperty
 
-class SmokeShaderWidget(Widget):
-    fs = StringProperty('''
-    #ifdef GL_ES
-    precision mediump float;
-    #endif
+from bin.shaders import load_shader, get_default_shader
 
-    uniform float time;
-    uniform vec2 resolution;
-    // Screen
-    vec3 screen(vec3 base, vec3 blend) {
-        return 1.0 - (1.0 - base) * (1.0 - blend);
-    }                        
-    // Color Dodge
-    vec3 colorDodge(vec3 base, vec3 blend) {
-        return base / (1.0 - min(blend, 0.999));
-    }    
-    // Pseudo-random number generator
-    float rand(vec2 co){
-        return fract(sin(dot(co.xy,vec2(11.1234,31.420))) * 1175.4846);
-    }
-    // 2D noise
-    float noise(vec2 p){
-        vec2 i = floor(p);
-        vec2 f = fract(p);
-        float a = rand(i);
-        float b = rand(i + vec2(1.0, 0.0));
-        float c = rand(i + vec2(0.0, 1.0));
-        float d = rand(i + vec2(1.0, 1.0));
-        vec2 u = f*f*(3.0-2.0*f);
-        return mix(a, b, u.x) +
-               (c - a)* u.y * (1.0 - u.x) +
-               (d - b) * u.x * u.y;
-    }
-    //fbm
-    float fbm(vec2 p) {
-        float value = 0.0;
-        float amplitude = 0.5;
-        float frequency = 1.0;
-        for (int i = 0; i < 5; i++) {
-            value += amplitude * noise(p * frequency);
-            frequency *= 2.0;
-            amplitude *= 0.5;
-        }
-        return value;
-    }
-    float fbm2(vec2 p) {
-        float value = 0.0;
-        float amplitude = 0.5;
-        float frequency = 1.0;
-        for (int i = 0; i < 5; i++) {
-            value += amplitude * noise(p * frequency);
-            frequency *= rand(vec2(2.0, 5.0));
-            amplitude *= rand(vec2(0.2, 0.7));
-        }
-        return value;
-    }
-    void main(void) {
-        vec2 uv = gl_FragCoord.xy / resolution.xy;
-        float n = 0.0;
-        float t = time * 0.05;
-                        
-        // make a wavy offset
-        vec2 offset;
-        offset.x = sin(uv.y * 10.0 + t) * 0.02;
-        offset.y = cos(uv.x * 10.0 - t) * 0.02;
+LOG = logging.getLogger(__name__)
 
-        // use the distorted coordinates
-        vec2 distortedUV = uv + offset;
-        float baseN   = fbm(distortedUV * 0.2 + t);
-        float detailN = noise(distortedUV * 0.4 + t * 0.5);
-        float wispsN  = fbm(distortedUV * 0.8 - t * 0.8);
-        float wisps2N  = fbm(distortedUV * 1.6 - t);
-                        
-        float baseAlpha   = 1.0;
-        float detailAlpha = 1.0;
-        float wispsAlpha  = 1.0;
-        float wisps2Alpha  = 1.0;
+# Discover the first available shader at import time (no hardcoded name).
+_DEFAULT_SHADER = get_default_shader()
+_DEFAULT_FS = load_shader(_DEFAULT_SHADER) if _DEFAULT_SHADER else ""
 
-        vec3 baseColor   = vec3(0.12, 0.172, 0.153); 
-        vec3 detailColor = vec3(0.2, 0.5, 0.3);   
-        vec3 wispsColor  = vec3(0.92, 0.972, 0.953);   
-        vec3 wisps2Color  = vec3(0.12, 0.172, 0.153);   
 
-        vec3 base   = baseColor   * (baseN   * baseAlpha);
-        vec3 detail = detailColor * (detailN * detailAlpha);
-        vec3 wisps  = wispsColor  * (wispsN  * wispsAlpha);
-        vec3 wisps2  = wisps2Color  * (wisps2N  * wisps2Alpha);
-        vec3 combined = base;
-        combined = colorDodge(combined, detail);
-        combined = colorDodge(combined, wisps);
-        combined = colorDodge(combined, wisps2);
+class ShaderWidget(Widget):
+    """Full-screen fragment-shader background widget.
 
-    
-        gl_FragColor = vec4(combined, 1.0);
-    }
-    ''')
+    ``shader_name``  – which .glsl to load (discovered dynamically).
+    ``color_a`` / ``color_b`` – RGB lists pushed as uniforms.
+    The ``fs`` StringProperty can also be set directly with raw GLSL source.
+    """
 
-    def __init__(self, **kwargs):
+    fs = StringProperty(_DEFAULT_FS)
+
+    def __init__(
+        self,
+        shader_name: str | None = None,
+        color_a: list | None = None,
+        color_b: list | None = None,
+        **kwargs,
+    ):
         self.canvas = RenderContext()
+        self._shader_name = shader_name or _DEFAULT_SHADER or ""
         super().__init__(**kwargs)
+
+        # Load the requested shader source
+        if self._shader_name and self._shader_name != _DEFAULT_SHADER:
+            source = load_shader(self._shader_name)
+            if source:
+                self.fs = source
+            else:
+                LOG.warning(
+                    "Shader '%s' not found, using default '%s'",
+                    self._shader_name, _DEFAULT_SHADER,
+                )
+                self._shader_name = _DEFAULT_SHADER or ""
+
         with self.canvas:
             self.rect = Rectangle(size=self.size, pos=self.pos)
-        # Set the shader code directly
         self.canvas.shader.fs = self.fs
+
+        # Uniforms — caller supplies colors from the active theme
         self.canvas['time'] = 0.0
         self.canvas['resolution'] = list(map(float, self.size))
+        self.canvas['color_a'] = list(map(float, color_a or [0.12, 0.172, 0.153]))
+        self.canvas['color_b'] = list(map(float, color_b or [0.22, 0.272, 0.253]))
+        self.canvas['pixel_scale'] = 1.0
+
         self.bind(size=self._update_rect, pos=self._update_rect)
-        self.bind(size=self._update_uniforms, pos=self._update_uniforms)
-        Clock.schedule_interval(self.update_glsl, 1/60.)
+        Clock.schedule_interval(self.update_glsl, 1 / 60.0)
 
-    def _update_rect(self, *args):
-        self.rect.size = self.size
-        self.rect.pos = self.pos
+    # -- public API ----------------------------------------------------------
 
-    def _update_uniforms(self, *args):
-        self.canvas['resolution'] = list(map(float, self.size))
+    def update_colors(self, color_a: list, color_b: list) -> None:
+        """Push new theme colours to the running shader."""
+        self.canvas['color_a'] = list(map(float, color_a))
+        self.canvas['color_b'] = list(map(float, color_b))
 
-    def update_glsl(self, dt):
-        self.canvas['time'] = self.canvas['time'] + dt
+    def set_shader(self, name: str, color_a: list | None = None, color_b: list | None = None) -> bool:
+        """Load a shader by name and apply it.  Optionally update colors.
+
+        Returns True on success.
+        """
+        source = load_shader(name)
+        if source is None:
+            LOG.warning("Cannot set shader '%s' — file not found", name)
+            return False
+        self._shader_name = name
+        if color_a is not None and color_b is not None:
+            self.update_colors(color_a, color_b)
+        self.fs = source
+        return True
+
+    # -- internals -----------------------------------------------------------
 
     def on_fs(self, instance, value):
+        """When the fs StringProperty changes, push it to the GPU."""
         self.canvas.shader.fs = value
 
     def _update_rect(self, *args):
@@ -134,5 +96,6 @@ class SmokeShaderWidget(Widget):
     def update_glsl(self, dt):
         self.canvas['time'] = self.canvas['time'] + dt
 
-    def on_fs(self, instance, value):
-        self.canvas['fragment_shader'] = value
+
+# Backward-compat alias
+SmokeShaderWidget = ShaderWidget

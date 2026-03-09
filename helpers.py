@@ -32,6 +32,12 @@ def go_to_garden(instance):
 
 def go_to_add_event(instance, plant):
     app = App.get_running_app()
+    # Normalise plant_id so set_plant always has what it needs
+    if isinstance(plant, dict):
+        pid = plant.get("plant_id") or plant.get("id")
+        if pid:
+            plant["plant_id"] = pid
+            plant.setdefault("id", pid)
     add_event_screen = app.screen.get_screen("add_event")
     add_event_screen.set_plant(plant)
     app.previous_screen = app.screen.current
@@ -40,12 +46,6 @@ def go_to_add_event(instance, plant):
 def go_to_timeline(instance, plant):
     app = App.get_running_app()
     timeline_screen = app.screen.get_screen("timeline_view")
-    # debug: dump timeline_screen type/attrs when troubleshooting missing methods
-    try:
-        print("DEBUG: timeline_screen type=", type(timeline_screen))
-        print("DEBUG: timeline_screen dir sample=", dir(timeline_screen)[:80])
-    except Exception:
-        pass
 
     # best-effort: call set_plant if available; otherwise set plant_id and trigger update_timeline
     try:

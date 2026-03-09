@@ -3,52 +3,190 @@
 #:import KivyLabel kivy.uix.label.Label
 
 <Theme@Widget>:
-    dark_gray: 0.18, 0.122, 0.153, 1
-    dark_green: 0.12, 0.172, 0.153, 1
-    very_dark_green: 0.13, 0.15, 0.14, 1
-    off_white:0.831, 0.875, 0.62, 1
-    light_green: 0.773, 0.847, 0.427, 1
-    nice_red: 0.827, 0.247, 0.286, 1
-    nice_yellow: 1, 0.651, 0.188, 1
-    light_yellow: 0.84, 0.68, 0.35, 1
-    nice_orange: 0.945, 0.427, 0.196, 1
-    nice_brown: 0.545, 0.325, 0.196, 1
-    dark_brown: 0.345, 0.225, 0.146, 1
-    bright_green: 0.196, 0.745, 0.325, 1
-    nice_green: 0.289, 0.516, 0.353, 1 
-    nice_blue: 0.235, 0.451, 0.686, 1 
-    nice_purple: 0.392, 0.259, 0.416, 1
-    black_transparent: 0, 0, 0, 0
+    # ── Colors (base palette) ──
+    color_gray: 0.18, 0.122, 0.153, 1
+    color_highlight: 0.831, 0.875, 0.62, 1
+    color_accent_1: 0.827, 0.247, 0.286, 1
+    color_accent_2: 0.945, 0.427, 0.196, 1
+    color_accent_3: 1, 0.651, 0.188, 1
+    color_accent_4: 0.289, 0.516, 0.353, 1
+    color_accent_5: 0.235, 0.451, 0.686, 1
+    color_accent_6: 0.392, 0.259, 0.416, 1
+    color_accent_7: 0.545, 0.325, 0.196, 1
+    color_accent_highlight_1: 0.84, 0.68, 0.35, 1
+    color_accent_highlight_2: 0.196, 0.745, 0.325, 1
+    color_transparent: 0, 0, 0, 0
 
+    # ── Element colors: Labels ──
+    color_label_body: 0.773, 0.847, 0.427, 1
+    color_label_title: 1, 0.651, 0.188, 1
+    color_label_subtitle: 0.831, 0.875, 0.62, 1
+    color_label_nutrient: 0.289, 0.516, 0.353, 1
+    color_label_warning: 0.84, 0.68, 0.35, 1
+
+    # ── Element colors: Buttons ──
+    color_button_bg: 0.12, 0.172, 0.153, 1
+    color_button_text: 0.289, 0.516, 0.353, 1
+    color_button_green_bg: 0.289, 0.516, 0.353, 1
+    color_button_yellow_bg: 1, 0.651, 0.188, 1
+    color_button_red_bg: 0.827, 0.247, 0.286, 1
+    color_button_blue_bg: 0.235, 0.451, 0.686, 1
+    color_button_purple_bg: 0.392, 0.259, 0.416, 1
+    color_button_on_color_text: 0.18, 0.122, 0.153, 1
+    color_button_transparent_text: 1, 0.651, 0.188, 1
+    color_button_dark_green_text: 0.831, 0.875, 0.62, 1
+    color_button_hover_bg: 0.289, 0.516, 0.353, 1
+    color_button_pressed_bg: 1, 0.651, 0.188, 1
+    color_button_pressed_text: 0.18, 0.122, 0.153, 1
+
+    # ── Element colors: Inputs ──
+    color_input_text: 0.831, 0.875, 0.62, 1
+    color_input_hint: 0.289, 0.516, 0.353, 1
+    color_input_cursor: 0.289, 0.516, 0.353, 1
+
+    # ── Element colors: Dropdown / Spinner ──
+    color_dropdown_text: 1, 0.651, 0.188, 1
+
+    # ── Element colors: Boxes ──
+    color_box_red: 0.827, 0.247, 0.286, 1
+    color_box_yellow: 1, 0.651, 0.188, 1
+    color_box_green: 0.289, 0.516, 0.353, 1
+    color_box_dark: 0.13, 0.15, 0.14, 1
+    color_box_light: 0.773, 0.847, 0.427, 1
+    color_stripe_1: 0.827, 0.247, 0.286, 1
+    color_stripe_2: 1, 0.651, 0.188, 1
+    color_stripe_3: 0.289, 0.516, 0.353, 1
+
+    # ── Element colors: EventBox / SelectableEventBox ──
+    color_event_box_text: 1, 0.651, 0.188, 1
+    color_event_box_hover_bg: 0.289, 0.516, 0.353, 1
+    color_event_box_hover_text: 0.18, 0.122, 0.153, 1
+    color_selectable_selected_bg: 0.289, 0.516, 0.353, 1
+    color_selectable_selected_text: 0.18, 0.122, 0.153, 1
+
+    # ── Element colors: Slider ──
+    color_slider_track: 0.827, 0.247, 0.286, 1
+    color_slider_cursor: 1, 0.651, 0.188, 1
+
+    # ── Element colors: Tabs ──
+    color_tab_text: 1, 0.651, 0.188, 1
+    color_tab_plant: 1, 0.651, 0.188, 1
+    color_tab_environment: 0.827, 0.247, 0.286, 1
+    color_tab_water: 0.235, 0.451, 0.686, 1
+    color_tab_food: 0.392, 0.259, 0.416, 1
+
+    # ── Element colors: Graphs ──
+    color_graph_line: 1, 0.651, 0.188, 1
+    color_graph_axis: 0.831, 0.875, 0.62, 1
+    # Plant graph data
+    color_graph_plant_height: 0.196, 0.745, 0.325, 1
+    color_graph_nodes: 0.545, 0.325, 0.196, 1
+    color_graph_node_spacing: 0.945, 0.427, 0.196, 1
+    color_graph_stem_count: 0.827, 0.247, 0.286, 1
+    # Environment graph data
+    color_graph_air_temp: 0.827, 0.247, 0.286, 1
+    color_graph_humidity: 0.235, 0.451, 0.686, 1
+    color_graph_soil_moisture: 0.196, 0.745, 0.325, 1
+    color_graph_soil_ph: 0.945, 0.427, 0.196, 1
+    color_graph_vpd: 1, 0.651, 0.188, 1
+    color_graph_ppfd: 0.392, 0.259, 0.416, 1
+    # Water graph data
+    color_graph_water_volume: 0.235, 0.451, 0.686, 1
+    color_graph_water_temp: 0.827, 0.247, 0.286, 1
+    color_graph_water_ph: 0.196, 0.745, 0.325, 1
+    color_graph_water_ppm: 1, 0.651, 0.188, 1
+    # Food graph data
+    color_graph_grow_mix: 0.196, 0.745, 0.325, 1
+    color_graph_root_mix: 0.545, 0.325, 0.196, 1
+    color_graph_bloom_mix: 0.945, 0.427, 0.196, 1
+    color_graph_bloom_boost: 0.827, 0.247, 0.286, 1
+    color_graph_soil_boost: 0.235, 0.451, 0.686, 1
+    color_graph_vit_boost: 1, 0.651, 0.188, 1
+    color_graph_calmag: 0.392, 0.259, 0.416, 1
+
+    # ── Element colors: Lists ──
+    color_list_selected_bg: 0.392, 0.259, 0.416, 1
+    color_list_item_accent: 1, 0.651, 0.188, 1
+
+    # ── Element colors: Screen ──
+    color_screen_bg: 0.12, 0.172, 0.153, 1
+
+    # ── Element colors: Sort / Filter ──
+    color_sort_indicator: 1, 0.651, 0.188, 1
+    color_filter_label: 0.289, 0.516, 0.353, 1
+
+    # ── Element colors: Strain colors ──
+    color_strain_sativa: 0.773, 0.847, 0.427, 1
+    color_strain_indica: 0.289, 0.516, 0.353, 1
+    color_strain_hybrid: 0.84, 0.68, 0.35, 1
+    color_strain_unknown: 0.831, 0.875, 0.62, 1
+
+    # ── Element colors: Detail panel ──
+    color_detail_label: 0.831, 0.875, 0.62, 1
+    color_detail_health: 0.289, 0.516, 0.353, 1
+    color_field_label: 0.289, 0.516, 0.353, 1
+    color_field_value: 0.831, 0.875, 0.62, 1
+    color_water_label: 0.235, 0.451, 0.686, 1
+    color_feed_label: 1, 0.651, 0.188, 1
+
+    # ── Element colors: Nutrients ──
+    color_nutrient_good: 0.289, 0.516, 0.353, 1
+    color_nutrient_warn: 1, 0.651, 0.188, 1
+    color_nutrient_text: 0.12, 0.172, 0.153, 1
+
+    # ── Element colors: Event types ──
+    color_event_watering: 0.235, 0.451, 0.686, 1
+    color_event_feeding: 1, 0.651, 0.188, 1
+    color_event_top: 0.945, 0.427, 0.196, 1
+    color_event_prune: 0.392, 0.259, 0.416, 1
+    color_event_flip: 0.827, 0.247, 0.286, 1
+    color_event_default: 0.289, 0.516, 0.353, 1
+
+    # ── Element colors: Health indicators ──
+    color_health_healthy: 0.289, 0.516, 0.353, 1
+    color_health_minor: 1, 0.651, 0.188, 1
+    color_health_moderate: 0.827, 0.247, 0.286, 1
+    color_health_severe: 0.392, 0.259, 0.416, 1
+    color_health_default: 0.831, 0.875, 0.62, 1
+
+    # ── Assets ──
     leaf_sativa: "res/svg/leaf_sativa.svg"
     leaf_indica: "res/svg/leaf_indica.svg"
     leaf_hybrid: "res/svg/leaf_hybrid.svg"
-
+    eye_open: "res/svg/eye_open.svg"
+    eye_closed: "res/svg/eye_closed.svg"
     bg_image: "res/img/background.png"
+
+    # ── Fonts ──
     font_logo_1: "res/fonts/Quicksand-Light.ttf"
-    logo_size_1: "72sp"
     font_logo_2: "res/fonts/Quicksand-Bold.ttf"
-    logo_size_2: "48sp"
     font_logo_3: "res/fonts/Quicksand-Regular.ttf"
-    logo_size_3: "24sp"
     font_title: "res/fonts/Quicksand-Light.ttf"
-    title_size: "32sp"
     font_subtitle: "res/fonts/SpaceGrotesk-Light.ttf"
-    subtitle_size: "22sp"
     font_input: "res/fonts/Quicksand-Regular.ttf"
-    input_size: "18sp"
     font_body: "res/fonts/SpaceGrotesk-Regular.ttf"
-    body_size: "16sp"
     font_button: "res/fonts/Quicksand-Bold.ttf"
+
+    # ── Sizes ──
+    logo_size_1: "72sp"
+    logo_size_2: "48sp"
+    logo_size_3: "24sp"
+    title_size: "32sp"
+    subtitle_size: "22sp"
+    input_size: "18sp"
+    body_size: "16sp"
     small_size: "14sp"
+
+    # ── Padding ──
     padding_zero: 0, 0, 0, 0
     padding_right: 0, 0, 20, 0
-    padding_left:  20, 0, 0, 0
+    padding_left: 20, 0, 0, 0
     padding_both: 20, 0, 20, 0
     padding_both_half: 10, 0, 10, 0
     padding_all: 20, 20, 20, 20
     padding_all_half: 10, 10, 10, 10
-    
+
+    # ── Layout ──
     array_4_10: 10, 10, 10, 10
     array_4_40: 40, 40, 20, 40
     array_4_100: 100, 100, 1000, 100
@@ -62,24 +200,26 @@
 <App>:
     theme: Theme()
 
+# ── Labels ──
+
 <Label>:
     font_name: app.theme.font_body
-    color: app.theme.light_green
+    color: app.theme.color_label_body
     font_size: app.theme.body_size
 
 <ListLabel>:
     font_name: app.theme.font_body
-    color: app.theme.light_green
+    color: app.theme.color_label_body
     font_size: app.theme.body_size
 
 <ListTitleLabel>:
     font_name: app.theme.font_subtitle
-    color: app.theme.nice_yellow
+    color: app.theme.color_label_title
     font_size: app.theme.subtitle_size
 
 <ListSubLabel>:
     font_name: app.theme.font_subtitle
-    color: app.theme.off_white
+    color: app.theme.color_label_subtitle
     font_size: app.theme.small_size
 
 <LogoLabel1>:
@@ -88,7 +228,16 @@
     padding: app.theme.padding_left
     font_name: app.theme.font_logo_1
     font_size: app.theme.logo_size_1
-    color: app.theme.nice_yellow
+    color: app.theme.color_label_title
+    text_size: self.size
+
+<LogoLabel2>:
+    halign: "left"
+    valign: "bottom"
+    padding: app.theme.padding_left
+    font_name: app.theme.font_logo_2
+    font_size: app.theme.logo_size_2
+    color: app.theme.color_label_subtitle
     text_size: self.size
 
 <LogoLabel3>:
@@ -97,75 +246,17 @@
     padding: app.theme.padding_left
     font_name: app.theme.font_logo_3
     font_size: app.theme.logo_size_3
-    color: app.theme.nice_yellow
-    text_size: self.size
-
-<Spinner>:
-    background_color: app.theme.black_transparent
-    color: app.theme.nice_yellow
-    font_name: app.theme.font_logo_1
-    font_size: app.theme.subtitle_size
-    text_size: self.size
-    valign: "middle"
-    halign: "left"
-    padding: 0
-    canvas.before:
-        Color:
-            rgba: app.theme.black_transparent
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-<CustomDropdown>:
-    background_color: app.theme.black_transparent
-    color: app.theme.nice_yellow
-    font_name: app.theme.font_title
-    font_size: app.theme.subtitle_size
-    text_size: self.size
-    valign: "middle"
-    halign: "left"
-    padding: 0
-    canvas.before:
-        Color:
-            rgba: app.theme.black_transparent
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-<SelectorDropdown>:
-    background_color: app.theme.black_transparent
-    color: app.theme.nice_yellow
-    font_name: app.theme.font_logo_1
-    font_size: app.theme.subtitle_size
-    text_size: self.size
-    valign: "middle"
-    halign: "left"
-    padding: 0
-    canvas.before:
-        Color:
-            rgba: app.theme.black_transparent
-        Rectangle:
-            pos: self.pos
-            size: self.size
-        
-
-<LogoLabel2>:
-    halign: "left"
-    valign: "bottom"
-    padding: app.theme.padding_left
-    font_name: app.theme.font_logo_2
-    font_size: app.theme.logo_size_2
-    color: app.theme.off_white
+    color: app.theme.color_label_title
     text_size: self.size
 
 <TitleLabel>:
     halign: "left"
     valign: "middle"
     markup: True
-    highlight_color: get_hex_from_color(app.theme.off_white)
+    highlight_color: get_hex_from_color(app.theme.color_label_subtitle)
     font_name: app.theme.font_title
     font_size: app.theme.title_size
-    color: app.theme.nice_yellow
+    color: app.theme.color_label_title
     canvas.before:
         PushMatrix
         Rotate:
@@ -174,7 +265,6 @@
     canvas.after:
         PopMatrix
 
-
 <NutrientLabel>:
     halign: "right"
     valign: "middle"
@@ -182,7 +272,7 @@
     padding: 0
     font_name: app.theme.font_subtitle
     font_size: app.theme.subtitle_size
-    color: app.theme.nice_green
+    color: app.theme.color_label_nutrient
     text_size: self.size
 
 <FieldLabel>:
@@ -192,7 +282,7 @@
     padding: app.theme.padding_right
     font_name: app.theme.font_subtitle
     font_size: app.theme.subtitle_size
-    color: app.theme.nice_yellow
+    color: app.theme.color_label_title
     text_size: self.size
 
 <HintLabel>:
@@ -202,7 +292,7 @@
     padding: app.theme.padding_both_half
     font_name: app.theme.font_subtitle
     font_size: app.theme.body_size
-    color: app.theme.nice_yellow
+    color: app.theme.color_label_title
     text_size: self.size
 
 <PromptLabel>:
@@ -210,8 +300,8 @@
     valign: "middle"
     padding: 0
     font_name: app.theme.font_subtitle
-    font_size: app.theme.body_size 
-    color: app.theme.off_white
+    font_size: app.theme.body_size
+    color: app.theme.color_label_subtitle
     text_size: self.size
 
 <WarningTitleLabel>:
@@ -219,8 +309,8 @@
     valign: "top"
     padding: app.theme.padding_all
     font_name: app.theme.font_title
-    font_size: app.theme.body_size 
-    color: app.theme.nice_yellow
+    font_size: app.theme.body_size
+    color: app.theme.color_label_title
     text_size: self.size
 
 <WarningLabel>:
@@ -229,21 +319,78 @@
     markup: True
     padding: app.theme.padding_left
     font_name: app.theme.font_subtitle
-    font_size: app.theme.small_size 
-    color: app.theme.light_yellow
+    font_size: app.theme.small_size
+    color: app.theme.color_label_warning
     text_size: self.size
     canvas.before:
         Color:
-            rgba: app.theme.black_transparent
+            rgba: app.theme.color_transparent
         Rectangle:
             pos: self.pos
             size: self.size
+
+<GardenLabel>:
+    font_name: app.theme.font_body
+    color: app.theme.color_label_body
+    font_size: app.theme.body_size
+
+# ── Spinner / Dropdown ──
+
+<Spinner>:
+    background_color: app.theme.color_transparent
+    color: app.theme.color_dropdown_text
+    font_name: app.theme.font_logo_1
+    font_size: app.theme.subtitle_size
+    text_size: self.size
+    valign: "middle"
+    halign: "left"
+    padding: 0
+    canvas.before:
+        Color:
+            rgba: app.theme.color_transparent
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<CustomDropdown>:
+    background_color: app.theme.color_transparent
+    color: app.theme.color_dropdown_text
+    font_name: app.theme.font_title
+    font_size: app.theme.subtitle_size
+    text_size: self.size
+    valign: "middle"
+    halign: "left"
+    padding: 0
+    canvas.before:
+        Color:
+            rgba: app.theme.color_transparent
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+<SelectorDropdown>:
+    background_color: app.theme.color_transparent
+    color: app.theme.color_dropdown_text
+    font_name: app.theme.font_logo_1
+    font_size: app.theme.subtitle_size
+    text_size: self.size
+    valign: "middle"
+    halign: "left"
+    padding: 0
+    canvas.before:
+        Color:
+            rgba: app.theme.color_transparent
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+# ── Boxes ──
 
 <RedBox>:
     padding: app.theme.padding_zero
     canvas:
         Color:
-            rgba: app.theme.nice_red
+            rgba: app.theme.color_stripe_1
         Rectangle:
             pos: self.pos
             size: self.size
@@ -252,17 +399,16 @@
     padding: app.theme.padding_zero
     canvas:
         Color:
-            rgba: app.theme.nice_yellow
+            rgba: app.theme.color_stripe_2
         Rectangle:
             pos: self.pos
             size: self.size
-
 
 <GreenBox>:
     padding: app.theme.padding_zero
     canvas:
         Color:
-            rgba: app.theme.nice_green
+            rgba: app.theme.color_stripe_3
         Rectangle:
             pos: self.pos
             size: self.size
@@ -271,7 +417,7 @@
     padding: app.theme.padding_zero
     canvas:
         Color:
-            rgba: app.theme.very_dark_green
+            rgba: app.theme.color_box_dark
         Rectangle:
             pos: self.pos
             size: self.size
@@ -280,7 +426,7 @@
     padding: app.theme.padding_zero
     canvas:
         Color:
-            rgba: app.theme.light_green
+            rgba: app.theme.color_box_light
         Rectangle:
             pos: self.pos
             size: self.size
@@ -293,16 +439,15 @@
             pos: self.pos
             size: self.size
 
-
 <BoxLayout>:
     spacing: 0
 
 <ContentBox>:
     padding: app.theme.padding_zero
-    spacing:0
+    spacing: 0
     canvas.before:
         Color:
-            rgba: app.theme.black_transparent
+            rgba: app.theme.color_transparent
         Rectangle:
             pos: self.pos
             size: self.size
@@ -312,7 +457,7 @@
     spacing: 40
     canvas.before:
         Color:
-            rgba: app.theme.black_transparent
+            rgba: app.theme.color_transparent
         Rectangle:
             pos: self.pos
             size: self.size
@@ -321,7 +466,7 @@
     padding: app.theme.padding_zero
     canvas.before:
         Color:
-            rgba: app.theme.black_transparent
+            rgba: app.theme.color_transparent
         Rectangle:
             pos: self.pos
             size: self.size
@@ -330,7 +475,7 @@
     padding: app.theme.padding_zero
     canvas.before:
         Color:
-            rgba: app.theme.black_transparent
+            rgba: app.theme.color_transparent
         Rectangle:
             pos: self.pos
             size: self.size
@@ -341,44 +486,100 @@
             rgba: root.selected_bg_color if root.selected else root.normal_bg_color
         Rectangle:
             pos: self.pos
-            size: self.size      
+            size: self.size
+
+# ── Text Inputs ──
 
 <TextInput>:
     background_normal: ""
     background_active: ""
     border: 0, 1, 0, 0
-    background_color: app.theme.black_transparent
-    foreground_color: app.theme.off_white
-    hint_text_color: app.theme.nice_green
+    background_color: app.theme.color_transparent
+    foreground_color: app.theme.color_input_text
+    hint_text_color: app.theme.color_input_hint
     hint_text_size: app.theme.body_size
     font_name: app.theme.font_input
     font_name_hint_text: app.theme.font_subtitle
-    selection_color: app.theme.nice_green
-    cursor_color: app.theme.nice_green
+    selection_color: app.theme.color_input_cursor
+    cursor_color: app.theme.color_input_cursor
     font_size: app.theme.body_size
     halign: "left"
     padding_x: 10
     padding_y: (self.height - self.line_height) / 2
     text_size: self.size
+
 <LargeTextInput>:
     background_normal: ""
     background_active: ""
     border: 0, 1, 0, 0
-    background_color: app.theme.black_transparent
-    foreground_color: app.theme.off_white
-    hint_text_color: app.theme.nice_green
+    background_color: app.theme.color_transparent
+    foreground_color: app.theme.color_input_text
+    hint_text_color: app.theme.color_input_hint
     hint_text_size: app.theme.body_size
     font_name: app.theme.font_input
     font_name_hint_text: app.theme.font_subtitle
-    selection_color: app.theme.nice_green
-    cursor_color: app.theme.nice_green
+    selection_color: app.theme.color_input_cursor
+    cursor_color: app.theme.color_input_cursor
     font_size: app.theme.body_size
     halign: "left"
     padding_x: 10
     # For multi-line inputs, use small vertical padding; for single-line, center text vertically
     padding_y: 10 if self.multiline else (self.height - (self.line_height * self.font_size)) / 2
     text_size: self.size
-    
+
+<NumTextInput>:
+    background_normal: ""
+    background_active: ""
+    border: 0, 1, 0, 0
+    background_color: app.theme.color_transparent
+    foreground_color: app.theme.color_input_text
+    hint_text_color: app.theme.color_input_hint
+    font_name: app.theme.font_input
+    font_name_hint_text: app.theme.font_subtitle
+    selection_color: app.theme.color_input_cursor
+    cursor_color: app.theme.color_input_cursor
+    font_size: app.theme.body_size
+    halign: "left"
+    padding_x: 10
+    padding_y: (self.height - self.line_height) / 2
+    text_size: self.size
+
+<DaysTextInput>:
+    background_normal: ""
+    background_active: ""
+    border: 0, 1, 0, 0
+    background_color: app.theme.color_transparent
+    foreground_color: app.theme.color_input_text
+    hint_text_color: app.theme.color_input_hint
+    font_name: app.theme.font_input
+    font_name_hint_text: app.theme.font_subtitle
+    selection_color: app.theme.color_input_cursor
+    cursor_color: app.theme.color_input_cursor
+    font_size: app.theme.body_size
+    halign: "left"
+    padding_x: 10
+    padding_y: (self.height - self.line_height) / 2
+    text_size: self.size
+
+<MedTextInput>:
+    background_normal: ""
+    background_active: ""
+    border: 0, 1, 0, 0
+    background_color: app.theme.color_transparent
+    foreground_color: app.theme.color_input_text
+    hint_text_color: app.theme.color_input_hint
+    font_name: app.theme.font_input
+    font_name_hint_text: app.theme.font_subtitle
+    selection_color: app.theme.color_input_cursor
+    cursor_color: app.theme.color_input_cursor
+    font_size: app.theme.body_size
+    halign: "left"
+    padding_x: 10
+    padding_y: (self.height - self.line_height) / 2
+    text_size: self.size
+
+# ── Buttons ──
+
 <HoverButton>:
     canvas.before:
         Color:
@@ -398,75 +599,74 @@
 <Button>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.dark_green
-    color: app.theme.nice_green
+    background_color: app.theme.color_button_bg
+    color: app.theme.color_button_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
     on_state:
-        self.background_color = app.theme.dark_green if self.state == "normal" else app.theme.nice_green
-        self.color = app.theme.nice_green if self.state == "normal" else app.theme.dark_green
+        self.background_color = app.theme.color_button_bg if self.state == "normal" else app.theme.color_button_green_bg
+        self.color = app.theme.color_button_text if self.state == "normal" else app.theme.color_button_bg
 
 <ButtonGreen>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.nice_green
-    color: app.theme.dark_gray
+    background_color: app.theme.color_button_green_bg
+    color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
     on_state:
-        self.background_color = app.theme.nice_green if self.state == "normal" else app.theme.nice_yellow
-        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.nice_green
+        self.background_color = app.theme.color_button_green_bg if self.state == "normal" else app.theme.color_button_pressed_bg
+        self.color = app.theme.color_button_on_color_text if self.state == "normal" else app.theme.color_button_green_bg
 
 <ButtonYellow>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.nice_yellow
-    color: app.theme.dark_gray
+    background_color: app.theme.color_button_yellow_bg
+    color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
     on_state:
-        self.background_color = app.theme.nice_yellow if self.state == "normal" else app.theme.nice_yellow
-        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.nice_yellow
-
+        self.background_color = app.theme.color_button_yellow_bg if self.state == "normal" else app.theme.color_button_pressed_bg
+        self.color = app.theme.color_button_on_color_text if self.state == "normal" else app.theme.color_button_yellow_bg
 
 <ButtonRed>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.nice_red
-    color: app.theme.dark_gray
+    background_color: app.theme.color_button_red_bg
+    color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
     on_state:
-        self.background_color = app.theme.nice_red if self.state == "normal" else app.theme.nice_yellow
-        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.nice_red
+        self.background_color = app.theme.color_button_red_bg if self.state == "normal" else app.theme.color_button_pressed_bg
+        self.color = app.theme.color_button_on_color_text if self.state == "normal" else app.theme.color_button_red_bg
 
-<ButtonBllue>:
+<ButtonBlue>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.nice_blue
-    color: app.theme.dark_gray
+    background_color: app.theme.color_button_blue_bg
+    color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
     on_state:
-        self.background_color = app.theme.nice_blue if self.state == "normal" else app.theme.nice_yellow
-        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.nice_blue
+        self.background_color = app.theme.color_button_blue_bg if self.state == "normal" else app.theme.color_button_pressed_bg
+        self.color = app.theme.color_button_on_color_text if self.state == "normal" else app.theme.color_button_blue_bg
 
 <ButtonPurple>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.nice_purple
-    color: app.theme.dark_gray
+    background_color: app.theme.color_button_purple_bg
+    color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
     on_state:
-        self.background_color = app.theme.nice_purple if self.state == "normal" else app.theme.nice_yellow
-        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.nice_purple
+        self.background_color = app.theme.color_button_purple_bg if self.state == "normal" else app.theme.color_button_pressed_bg
+        self.color = app.theme.color_button_on_color_text if self.state == "normal" else app.theme.color_button_purple_bg
 
 <ButtonTransparent>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.black_transparent
-    color: app.theme.nice_yellow
+    background_color: app.theme.color_transparent
+    color: app.theme.color_button_transparent_text
     font_name: app.theme.font_title
     font_size: app.theme.input_size
     halign: "left"
@@ -474,27 +674,27 @@
     text_size: self.size
     padding: app.theme.padding_left
     on_state:
-        self.background_color = app.theme.black_transparent if self.state == "normal" else app.theme.nice_yellow
-        self.color = app.theme.nice_yellow if self.state == "normal" else app.theme.dark_gray
+        self.background_color = app.theme.color_transparent if self.state == "normal" else app.theme.color_button_pressed_bg
+        self.color = app.theme.color_button_transparent_text if self.state == "normal" else app.theme.color_button_on_color_text
 
 <ToggleButton>:
     width: 200
     background_normal: ""
     background_down: ""
-    background_color: app.theme.black_transparent
-    color: app.theme.nice_yellow
+    background_color: app.theme.color_transparent
+    color: app.theme.color_button_transparent_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
     size_hint: app.theme.small_button
     on_state:
-        self.background_color = app.theme.black_transparent if self.state == "normal" else app.theme.nice_yellow
-        self.color = app.theme.nice_yellow if self.state == "normal" else app.theme.dark_gray
+        self.background_color = app.theme.color_transparent if self.state == "normal" else app.theme.color_button_pressed_bg
+        self.color = app.theme.color_button_transparent_text if self.state == "normal" else app.theme.color_button_on_color_text
 
 <ButtonDarkGreen>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.dark_green
-    color: app.theme.off_white
+    background_color: app.theme.color_button_bg
+    color: app.theme.color_button_dark_green_text
     font_name: app.theme.font_title
     font_size: app.theme.input_size
     size_hint: app.theme.small_button
@@ -503,20 +703,20 @@
     text_size: self.size
     padding: app.theme.padding_left
     on_state:
-        self.background_color = app.theme.dark_green if self.state == "normal" else app.theme.nice_green
-        self.color = app.theme.off_white if self.state == "normal" else app.theme.dark_gray
+        self.background_color = app.theme.color_button_bg if self.state == "normal" else app.theme.color_button_green_bg
+        self.color = app.theme.color_button_dark_green_text if self.state == "normal" else app.theme.color_button_on_color_text
 
 <NutrientButton>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.nice_green
-    color: app.theme.dark_gray
+    background_color: app.theme.color_button_green_bg
+    color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.subtitle_size
     size_hint_x: 1
     on_state:
-        self.background_color = app.theme.nice_green if self.state == "normal" else app.theme.nice_yellow
-        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.nice_green
+        self.background_color = app.theme.color_button_green_bg if self.state == "normal" else app.theme.color_button_pressed_bg
+        self.color = app.theme.color_button_on_color_text if self.state == "normal" else app.theme.color_button_green_bg
 
 <GraphButton>:
     background_normal: ""
@@ -527,20 +727,20 @@
 <ResetButton>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.nice_green
-    color: app.theme.dark_gray
+    background_color: app.theme.color_button_green_bg
+    color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.subtitle_size
     size_hint_x: 1
     on_state:
-        self.background_color = app.theme.nice_green if self.state == "normal" else app.theme.nice_green
-        self.color = app.theme.dark_gray if self.state == "normal" else app.theme.dark_gray
+        self.background_color = app.theme.color_button_green_bg if self.state == "normal" else app.theme.color_button_green_bg
+        self.color = app.theme.color_button_on_color_text if self.state == "normal" else app.theme.color_button_on_color_text
 
 <SuggestionButton>:
     background_normal: ""
     background_down: ""
-    background_color: app.theme.nice_green
-    color: app.theme.off_white
+    background_color: app.theme.color_button_green_bg
+    color: app.theme.color_button_dark_green_text
     font_name: app.theme.font_input
     font_size: app.theme.body_size
     size_hint_y: None
@@ -550,35 +750,46 @@
     text_size: self.size
     padding: app.theme.padding_left
 
+<PasswordEyeToggle>:
+    background_normal: ""
+    background_down: ""
+    background_color: app.theme.color_button_bg
+    color: app.theme.color_button_transparent_text
+    font_name: app.theme.font_button
+    font_size: app.theme.small_size
+
+# ── Slider ──
+
 <Slider>:
     cursor_size: app.theme.subtitle_size, app.theme.subtitle_size
     cursor_image: ""
     canvas.before:
         Color:
-            rgba: app.theme.nice_red
+            rgba: app.theme.color_slider_track
         Rectangle:
             size: self.cursor_size
             pos: self.x + self.value_normalized * self.width - self.cursor_size[0] / 2, self.center_y - self.cursor_size[1] / 2
     canvas.after:
         Color:
-            rgba: app.theme.nice_yellow
+            rgba: app.theme.color_slider_cursor
         Rectangle:
             size: self.cursor_size
             pos: self.x + self.value_normalized * self.width - self.cursor_size[0] / 2, self.center_y - self.cursor_size[1] / 2
 
+# ── Tabs ──
+
 <TabbedPanel>:
-    background_color: app.theme.black_transparent
+    background_color: app.theme.color_transparent
     tab_height: 40
     tab_width: 200
     do_default_tab: False
-    text_color: app.theme.nice_yellow
+    text_color: app.theme.color_tab_text
     background_normal: ""
     background_down: ""
     border: 0, 0, 0, 0
     canvas.before:
         Color:
-            rgba: app.theme.black_transparent if not self._current_tab else app.theme.nice_yellow
-
+            rgba: app.theme.color_transparent if not self._current_tab else app.theme.color_tab_text
 
 <TabbedPanelContent>:
     # remove default style padding to eliminate gap below tabs
@@ -588,28 +799,32 @@
     # reduce strip padding so tabs sit closer to content
     padding: 0
 
+# ── Graph ──
+
 <Graph>:
     line_width: 2
-    background_color: app.theme.black_transparent
-    color: app.theme.nice_yellow
-    border_color: app.theme.black_transparent
-    xlabel_color: app.theme.off_white
-    ylabel_color: app.theme.off_white
-    tick_color: app.theme.black_transparent
-    grid_color: app.theme.black_transparent
+    background_color: app.theme.color_transparent
+    color: app.theme.color_graph_line
+    border_color: app.theme.color_transparent
+    xlabel_color: app.theme.color_graph_axis
+    ylabel_color: app.theme.color_graph_axis
+    tick_color: app.theme.color_transparent
+    grid_color: app.theme.color_transparent
     label_options: {'font_name': app.theme.font_subtitle, 'font_size': app.theme.small_size}
     padding: 5
     canvas.before:
         Color:
-            rgba: app.theme.black_transparent
+            rgba: app.theme.color_transparent
         Rectangle:
             pos: self.pos
             size: self.size
 
+# ── Plant List ──
+
 <PlantListView>:
     viewclass: "PlantListItem"
     SelectableRecycleBoxLayout:
-        default_size: None, dp(80)
+        default_size: None, dp(120)
         default_size_hint: 1, None
         size_hint_y: None
         height: self.minimum_height
@@ -632,12 +847,12 @@
 
     canvas.before:
         Color:
-            rgba: app.theme.nice_purple if root.selected else app.theme.black_transparent
+            rgba: app.theme.color_list_selected_bg if root.selected else app.theme.color_transparent
         Rectangle:
             pos: self.pos
             size: self.size
 
-    # left: type icon 
+    # left: type icon
     ItemBox:
         size_hint_x: 0.1
         LeafIcon:
@@ -649,7 +864,7 @@
     ItemBox:
         orientation: "vertical"
         size_hint_x: 0.5
-        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
+        color: app.theme.color_list_item_accent if root.selected else app.theme.color_transparent
         ListSubLabel:
             text: root.name
             halign: "left"
@@ -672,7 +887,7 @@
     # medium
     ItemBox:
         size_hint_x: 0.10
-        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
+        color: app.theme.color_list_item_accent if root.selected else app.theme.color_transparent
         ListLabel:
             text: root.medium
             halign: "center"
@@ -682,29 +897,27 @@
     # last watering
     ItemBox:
         size_hint_x: 0.11
-        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
+        color: app.theme.color_list_item_accent if root.selected else app.theme.color_transparent
         ListLabel:
             text: root.last_watering
             halign: "center"
             valign: "middle"
             text_size: self.size
-            
+
     # next watering
     ItemBox:
         size_hint_x: 0.13
-        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
+        color: app.theme.color_list_item_accent if root.selected else app.theme.color_transparent
         ListLabel:
             text: root.next_watering
             halign: "center"
             valign: "middle"
             text_size: self.size
 
-
-
     # flower / harvest
     ItemBox:
         size_hint_x: 0.14
-        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
+        color: app.theme.color_list_item_accent if root.selected else app.theme.color_transparent
         ListLabel:
             text: root.flower_status
             halign: "center"
@@ -713,10 +926,65 @@
 
     ItemBox:
         size_hint_x: 0.14
-        color: app.theme.nice_yellow if root.selected else app.theme.black_transparent
+        color: app.theme.color_list_item_accent if root.selected else app.theme.color_transparent
         ListLabel:
             text: root.harvest_status
             halign: "center"
             valign: "middle"
             text_size: self.size
-       
+
+# ── Garden List ──
+
+<GardenListView>:
+    viewclass: "GardenListItem"
+    SelectableRecycleBoxLayout:
+        default_size: None, dp(80)
+        default_size_hint: 1, None
+        size_hint_y: None
+        height: self.minimum_height
+        orientation: "vertical"
+
+<GardenListItem@SelectableBoxLayout>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: "80dp"
+
+    garden_id: ""
+    garden_name: ""
+    garden_type: ""
+    plant_count: ""
+
+    canvas.before:
+        Color:
+            rgba: app.theme.color_list_selected_bg if root.selected else app.theme.color_transparent
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    ItemBox:
+        size_hint_x: 0.5
+        ListTitleLabel:
+            text: root.garden_name
+            halign: "left"
+            valign: "middle"
+            padding: app.theme.padding_left
+            text_size: self.size
+
+    ItemBox:
+        size_hint_x: 0.2
+        ListLabel:
+            text: root.garden_type
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+    ItemBox:
+        size_hint_x: 0.2
+        ListLabel:
+            text: root.plant_count
+            halign: "center"
+            valign: "middle"
+            text_size: self.size
+
+    SpacerBox:
+        size_hint_x: 0.1

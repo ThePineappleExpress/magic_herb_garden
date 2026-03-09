@@ -1,33 +1,89 @@
 """storage.py - Low-level JSON read/write with transparent encryption.
 
-Provides both the legacy flat-file API (load_plants / save_plants) used by
-older screens, and the per-garden API (load_garden / save_garden /
-load_gardens) used by export/import and the new multi-garden screens.
+Resolves the database path at import time:
+  1. Check platformdirs location for settings.json
+  2. Fall back to local usr/db/settings.json
+  3. Honour the ``db_path`` key in settings (user-configurable)
 
-Atomic writes via .tmp sibling files.  Respects user-configurable db_path
-setting for relocating the database.  Encryption is applied automatically
+Provides the per-garden API used by the multi-garden architecture.
+Plants are stored inside garden files (garden/<uuid>.json → "plants" array).
+Per-plant event logs live in plants/<uuid>.json.
+
+Atomic writes via .tmp sibling files.  Encryption is applied automatically
 when a CryptoContext key is active.
 """
 
 import json
 import logging
 import os
-from datetime import datetime
 from pathlib import Path
 from uuid import uuid4
 
 LOG = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Base paths (may be overridden at runtime via settings db_path)
+# Path resolution
 # ---------------------------------------------------------------------------
-_BASE = Path(os.path.dirname(__file__)) / "usr" / "db"
 
-DB_PATH = _BASE / "plants.json"           # legacy flat plant list
+_PROJECT_ROOT = Path(os.path.dirname(__file__))
+_LOCAL_DB = _PROJECT_ROOT / "usr" / "db"
+
+def _resolve_db_base() -> Path:
+    """Determine the active database directory.
+
+    Order:
+      1. platformdirs data dir (``~/.local/share/MagicHerbTracker/db/``)
+      2. local ``usr/db/`` fallback
+
+    Within whichever location contains a ``settings.json``, the ``db_path``
+    key is honoured if present and the directory exists.
+    """
+    # Try platformdirs first
+    try:
+        from platformdirs import user_data_dir
+        pd_base = Path(user_data_dir("MagicHerbTracker")) / "db"
+    except ImportError:
+        pd_base = None
+
+    # Find settings.json
+    settings_data = None
+    chosen_base = None
+
+    if pd_base and (pd_base / "settings.json").exists():
+        chosen_base = pd_base
+        try:
+            settings_data = json.loads((pd_base / "settings.json").read_bytes())
+        except Exception:
+            pass
+    elif (_LOCAL_DB / "settings.json").exists():
+        chosen_base = _LOCAL_DB
+        try:
+            settings_data = json.loads((_LOCAL_DB / "settings.json").read_bytes())
+        except Exception:
+            pass
+
+    # Honour db_path from settings
+    if isinstance(settings_data, dict) and settings_data.get("db_path"):
+        custom = Path(settings_data["db_path"])
+        if custom.is_dir():
+            return custom
+
+    # Default to whichever base we found, or platformdirs, or local
+    if chosen_base:
+        return chosen_base
+    if pd_base:
+        return pd_base
+    return _LOCAL_DB
+
+
+_BASE = _resolve_db_base()
+
 GARDEN_DIR = _BASE / "garden"
 EVENTS_DIR = _BASE / "plants"
 INDEX_PATH = _BASE / "plants_index.json"
 SETTINGS_PATH = _BASE / "settings.json"
+
+LOG.info("Database path resolved to: %s", _BASE)
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -108,130 +164,11 @@ def _read_json(path: Path):
 
 
 # ---------------------------------------------------------------------------
-# Legacy flat-file API (used by garden_view, sow_seed, etc.)
-# ---------------------------------------------------------------------------
-
-def _normalize_plants(data):
-    """Normalize plant data into a list of dictionaries."""
-    if data is None:
-        return []
-    if isinstance(data, dict):
-        return [data]
-    if not isinstance(data, list):
-        return []
-
-    normalized = []
-    for item in data:
-        if isinstance(item, dict):
-            normalized.append(item)
-        elif isinstance(item, list):
-            for sub in item:
-                if isinstance(sub, dict):
-                    normalized.append(sub)
-    return normalized
-
-
-def load_plants():
-    """Load plant data from the legacy flat JSON file."""
-    data = _read_json(DB_PATH)
-    if data is None:
-        return []
-    return _normalize_plants(data)
-
-
-def save_plants(plants):
-    """Save plant data to the legacy flat JSON file."""
-    normalized = _normalize_plants(plants)
-    _atomic_write_json(DB_PATH, normalized)
-
-
-def save_plant(plant):
-    """Save a single plant entry to the legacy JSON file and create its events file."""
-    plants = load_plants()
-    if isinstance(plant, dict):
-        plants.append(plant)
-    save_plants(plants)
-
-    plant_id = plant.get("id")
-    date_planted = plant.get("date_planted", datetime.now().strftime("%Y-%m-%d"))
-    initial_event = {
-        'id': 'evt-0',
-        'ts': date_planted,
-        'type': 'planted',
-        'volume_l': 0.1,
-        'water_temp_c': 18,
-        'ph': 5.8,
-        'ppm': 140,
-        'feeding': {
-            'grow_mix': 0.0,
-            'root_mix': 0.0,
-            'bloom_mix': 0.0,
-            'bloom_boost': 0.0,
-            'soil_boost': 0.0,
-            'vit_boost': 0.0,
-            'CalMag': 0.0,
-            'myco_trico': False
-        },
-        'plant': {
-            'stage': 'planting',
-            'plant_height': 0,
-            'num_nodes': 0,
-            'node_spacing': 0,
-            'main_stem_number': 1,
-            'leaf_color': 'light',
-            'leaf_morphology': 'normal',
-            'deficiencies': {k: False for k in ['n', 'p', 'k', 'ca', 'mg', 's', 'fe', 'mn', 'zn', 'cu', 'b', 'mo']},
-            'excess': {k: False for k in ['n', 'p', 'k', 'ca', 'mg', 's', 'fe', 'mn', 'zn', 'cu', 'b', 'mo']}
-        },
-        'environment': {
-            'air_temp_c': 20,
-            'rh_percent': 55,
-            'soil_moisture': 'wet',
-            'soil_ph': 5.5,
-            'vpd_kpa': 1.1,
-            'ppfd': 100,
-            'light_schedule': [18, 6]
-        },
-        'notes': f"Planted {plant['strain']} from {plant['name']} on {date_planted}."
-    }
-    events_data = {
-        'plant_id': plant_id,
-        'penalty': 0,
-        'events': [initial_event]
-    }
-    _ensure_dirs()
-    save_plant_events(plant_id, events_data)
-    LOG.info("Added plant %s (%s) and created events file.", plant.get('strain'), plant_id)
-
-
-# ---------------------------------------------------------------------------
-# Per-plant events API
-# ---------------------------------------------------------------------------
-
-def load_plant_events(plant_id: str):
-    """Load events for a single plant by ID."""
-    path = EVENTS_DIR / f"{plant_id}.json"
-    return _read_json(path)
-
-
-def save_plant_events(plant_id: str, data) -> bool:
-    """Save events data for a single plant. Returns True on success."""
-    try:
-        _ensure_dirs()
-        path = EVENTS_DIR / f"{plant_id}.json"
-        _atomic_write_json(path, data)
-        return True
-    except Exception:
-        LOG.exception("Failed to save events for plant %s", plant_id)
-        return False
-
-
-# ---------------------------------------------------------------------------
-# Per-garden API (multi-garden support)
+# Per-garden API
 # ---------------------------------------------------------------------------
 
 def load_gardens() -> list:
-    """Return a list of all garden dicts from usr/db/garden/*.json."""
+    """Return a list of all garden dicts from garden/*.json."""
     if not GARDEN_DIR.exists():
         return []
     gardens = []
@@ -249,7 +186,7 @@ def load_garden(garden_id: str):
 
 
 def save_garden(garden: dict) -> bool:
-    """Save a garden dict to usr/db/garden/{id}.json. Returns True on success."""
+    """Save a garden dict to garden/{id}.json. Returns True on success."""
     gid = garden.get("id")
     if not gid:
         return False
@@ -276,6 +213,149 @@ def delete_garden(garden_id: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Plant helpers (plants live inside garden files)
+# ---------------------------------------------------------------------------
+
+def get_plants_for_garden(garden_id: str) -> list:
+    """Return the plants array from a garden file."""
+    garden = load_garden(garden_id)
+    if not isinstance(garden, dict):
+        return []
+    plants = garden.get("plants", [])
+    return _normalize_plants(plants)
+
+
+def _normalize_plants(data) -> list:
+    """Filter a plants list to only valid dict entries.
+
+    Returns an empty list for None, non-list, or invalid input.
+    """
+    if not isinstance(data, list):
+        return []
+    return [p for p in data if isinstance(p, dict)]
+
+
+def save_plants_for_garden(garden_id: str, plants: list) -> bool:
+    """Replace the plants array in a garden file."""
+    garden = load_garden(garden_id)
+    if not isinstance(garden, dict):
+        return False
+    garden["plants"] = plants
+    return save_garden(garden)
+
+
+def add_plant_to_garden(garden_id: str, plant: dict) -> bool:
+    """Append a plant dict to a garden's plants array and create its events file."""
+    garden = load_garden(garden_id)
+    if not isinstance(garden, dict):
+        return False
+    plants = garden.get("plants", [])
+    if not isinstance(plants, list):
+        plants = []
+    plants.append(plant)
+    garden["plants"] = plants
+    if not save_garden(garden):
+        return False
+
+    # Create initial events file
+    plant_id = plant.get("id")
+    if plant_id:
+        from datetime import datetime
+        date_planted = plant.get("date_planted", datetime.now().strftime("%Y-%m-%d"))
+        initial_event = {
+            'id': 'evt-0',
+            'ts': date_planted,
+            'type': 'planted',
+            'volume_l': 0.1,
+            'water_temp_c': 18,
+            'ph': 5.8,
+            'ppm': 140,
+            'feeding': {
+                'grow_mix': 0.0,
+                'root_mix': 0.0,
+                'bloom_mix': 0.0,
+                'bloom_boost': 0.0,
+                'soil_boost': 0.0,
+                'vit_boost': 0.0,
+                'CalMag': 0.0,
+                'myco_trico': False
+            },
+            'plant': {
+                'stage': 'planting',
+                'plant_height': 0,
+                'num_nodes': 0,
+                'node_spacing': 0,
+                'main_stem_number': 1,
+                'leaf_color': 'light',
+                'leaf_morphology': 'normal',
+                'deficiencies': {k: False for k in ['n', 'p', 'k', 'ca', 'mg', 's', 'fe', 'mn', 'zn', 'cu', 'b', 'mo']},
+                'excess': {k: False for k in ['n', 'p', 'k', 'ca', 'mg', 's', 'fe', 'mn', 'zn', 'cu', 'b', 'mo']}
+            },
+            'environment': {
+                'air_temp_c': 20,
+                'rh_percent': 55,
+                'soil_moisture': 'wet',
+                'soil_ph': 5.5,
+                'vpd_kpa': 1.1,
+                'ppfd': 100,
+                'light_schedule': [18, 6]
+            },
+            'notes': f"Planted {plant.get('strain', '')} on {date_planted}."
+        }
+        events_data = {
+            'plant_id': plant_id,
+            'penalty': 0,
+            'events': [initial_event]
+        }
+        _ensure_dirs()
+        save_plant_events(plant_id, events_data)
+        LOG.info("Added plant %s (%s) to garden %s", plant.get('strain'), plant_id, garden_id)
+
+    return True
+
+
+def remove_plant_from_garden(garden_id: str, plant_id: str) -> bool:
+    """Remove a plant from a garden's plants array and delete its events file."""
+    garden = load_garden(garden_id)
+    if not isinstance(garden, dict):
+        return False
+    plants = garden.get("plants", [])
+    garden["plants"] = [p for p in plants if p.get("id") != plant_id]
+    if not save_garden(garden):
+        return False
+    # Remove events file
+    events_path = EVENTS_DIR / f"{plant_id}.json"
+    try:
+        if events_path.exists():
+            events_path.unlink()
+    except Exception:
+        LOG.exception("Failed to delete events file for plant %s", plant_id)
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Per-plant events API
+# ---------------------------------------------------------------------------
+
+def load_plant_events(plant_id: str):
+    """Load events for a single plant by ID."""
+    path = EVENTS_DIR / f"{plant_id}.json"
+    return _read_json(path)
+
+
+def save_plant_events(plant_id: str, data) -> bool:
+    """Save events data for a single plant. Returns True on success."""
+    try:
+        _ensure_dirs()
+        path = EVENTS_DIR / f"{plant_id}.json"
+        _atomic_write_json(path, data)
+        return True
+    except Exception:
+        LOG.exception("Failed to save events for plant %s", plant_id)
+        return False
+
+
+# ---------------------------------------------------------------------------
 # Settings API (always plaintext)
 # ---------------------------------------------------------------------------
 
@@ -289,7 +369,6 @@ def save_settings(settings: dict) -> bool:
     """Save app settings (plaintext). Returns True on success."""
     try:
         SETTINGS_PATH.parent.mkdir(parents=True, exist_ok=True)
-        # Settings are always plaintext - write directly
         raw = json.dumps(settings, indent=2, ensure_ascii=False).encode("utf-8")
         tmp = SETTINGS_PATH.with_suffix(SETTINGS_PATH.suffix + ".tmp")
         tmp.write_bytes(raw)
@@ -305,7 +384,7 @@ def save_settings(settings: dict) -> bool:
 # ---------------------------------------------------------------------------
 
 def load_index() -> dict:
-    """Load the plants index (plant_id → metadata). Returns dict."""
+    """Load the plants index (plant_id -> metadata). Returns dict."""
     data = _read_json(INDEX_PATH)
     return data if isinstance(data, dict) else {}
 

@@ -7,6 +7,7 @@ EVENT_PLANTING = "planted"
 EVENT_TOP = "top"
 EVENT_PRUNE = "prune"
 EVENT_FLIP = "flip"
+EVENT_HARVEST = "harvest"
 
 _ALIASES = {
     "water": EVENT_WATERING,
@@ -24,6 +25,8 @@ _ALIASES = {
     "pruning": EVENT_PRUNE,
     "flipped": EVENT_FLIP,
     "flipping": EVENT_FLIP,
+    "harvested": EVENT_HARVEST,
+    "harvest": EVENT_HARVEST,
 }
 
 ALL_EVENT_TYPES = (
@@ -34,6 +37,7 @@ ALL_EVENT_TYPES = (
     EVENT_TOP,
     EVENT_PRUNE,
     EVENT_FLIP,
+    EVENT_HARVEST,
 )
 
 

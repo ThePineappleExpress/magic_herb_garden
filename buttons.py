@@ -35,12 +35,16 @@ class HoverBehavior:
 
 
 class HoverButton(HoverBehavior, Button):
-    app = App.get_running_app()
     hover_background_color = ListProperty([0.773, 0.847, 0.427, 1])
     _orig_background_color = None
 
-    def on_enter(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        app = App.get_running_app()
+        if app and hasattr(app, 'theme'):
+            self.hover_background_color = list(app.theme.color_button_hover_bg)
 
+    def on_enter(self):
         if self._orig_background_color is None:
             self._orig_background_color = list(self.background_color)
         self.background_color = list(self.hover_background_color)
@@ -55,6 +59,12 @@ class HoverButton(HoverBehavior, Button):
 class HoverToggle(HoverBehavior, ToggleButton):
     hover_background_color = ListProperty([0.773, 0.847, 0.427, 1])
     _orig_background_color = None
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        app = App.get_running_app()
+        if app and hasattr(app, 'theme'):
+            self.hover_background_color = list(app.theme.color_button_hover_bg)
 
     def on_enter(self):
         # Only apply hover styling when the toggle is in the normal (unpressed) state.
