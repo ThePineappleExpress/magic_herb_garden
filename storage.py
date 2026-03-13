@@ -82,6 +82,8 @@ GARDEN_DIR = _BASE / "garden"
 EVENTS_DIR = _BASE / "plants"
 INDEX_PATH = _BASE / "plants_index.json"
 SETTINGS_PATH = _BASE / "settings.json"
+PHOTOS_DIR = _BASE / "photos"
+PHOTO_INDEX = _BASE / "photos_index.json"
 
 LOG.info("Database path resolved to: %s", _BASE)
 
@@ -93,6 +95,7 @@ def _ensure_dirs():
     """Create data directories if they don't exist."""
     GARDEN_DIR.mkdir(parents=True, exist_ok=True)
     EVENTS_DIR.mkdir(parents=True, exist_ok=True)
+    PHOTOS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _atomic_write_json(path: Path, data) -> None:
@@ -101,7 +104,7 @@ def _atomic_write_json(path: Path, data) -> None:
     If a CryptoContext key is active the output bytes are encrypted,
     unless the path is the settings file (always plaintext).
     """
-    raw = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
+    raw = json.dumps(data, ensure_ascii=False, separators=(',', ':')).encode("utf-8")
 
     # Encrypt unless this is the settings file
     if path.resolve() != SETTINGS_PATH.resolve():
@@ -201,15 +204,77 @@ def save_garden(garden: dict) -> bool:
 
 
 def delete_garden(garden_id: str) -> bool:
-    """Delete a garden file. Returns True on success."""
+    """Delete a garden file, all its plants' event files, and all photos."""
+    # Collect plant IDs before deleting the garden file
+    garden = load_garden(garden_id)
+    plant_ids = []
+    if isinstance(garden, dict):
+        for p in garden.get("plants", []):
+            pid = p.get("id")
+            if pid:
+                plant_ids.append(pid)
+
+    # Delete the garden file
     path = GARDEN_DIR / f"{garden_id}.json"
     try:
         if path.exists():
             path.unlink()
-        return True
     except Exception:
-        LOG.exception("Failed to delete garden %s", garden_id)
+        LOG.exception("Failed to delete garden file %s", garden_id)
         return False
+
+    # Clean up each plant's events and photos
+    for pid in plant_ids:
+        # Remove events file
+        events_path = EVENTS_DIR / f"{pid}.json"
+        try:
+            if events_path.exists():
+                events_path.unlink()
+        except Exception:
+            LOG.exception("Failed to delete events for plant %s", pid)
+        # Remove photo blobs
+        try:
+            import photo_storage
+            photo_storage.delete_plant_photos(pid)
+        except Exception:
+            LOG.exception("Failed to delete photo blobs for plant %s", pid)
+
+    # Purge photo index entries for all deleted plants in one pass
+    if plant_ids:
+        try:
+            import photo_storage
+            index = photo_storage.load_photo_index()
+            plant_id_set = set(plant_ids)
+            to_remove = [pid for pid, meta in index.items()
+                         if meta.get("plant_id") in plant_id_set]
+            if to_remove:
+                for pid in to_remove:
+                    index.pop(pid, None)
+                photo_storage.save_photo_index(index)
+            # Invalidate PhotoRepository cache if loaded
+            try:
+                from data import PhotoRepository
+                PhotoRepository.invalidate()
+            except ImportError:
+                pass
+        except Exception:
+            LOG.exception("Failed to purge photo index for garden %s", garden_id)
+
+    # Purge plants index entries for all deleted plants
+    if plant_ids:
+        try:
+            plants_index = load_index()
+            changed = False
+            for pid in plant_ids:
+                if pid in plants_index:
+                    plants_index.pop(pid)
+                    changed = True
+            if changed:
+                save_index(plants_index)
+        except Exception:
+            LOG.exception("Failed to purge plants index for garden %s", garden_id)
+
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -315,7 +380,7 @@ def add_plant_to_garden(garden_id: str, plant: dict) -> bool:
 
 
 def remove_plant_from_garden(garden_id: str, plant_id: str) -> bool:
-    """Remove a plant from a garden's plants array and delete its events file."""
+    """Remove a plant from a garden's plants array, its events file, and its photos."""
     garden = load_garden(garden_id)
     if not isinstance(garden, dict):
         return False
@@ -330,6 +395,33 @@ def remove_plant_from_garden(garden_id: str, plant_id: str) -> bool:
             events_path.unlink()
     except Exception:
         LOG.exception("Failed to delete events file for plant %s", plant_id)
+    # Remove photos (blobs + index entries)
+    try:
+        import photo_storage
+        photo_storage.delete_plant_photos(plant_id)
+        index = photo_storage.load_photo_index()
+        to_remove = [pid for pid, meta in index.items()
+                     if meta.get("plant_id") == plant_id]
+        if to_remove:
+            for pid in to_remove:
+                index.pop(pid, None)
+            photo_storage.save_photo_index(index)
+        # Invalidate PhotoRepository cache if loaded
+        try:
+            from data import PhotoRepository
+            PhotoRepository.invalidate()
+        except ImportError:
+            pass
+    except Exception:
+        LOG.exception("Failed to delete photos for plant %s", plant_id)
+    # Remove plants index entry
+    try:
+        plants_index = load_index()
+        if plant_id in plants_index:
+            plants_index.pop(plant_id)
+            save_index(plants_index)
+    except Exception:
+        LOG.exception("Failed to purge plants index for plant %s", plant_id)
     return True
 
 

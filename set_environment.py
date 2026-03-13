@@ -310,7 +310,7 @@ class SetEnvironmentScreen(BaseScreen):
         # only reach here if all fields are valid
         plant = {
             "id": str(uuid.uuid4()),
-            "name": str(pending.get("name", "")),
+            "seedbank": str(pending.get("seedbank", "")),
             "strain": str(pending.get("strain", "")),
             "notes": str(pending.get("notes", "")),
             "genes": str(pending.get("genes", "")),

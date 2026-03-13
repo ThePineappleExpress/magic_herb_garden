@@ -22,9 +22,8 @@ PLANT_SCHEMA = {
     "required": ["id", "strain"],
     "properties": {
         "id": {"type": "string"},
-        "name": {"type": "string"},
-        "strain": {"type": "string"},
         "seedbank": {"type": "string"},
+        "strain": {"type": "string"},
         "genes": {"type": "string"},
         "type": {"type": "string"},
         "notes": {"type": "string"},
@@ -42,6 +41,25 @@ EVENT_SCHEMA = {
         "id": {"type": "string"},
         "ts": {"type": "string"},
         "type": {"type": "string"},
+        "photos": {"type": "array", "items": {"type": "string"}},
+    },
+}
+
+PHOTO_INDEX_ENTRY_SCHEMA = {
+    "type": "object",
+    "required": ["plant_id", "event_id", "garden_id", "mime"],
+    "properties": {
+        "plant_id":      {"type": "string"},
+        "event_id":      {"type": "string"},
+        "garden_id":     {"type": "string"},
+        "original_name": {"type": "string"},
+        "mime":          {"type": "string"},
+        "width":         {"type": "integer"},
+        "height":        {"type": "integer"},
+        "thumb_width":   {"type": "integer"},
+        "thumb_height":  {"type": "integer"},
+        "size_bytes":    {"type": "integer"},
+        "added_ts":      {"type": "string"},
     },
 }
 
@@ -96,3 +114,66 @@ def validate_garden(data: dict) -> bool:
     except ValidationError as exc:
         LOG.warning("Garden validation failed: %s", exc.message)
         return False
+
+
+# ---------------------------------------------------------------------------
+# Error-list validators (return list[str] instead of bool)
+# ---------------------------------------------------------------------------
+
+def check_plant(data: dict) -> list[str]:
+    """Validate *data* against the plant schema, returning a list of errors.
+
+    Returns an empty list when the data is valid.  Falls back to basic
+    structural checks when jsonschema is not installed.
+    """
+    if not isinstance(data, dict):
+        return ["Plant data must be a dict"]
+    if not _HAS_JSONSCHEMA:
+        errors = []
+        if not data.get("id"):
+            errors.append("Missing required field: id")
+        if not data.get("strain"):
+            errors.append("Missing required field: strain")
+        return errors
+    from jsonschema import Draft7Validator
+    v = Draft7Validator(PLANT_SCHEMA)
+    return [e.message for e in sorted(v.iter_errors(data), key=lambda e: list(e.path))]
+
+
+def check_event(data: dict) -> list[str]:
+    """Validate *data* against the event schema, returning a list of errors.
+
+    Returns an empty list when the data is valid.  Falls back to basic
+    structural checks when jsonschema is not installed.
+    """
+    if not isinstance(data, dict):
+        return ["Event data must be a dict"]
+    if not _HAS_JSONSCHEMA:
+        errors = []
+        for field in ("id", "ts", "type"):
+            if not data.get(field):
+                errors.append(f"Missing required field: {field}")
+        return errors
+    from jsonschema import Draft7Validator
+    v = Draft7Validator(EVENT_SCHEMA)
+    return [e.message for e in sorted(v.iter_errors(data), key=lambda e: list(e.path))]
+
+
+def check_garden(data: dict) -> list[str]:
+    """Validate *data* against the garden schema, returning a list of errors.
+
+    Returns an empty list when the data is valid.  Falls back to basic
+    structural checks when jsonschema is not installed.
+    """
+    if not isinstance(data, dict):
+        return ["Garden data must be a dict"]
+    if not _HAS_JSONSCHEMA:
+        errors = []
+        if not data.get("id"):
+            errors.append("Missing required field: id")
+        if not data.get("name"):
+            errors.append("Missing required field: name")
+        return errors
+    from jsonschema import Draft7Validator
+    v = Draft7Validator(GARDEN_SCHEMA)
+    return [e.message for e in sorted(v.iter_errors(data), key=lambda e: list(e.path))]

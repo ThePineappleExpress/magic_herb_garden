@@ -8,6 +8,7 @@ from kivy.uix.recycleview.views import RecycleDataViewBehavior
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.graphics import Color, Rectangle
 from kivy.properties import ListProperty, BooleanProperty
+import hover_manager
 
 
 class TitleBox(BoxLayout):
@@ -36,19 +37,20 @@ class EventBox(BoxLayout):
             self.hover_text_color = app.theme.color_event_box_hover_text
             self.normal_bg_color = app.theme.color_transparent
             self.hover_bg_color = app.theme.color_event_box_hover_bg
-        Window.bind(mouse_pos=self._on_mouse_pos)
+        hover_manager.register(self)
         self.bind(hovered=self._apply_hover_state)
 
     def on_parent(self, instance, parent):
         if parent is None:
-            Window.unbind(mouse_pos=self._on_mouse_pos)
+            hover_manager.unregister(self)
+        else:
+            hover_manager.register(self)
 
-    def _on_mouse_pos(self, _window, pos):
-        if not self.get_root_window():
-            return
-        is_hover = self.collide_point(*self.to_widget(*pos))
-        if self.hovered != is_hover:
-            self.hovered = is_hover
+    def on_enter(self):
+        self.hovered = True
+
+    def on_leave(self):
+        self.hovered = False
 
     def add_widget(self, widget, *args, **kwargs):
         super().add_widget(widget, *args, **kwargs)

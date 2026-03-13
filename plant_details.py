@@ -6,6 +6,8 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.screenmanager import Screen
 from kivy.clock import Clock
 
+from uuid import uuid4
+
 from helpers import get_difference_days, go_to_add_event, go_to_garden, go_to_timeline
 from storage import load_plant_events
 from constants import (
@@ -16,6 +18,8 @@ from boxes import ItemBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox,
 from buttons import ButtonRed, ButtonGreen, ButtonYellow, ButtonTransparent
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from screens import BaseScreen
+from photo_widgets import PhotoStrip, PhotoViewPopup, PhotoPickerPopup, bytes_to_texture
+from data import PhotoRepository
 import lang
 
 class HorizontalScrollView(ScrollView):
@@ -163,26 +167,44 @@ class PlantDetailsScreen(BaseScreen):
         self.events_container.bind(minimum_width=self.events_container.setter("width"))
         self.events_scroll.add_widget(self.events_container)
         scroll_events.add_widget(self.events_scroll)
-        add_event_box = WrapperBox(orientation="horizontal", size_hint_x=0.1)
+        add_event_box = WrapperBox(orientation="vertical", size_hint_x=0.1)
         scroll_events.add_widget(add_event_box)
+
+        # "+" button — always creates a new event
         add_event_button = ButtonYellow(text=lang.BUTTON_PLUS)
         add_event_button.font_size = app.theme.logo_size_1
         add_event_button.font_name = app.theme.font_logo_1
         def safe_go_to_add_event(instance):
             plant = self.plant or {}
-            # Patch: ensure plant_id is present for AddEventScreen
             if 'plant_id' not in plant and 'id' in plant:
                 plant = dict(plant)
                 plant['plant_id'] = plant['id']
             go_to_add_event(self, plant)
-            # If we have a last-event-today, pass it to AddEventScreen for editing
-            if self._last_event_today:
-                add_event_screen = app.screen.get_screen('add_event')
-                add_event_screen._selected_event_data = self._last_event_today
         add_event_button.bind(on_release=safe_go_to_add_event)
         self.add_event_button = add_event_button
-        self._last_event_today = None
         add_event_box.add_widget(add_event_button)
+
+        # "Edit" button — edits the currently selected event
+        edit_event_button = ButtonGreen(
+            text=lang.BUTTON_EDIT if hasattr(lang, 'BUTTON_EDIT') else "Edit",
+        )
+        edit_event_button.font_size = app.theme.body_size
+        edit_event_button.font_name = app.theme.font_body
+        edit_event_button.disabled = True  # enabled when an event is selected
+        def safe_go_to_edit_event(instance):
+            event_data = getattr(self, '_selected_event_data', None)
+            if not event_data:
+                return
+            plant = self.plant or {}
+            if 'plant_id' not in plant and 'id' in plant:
+                plant = dict(plant)
+                plant['plant_id'] = plant['id']
+            go_to_add_event(self, plant)
+            add_event_screen = app.screen.get_screen('add_event')
+            add_event_screen.enter_edit_mode(event_data)
+        edit_event_button.bind(on_release=safe_go_to_edit_event)
+        self.edit_event_button = edit_event_button
+        add_event_box.add_widget(edit_event_button)
         content_wrapper.add_widget(scroll_events)
         spacer_box = SpacerBox(size_hint_y=0.02)
         content_wrapper.add_widget(spacer_box)
@@ -209,7 +231,7 @@ class PlantDetailsScreen(BaseScreen):
         app = App.get_running_app()
         plant = self.plant or {}
         self.genes = plant.get("genes", "")
-        self.name_label.text = " | ".join([plant.get("name", ""), self.genes])
+        self.name_label.text = " | ".join([plant.get("seedbank", ""), self.genes])
         
         self.strain_label.text = plant.get("strain", "")
         genes = (self.genes or "").strip().lower()
@@ -231,7 +253,10 @@ class PlantDetailsScreen(BaseScreen):
             self._selected_event_item.selected = False
         item.selected = True
         self._selected_event_item = item
-        self._selected_event_data = event 
+        self._selected_event_data = event
+        # Enable edit button when an event is selected
+        if hasattr(self, 'edit_event_button'):
+            self.edit_event_button.disabled = False
         self.selected_event_view()
 
     def _load_and_display_events(self):
@@ -345,31 +370,17 @@ class PlantDetailsScreen(BaseScreen):
             last_box, last_event = event_boxes[-1]
             Clock.schedule_once(lambda *_: self._select_event_item(last_box, last_event), 0)
 
-        # Edit-last-event: if last event was today, change + to "Edit"
-        app = App.get_running_app()
-        last_ts = last.get("ts", "")
-        last_date_str = str(last_ts)[:10] if last_ts else ""
-        today_str = datetime.date.today().isoformat()
-        if last_date_str == today_str and last.get("type") != EVENT_HARVEST:
-            self._last_event_today = last
-            if hasattr(self, 'add_event_button'):
-                self.add_event_button.text = lang.BUTTON_EDIT if hasattr(lang, 'BUTTON_EDIT') else "Edit"
-                self.add_event_button.font_size = app.theme.body_size
-                self.add_event_button.font_name = app.theme.font_body
-        else:
-            self._last_event_today = None
-            if hasattr(self, 'add_event_button'):
-                self.add_event_button.text = lang.BUTTON_PLUS
-                self.add_event_button.font_size = app.theme.logo_size_1
-                self.add_event_button.font_name = app.theme.font_logo_1
-
         # Disable add-event if plant has been harvested
+        app = App.get_running_app()
         has_harvest = any(
             isinstance(e, dict) and e.get("type") == EVENT_HARVEST
             for e in events
         )
         if hasattr(self, 'add_event_button'):
             self.add_event_button.disabled = has_harvest
+        # Edit button starts disabled; gets enabled when user selects an event
+        if hasattr(self, 'edit_event_button'):
+            self.edit_event_button.disabled = True
 
     def get_nutrient(self, plant_dict, key):
         deficiencies = plant_dict.get("deficiencies", {})
@@ -410,9 +421,9 @@ class PlantDetailsScreen(BaseScreen):
         event = getattr(self, '_selected_event_data', None) 
         if not event:
             return
-        event_date = event.get("ts", "")
+        event_date = event.get("ts") or ""
         formatter = []
-        split_date = event_date.split("-")
+        split_date = event_date.split("-") if event_date else []
         self.days_passed = get_difference_days(event.get("ts", ""), plant.get("date_planted", ""))
         self.days_passed_value.text = str(self.days_passed) if self.days_passed is not None else "–"
         for i in split_date[::-1]:
@@ -506,12 +517,12 @@ class PlantDetailsScreen(BaseScreen):
 
         # Define event info fields: (title, value, source_dict, key, special)
         event_info_fields = [
-            ("Height", plant, "plant_height", False),
-            ("Nodes", plant, "num_nodes", False),
-            ("Spacing", plant, "node_spacing", False),
-            ("Main Stems", plant, "main_stem_number", False),
-            ("Color", plant, "leaf_color", False),
-            ("Morphology", plant, "leaf_morphology", False),
+            ("Height", plant_obs, "plant_height", False),
+            ("Nodes", plant_obs, "num_nodes", False),
+            ("Spacing", plant_obs, "node_spacing", False),
+            ("Main Stems", plant_obs, "main_stem_number", False),
+            ("Color", plant_obs, "leaf_color", False),
+            ("Morphology", plant_obs, "leaf_morphology", False),
             ("Air Temp", environment, "air_temp_c", False),
             ("Humidity", environment, "rh_percent", False),
             ("VPD", environment, "vpd_kpa", False),
@@ -570,7 +581,7 @@ class PlantDetailsScreen(BaseScreen):
         main_data_column = WrapperBox(orientation="horizontal")
         event_details.add_widget(main_data_column)
 
-        water_and_food_box = WrapperBox(orientation="vertical", size_hint_x=0.4)
+        water_and_food_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
         main_data_column.add_widget(water_and_food_box)
 
         # Watering/Feeding fields (no units, looped)
@@ -669,7 +680,7 @@ class PlantDetailsScreen(BaseScreen):
             spacer = SpacerBox(size_hint_y=0.2)
             water_and_food_box.add_widget(spacer)
 
-        right_column_box = WrapperBox(orientation="vertical", size_hint_x=0.3)
+        right_column_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
         main_data_column.add_widget(right_column_box)
 
         nutrients_box = WrapperBox(orientation="vertical", size_hint_y = 0.4)
@@ -729,7 +740,145 @@ class PlantDetailsScreen(BaseScreen):
         notes_text.color = app.theme.color_field_value
         notes_text_box.add_widget(notes_text)
 
+        # -- Photo column (third column) --
+        photo_column_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
+        main_data_column.add_widget(photo_column_box)
+
+        photo_title_box = ContentBox(orientation="horizontal", size_hint_y=0.1)
+        photo_column_box.add_widget(photo_title_box)
+        photo_title = FieldLabel(text=lang.PHOTOS_TITLE, valign="bottom", halign="left")
+        photo_title.color = app.theme.color_field_label
+        photo_title.font_size = app.theme.subtitle_size
+        photo_title_box.add_widget(photo_title)
+
+        event_id = event.get("id", "")
+        plant_id = str(plant.get("id") or plant.get("plant_id") or "")
+        photo_metas = PhotoRepository.list_for_event(event_id, plant_id=plant_id) if event_id else []
+
+        self._photo_strip = PhotoStrip(
+            size_hint_y=0.7,
+            on_select=self._on_photo_select,
+            on_double_click=self._on_photo_double_click,
+        )
+        self._photo_strip.set_photos(
+            photo_metas,
+            load_thumb_fn=PhotoRepository.load_thumb_bytes,
+        )
+        photo_column_box.add_widget(self._photo_strip)
+
+        photo_buttons_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
+        photo_column_box.add_widget(photo_buttons_box)
+
+        view_gallery_btn = ButtonGreen(text=lang.PHOTO_VIEW_GALLERY, size_hint_x=0.34)
+        view_gallery_btn.font_size = app.theme.small_size
+        view_gallery_btn.bind(on_release=lambda *_: self._go_to_photo_gallery())
+        photo_buttons_box.add_widget(view_gallery_btn)
+
+        add_photo_btn = ButtonYellow(text=lang.PHOTO_ADD, size_hint_x=0.33)
+        add_photo_btn.font_size = app.theme.small_size
+        add_photo_btn.bind(on_release=lambda *_: self._open_file_picker())
+        photo_buttons_box.add_widget(add_photo_btn)
+
+        delete_photo_btn = ButtonRed(text=lang.PHOTO_DELETE, size_hint_x=0.33)
+        delete_photo_btn.font_size = app.theme.small_size
+        delete_photo_btn.bind(on_release=lambda *_: self._delete_selected_photo())
+        photo_buttons_box.add_widget(delete_photo_btn)
+
         self.info_box.add_widget(event_details)
 
+    def _on_photo_select(self, photo_id):
+        """Track the currently selected photo in the event strip."""
+        self._selected_photo_id = photo_id
 
+    def _delete_selected_photo(self):
+        """Delete the currently selected photo after confirmation."""
+        if not self._selected_photo_id:
+            return
+        app = App.get_running_app()
+        photo_id = self._selected_photo_id
 
+        def _do_delete():
+            meta = PhotoRepository.get_meta(photo_id)
+            if not meta:
+                app.screen.current = "plant_details"
+                return
+            plant_id = meta.get("plant_id", "")
+            PhotoRepository.detach(plant_id, photo_id)
+            self._photo_strip.remove_thumbnail(photo_id)
+            self._selected_photo_id = ""
+            app.screen.current = "plant_details"
+
+        app.previous_screen = "plant_details"
+        are_you_sure = app.screen.get_screen("are_you_sure")
+        are_you_sure.prompt_text = lang.MSG_CONFIRM_DELETE_PHOTO
+        are_you_sure.confirm_callback = _do_delete
+        app.screen.current = "are_you_sure"
+
+    def _on_photo_double_click(self, photo_id, plant_id):
+        """Open full-size photo viewer on double-click (same-event photos)."""
+        raw = PhotoRepository.load_photo_bytes(plant_id, photo_id)
+        if raw:
+            # Build photo list from the current event's photos
+            event = getattr(self, '_selected_event_data', None)
+            photo_list = []
+            current_index = 0
+            if event:
+                event_id = event.get("id", "")
+                if event_id:
+                    metas = PhotoRepository.list_for_event(event_id, plant_id=plant_id)
+                    photo_list = [(m["id"], m["plant_id"]) for m in metas]
+                    for i, (pid, _) in enumerate(photo_list):
+                        if pid == photo_id:
+                            current_index = i
+                            break
+            popup = PhotoViewPopup(
+                image_bytes=raw,
+                photo_list=photo_list,
+                current_index=current_index,
+            )
+            popup.open()
+
+    def _go_to_photo_gallery(self):
+        """Navigate to the per-plant photo gallery screen."""
+        app = App.get_running_app()
+        plant = self.plant or {}
+        app.previous_screen = "plant_details"
+        gallery = app.screen.get_screen("photo_gallery")
+        gallery.set_plant(plant)
+        app.screen.current = "photo_gallery"
+
+    def _open_file_picker(self):
+        """Open a file picker to attach a photo to the current event."""
+        app = App.get_running_app()
+        event = getattr(self, '_selected_event_data', None)
+        plant = self.plant or {}
+        if not event or not plant.get("id"):
+            return
+
+        def _on_file_selected(filepath):
+            try:
+                image_bytes = filepath.read_bytes()
+            except Exception:
+                return
+            photo_id = str(uuid4())
+            plant_id = str(plant["id"])
+            event_id = str(event["id"])
+            garden_id = str(app.current_garden_id or "")
+
+            ok = PhotoRepository.attach(
+                plant_id, event_id, garden_id,
+                photo_id, image_bytes, filepath.name,
+            )
+            if ok:
+                # Add photo ID to event's photos list
+                photos = event.setdefault("photos", [])
+                photos.append(photo_id)
+                from data import EventRepository
+                EventRepository.save(plant_id, {
+                    "plant_id": plant_id,
+                    "events": load_plant_events(plant_id).get("events", []),
+                })
+                # Refresh the view
+                self.selected_event_view()
+
+        PhotoPickerPopup(on_file_selected=_on_file_selected).open()

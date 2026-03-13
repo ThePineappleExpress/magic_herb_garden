@@ -43,6 +43,11 @@ def go_to_add_event(instance, plant):
     app.previous_screen = app.screen.current
     app.screen.current = "add_event"
 
+def go_to_add_garden(*args):
+    app = App.get_running_app()
+    app.previous_screen = app.screen.current
+    app.screen.current = "add_garden"
+
 def go_to_timeline(instance, plant):
     app = App.get_running_app()
     timeline_screen = app.screen.get_screen("timeline_view")
@@ -145,7 +150,15 @@ def verify_password(password: str, stored: dict) -> bool:
     """
     import hmac
 
-    salt = bytes.fromhex(stored.get("salt", ""))
+    salt_hex = stored.get("salt", "")
+    if not salt_hex:
+        LOG.error("verify_password: missing or empty salt in stored hash")
+        return False
+    try:
+        salt = bytes.fromhex(salt_hex)
+    except ValueError:
+        LOG.error("verify_password: invalid hex in salt")
+        return False
     expected = stored.get("hash", "")
     iterations = stored.get("iterations", _PBKDF2_ITERATIONS)
 
@@ -157,7 +170,13 @@ def verify_password(password: str, stored: dict) -> bool:
 
 def derive_encryption_key(password: str, stored: dict) -> bytes:
     """Derive the 32-byte AES-256 encryption key from the password and stored enc_salt."""
-    enc_salt = bytes.fromhex(stored.get("enc_salt", ""))
+    enc_salt_hex = stored.get("enc_salt", "")
+    if not enc_salt_hex:
+        raise ValueError("derive_encryption_key: missing or empty enc_salt in stored hash")
+    try:
+        enc_salt = bytes.fromhex(enc_salt_hex)
+    except ValueError:
+        raise ValueError("derive_encryption_key: invalid hex in enc_salt")
     iterations = stored.get("iterations", _PBKDF2_ITERATIONS)
 
     return hashlib.pbkdf2_hmac(

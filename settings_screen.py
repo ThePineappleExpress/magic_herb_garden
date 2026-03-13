@@ -14,7 +14,7 @@ from buttons import ButtonGreen, ButtonRed, ButtonYellow, PasswordEyeToggle
 from effects import shake_and_flash
 from helpers import derive_encryption_key, hash_password, verify_password
 from labels import FieldLabel, TitleLabel
-from screens import BaseScreen
+from screens import BaseScreen, invalidate_shader_prefs_cache
 from text_inputs import MedTextInput
 from ui_builders import create_initial_layout
 import lang
@@ -29,6 +29,8 @@ class SettingsScreen(BaseScreen):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self._origin_screen = None
+        self._saved_language = None
 
         app = App.get_running_app()
         title_text = lang.SCREEN_SETTINGS_TITLE.format(color=TitleLabel().hex_color)
@@ -77,9 +79,11 @@ class SettingsScreen(BaseScreen):
             values=[lang.SETTINGS_SHADER_ON, lang.SETTINGS_SHADER_OFF],
             size_hint_x=0.3,
         )
+        self.shader_spinner.bind(text=self._on_shader_toggle_changed)
         shader_input.add_widget(self.shader_spinner)
 
         self.shader_style_spinner = Spinner(text="", values=[], size_hint_x=0.3)
+        self.shader_style_spinner.bind(text=self._on_shader_style_changed)
         shader_input.add_widget(self.shader_style_spinner)
 
         reload_btn = ButtonYellow(text=lang.SETTINGS_SHADER_RELOAD, size_hint_x=0.2)
@@ -181,7 +185,15 @@ class SettingsScreen(BaseScreen):
     # -- Lifecycle --------------------------------------------------------------
 
     def on_enter(self):
+        super().on_enter()
+        app = App.get_running_app()
+        # Save the screen we came from (skip "are_you_sure" and "settings" itself)
+        prev = app.previous_screen
+        if prev and prev not in ("are_you_sure", "settings"):
+            self._origin_screen = prev
+
         settings = storage.load_settings()
+        self._saved_language = settings.get("language", "english")
 
         # Populate language spinner
         try:
@@ -189,7 +201,7 @@ class SettingsScreen(BaseScreen):
             self.lang_spinner.values = get_available_languages()
         except Exception:
             self.lang_spinner.values = ["English"]
-        current_lang = settings.get("language", "english").capitalize()
+        current_lang = self._saved_language.capitalize()
         if current_lang in self.lang_spinner.values:
             self.lang_spinner.text = current_lang
 
@@ -235,7 +247,43 @@ class SettingsScreen(BaseScreen):
         pass  # Applied on save
 
     def _on_theme_changed(self, spinner, text):
-        pass  # Applied on save
+        if not text:
+            return
+        from bin.themes import load_theme, apply_theme, get_shader_colors
+        invalidate_shader_prefs_cache()
+        app = App.get_running_app()
+        theme_data = load_theme(text)
+        apply_theme(app.theme, theme_data)
+        shader_name = self.shader_style_spinner.text or None
+        color_a, color_b = get_shader_colors(theme_data, shader_name)
+        for screen in app.screen.screens:
+            if hasattr(screen, 'update_shader_colors'):
+                screen.update_shader_colors(color_a, color_b)
+
+    def _on_shader_style_changed(self, spinner, text):
+        if not text:
+            return
+        self._apply_shader_live()
+
+    def _on_shader_toggle_changed(self, spinner, text):
+        self._apply_shader_live()
+
+    def _apply_shader_live(self):
+        invalidate_shader_prefs_cache()
+        app = App.get_running_app()
+        shader_name = self.shader_style_spinner.text
+        shader_enabled = self.shader_spinner.text == lang.SETTINGS_SHADER_ON
+
+        from bin.themes import load_theme, get_shader_colors
+        theme_name = self.theme_spinner.text or "green"
+        theme_data = load_theme(theme_name)
+        color_a, color_b = get_shader_colors(theme_data, shader_name)
+
+        for screen in app.screen.screens:
+            if hasattr(screen, 'toggle_shader'):
+                screen.toggle_shader(shader_enabled, shader_name, color_a, color_b)
+                if shader_enabled and hasattr(screen, 'set_shader'):
+                    screen.set_shader(shader_name, color_a, color_b)
 
     def _on_shader_reload(self, *args):
         app = App.get_running_app()
@@ -243,6 +291,7 @@ class SettingsScreen(BaseScreen):
         shader_enabled = self.shader_spinner.text == lang.SETTINGS_SHADER_ON
 
         # Persist preference
+        invalidate_shader_prefs_cache()
         settings = storage.load_settings()
         settings["shader"] = shader_name
         settings["shader_enabled"] = shader_enabled
@@ -312,7 +361,15 @@ class SettingsScreen(BaseScreen):
 
         storage.save_settings(settings)
 
-        # If theme changed, apply new theme colors and push shader colors
+        # If language changed, restart the app
+        new_lang = settings["language"]
+        if self._saved_language and new_lang != self._saved_language:
+            import sys
+            import os
+            os.execv(sys.executable, [sys.executable] + sys.argv)
+            return
+
+        # Apply theme colors and push shader colors
         from bin.themes import load_theme, get_shader_colors, apply_theme
         theme_data = load_theme(settings["theme"])
         app = App.get_running_app()
@@ -399,7 +456,5 @@ class SettingsScreen(BaseScreen):
 
     def _on_back(self, *args):
         app = App.get_running_app()
-        if app.previous_screen:
-            app.screen.current = app.previous_screen
-        else:
-            app.screen.current = "garden_view"
+        target = self._origin_screen or "garden_view"
+        app.screen.current = target

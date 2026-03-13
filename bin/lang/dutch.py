@@ -350,6 +350,17 @@ CSV_EXPORT_SUCCESS = "CSV-export voltooid:"
 CSV_EXPORT_ERROR = "CSV-export mislukt:"
 CSV_EXPORT_NO_GARDENS = "Selecteer ten minste één tuin om te exporteren."
 
+# Photos
+PHOTOS_TITLE = "Foto's"
+PHOTO_ADD = "Foto toevoegen"
+PHOTO_VIEW = "Foto bekijken"
+PHOTO_DELETE = "Foto verwijderen"
+PHOTO_VIEW_GALLERY = "Galerij\nbekijken"
+PHOTO_SHOW_GALLERY = "Galerij\ntonen"
+PHOTO_NONE = "Geen foto's"
+MSG_CONFIRM_DELETE_PHOTO = "Weet je zeker dat je deze foto wilt verwijderen?"
+PHOTO_GALLERY_TITLE = "Jouw [color={color}]GALERIJ[/color]"
+
 import sys
 
 def get(key: str) -> str:

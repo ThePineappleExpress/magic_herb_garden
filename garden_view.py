@@ -15,12 +15,12 @@ from kivy.uix.widget import Widget
 from kivy.graphics.svg import Svg
 from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale
 
-from labels import TitleLabel, FieldLabel
-from storage import get_plants_for_garden, save_plants_for_garden, remove_plant_from_garden, load_plant_events
+from labels import TitleLabel, FieldLabel, ListSubLabel
+from storage import get_plants_for_garden, save_plants_for_garden, remove_plant_from_garden
 import lang
 from helpers import on_plant_seed, get_difference_days
 from boxes import TitleBox, WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox, SelectableBoxLayout, SelectableRecycleBoxLayout
-from buttons import ButtonRed, ButtonGreen, ButtonYellow
+from buttons import ButtonRed, ButtonGreen, ButtonYellow, SortDirButton
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from custom_dropdown import CustomDropdown
 from screens import BaseScreen
@@ -117,14 +117,17 @@ class GardenViewScreen(BaseScreen):
 
         header = TitleBox(orientation="horizontal", size_hint_y=0.1)
 
-        spacer = SpacerBox(size_hint_x=0.8)
+        spacer = SpacerBox(size_hint_x=0.7)
         header.add_widget(spacer)
-        side_menu = ItemBox(orientation='horizontal', size_hint_x=0.2)
+        side_menu = ItemBox(orientation='horizontal', size_hint_x=0.3)
+        gardens_btn = ButtonYellow(text=lang.VIEW_GARDENS, size_hint_x=0.1)
+        gardens_btn.bind(on_release=self.on_garden_exit)
+        side_menu.add_widget(gardens_btn)
         option_btn = ButtonYellow(text=lang.OPTIONS, size_hint_x=0.1)
         option_btn.bind(on_release=self.on_options)
         side_menu.add_widget(option_btn)
-        exit_btn = ButtonRed(text=lang.EXIT_GARDEN, size_hint_x=0.1)
-        exit_btn.bind(on_release=self.on_garden_exit)
+        exit_btn = ButtonRed(text=lang.EXIT_APP, size_hint_x=0.1)
+        exit_btn.bind(on_release=self.on_exit_app)
         side_menu.add_widget(exit_btn)
 
         header.add_widget(side_menu)
@@ -145,7 +148,7 @@ class GardenViewScreen(BaseScreen):
         ]
         self._sort_label_to_key = {
             lang.SORT_NAME: "strain",
-            lang.SORT_BREEDER: "name",
+            lang.SORT_BREEDER: "seedbank",
             lang.SORT_DATE_PLANTED: "date_planted",
             lang.SORT_DAYS_TO_HARVEST: "harvest_status",
             lang.SORT_DAYS_TO_WATER: "last_watering",
@@ -163,8 +166,8 @@ class GardenViewScreen(BaseScreen):
         toolbar.add_widget(self.sort_dropdown)
 
         # Asc / Desc toggle
-        self.sort_dir_btn = ToggleButton(
-            text=lang.SORT_ASCENDING, size_hint_x=None, width="100dp",
+        self.sort_dir_btn = SortDirButton(
+            size_hint_x=None, width="44dp",
         )
         self.sort_dir_btn.bind(on_press=self._on_sort_dir_toggle)
         toolbar.add_widget(self.sort_dir_btn)
@@ -192,7 +195,41 @@ class GardenViewScreen(BaseScreen):
 
         spacer_box = SpacerBox(size_hint_y=0.02)
         content_wrapper.add_widget(spacer_box)
-        
+
+        # ── Column legend row ──
+        legend = ContentBox(orientation="horizontal", size_hint_y=None, height="28dp")
+        legend.add_widget(SpacerBox(size_hint_x=0.02))  # match list_area left spacer
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_GENES, size_hint_x=0.1,
+            halign="center", valign="middle",
+        ))
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_PLANT, size_hint_x=0.5,
+            halign="left", valign="middle", padding=(10, 0, 0, 0),
+        ))
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_MEDIUM, size_hint_x=0.10,
+            halign="center", valign="middle",
+        ))
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_LAST_WATER, size_hint_x=0.11,
+            halign="center", valign="middle",
+        ))
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_NEXT_WATER, size_hint_x=0.13,
+            halign="center", valign="middle",
+        ))
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_FLOWER, size_hint_x=0.14,
+            halign="center", valign="middle",
+        ))
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_HARVEST, size_hint_x=0.14,
+            halign="center", valign="middle",
+        ))
+        legend.add_widget(SpacerBox(size_hint_x=0.02))  # match list_area right spacer
+        content_wrapper.add_widget(legend)
+
         garden_list = ItemBox(orientation="horizontal", size_hint_y=1)
 
         spacer_box = SpacerBox(size_hint_x=0.02)
@@ -251,26 +288,39 @@ class GardenViewScreen(BaseScreen):
         app.previous_screen = app.screen.current
         app.screen.current = "select_garden"
 
+    def on_exit_app(self, instance):
+        app = App.get_running_app()
+        are_you_sure = app.screen.get_screen("are_you_sure")
+        are_you_sure.confirm_callback = lambda *_: sys.exit(0)
+        are_you_sure.prompt_text = lang.MSG_CONFIRM_EXIT
+        app.previous_screen = app.screen.current
+        app.screen.current = "are_you_sure"
+
     def refresh_plants(self):
         app = App.get_running_app()
         garden_id = getattr(app, 'current_garden_id', None)
         plants = get_plants_for_garden(garden_id) if garden_id else []
         today = date.today()
+
+        # Single read: load the lightweight index instead of N event files
+        from storage import load_index
+        index = load_index()
+
         data = []
         for p in plants:
             if not isinstance(p, dict):
                 continue
             # basic text fields
             plant_id = p.get("id")
-            name = p.get("name", "")
+            name = p.get("seedbank") or p.get("name", "")
             strain = p.get("strain", "")
             notes = p.get("notes", "")
             genes = p.get("genes", "")
             date_planted  = p.get("date_planted", "")
-            self.plant_event = load_plant_events(str(plant_id)) if plant_id else None
-            events = (self.plant_event or {}).get("events", [])
-            last_event = events[-1] if events else None
-            last_event_ts = last_event.get("ts") if isinstance(last_event, dict) else None
+
+            # Use the plants index for last_event_ts instead of loading full event files
+            idx_entry = index.get(str(plant_id), {}) if plant_id else {}
+            last_event_ts = idx_entry.get("last_event_ts")
 
             last_watering = get_difference_days(today, last_event_ts) if last_event_ts else None
             if last_watering is None:
@@ -312,7 +362,7 @@ class GardenViewScreen(BaseScreen):
                     days_left = est_f - days_since
                     if days_left > 0:
                         flower_status = f"{days_left}"
-                    elif days_left <= 0 and harvest_status != "Harvested!":
+                    elif days_left <= 0 and harvest_status != lang.STATUS_HARVESTED:
                         flower_status = lang.STATUS_FLOWERING
                     elif days_left <= 0 and harvest_status == lang.STATUS_HARVESTED:
                         flower_status = lang.STATUS_HARVESTED
@@ -333,7 +383,7 @@ class GardenViewScreen(BaseScreen):
             data.append({
                 "id": plant_id,
                 "genes": genes,
-                "name": name,
+                "seedbank": name,
                 "strain": strain,
                 "notes": notes,
                 "medium": medium,
@@ -358,7 +408,7 @@ class GardenViewScreen(BaseScreen):
             items = [
                 p for p in items
                 if search_text in (p.get("strain") or "").lower()
-                or search_text in (p.get("name") or "").lower()
+                or search_text in (p.get("seedbank") or "").lower()
                 or search_text in (p.get("notes") or "").lower()
                 or search_text in (p.get("medium") or "").lower()
                 or search_text in (p.get("genes") or "").lower()
@@ -394,12 +444,7 @@ class GardenViewScreen(BaseScreen):
         self._apply_filters()
 
     def _on_sort_dir_toggle(self, instance):
-        if instance.state == "down":
-            self._sort_ascending = False
-            instance.text = lang.SORT_DESCENDING
-        else:
-            self._sort_ascending = True
-            instance.text = lang.SORT_ASCENDING
+        self._sort_ascending = instance.state != "down"
         self._apply_filters()
 
     def _on_search_text(self, instance, value):

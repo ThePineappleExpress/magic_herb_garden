@@ -32,7 +32,13 @@ def load_catalog():
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-SEED_CATALOG = load_catalog()
+_SEED_CATALOG = None
+
+def _get_catalog():
+    global _SEED_CATALOG
+    if _SEED_CATALOG is None:
+        _SEED_CATALOG = load_catalog()
+    return _SEED_CATALOG
 
 
 class SowSeedScreen(BaseScreen):
@@ -102,9 +108,6 @@ class SowSeedScreen(BaseScreen):
         self.breeder_suggestion_index = -1
         self.breeder_suggestion = ""
         self.input_plant_name.bind(text=self.on_breeder_text)
-
-        # listen for keyboard
-        Window.bind(on_key_down=self.on_key_down)
 
         plant_description = ContentBox(orientation="horizontal")
         # reserve vertical space so multi-line input is visible
@@ -191,6 +194,14 @@ class SowSeedScreen(BaseScreen):
         # add everything to this Screen
         self.add_widget(sow_seed_screen)
 
+    def on_enter(self):
+        super().on_enter()
+        Window.bind(on_key_down=self.on_key_down)
+
+    def on_leave(self):
+        super().on_leave()
+        Window.unbind(on_key_down=self.on_key_down)
+
     def clear_fields(self):
         # Text inputs
         self.input_plant_name.text = ""
@@ -245,7 +256,7 @@ class SowSeedScreen(BaseScreen):
             return
         app = App.get_running_app()
         app.pending_plant_data = {
-            "name": self.input_plant_name.text.strip(),
+            "seedbank": self.input_plant_name.text.strip(),
             "strain": self.input_plant_strain.text.strip(),
             "notes": self.input_plant_description.text.strip(),
             "genes": (
@@ -543,7 +554,7 @@ class SowSeedScreen(BaseScreen):
 
         # case-insensitive exact match
         rec = next(
-            (r for r in SEED_CATALOG
+            (r for r in _get_catalog()
             if r.get("strain", "").strip().lower() == lower),
             None
         )

@@ -79,6 +79,7 @@ class PasswordCheckScreen(BaseScreen):
         screen_wrapper.add_widget(SpacerBox(size_hint_x=0.1))
 
     def on_enter(self):
+        super().on_enter()
         self.pw_input.text = ""
         self._eye.reset()
         self.status_label.text = ""

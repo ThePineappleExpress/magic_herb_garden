@@ -1,6 +1,8 @@
 """select_garden.py - Multi-garden selection screen."""
 
+import sys
 import logging
+from datetime import date
 
 from kivy.app import App
 from kivy.properties import ObjectProperty
@@ -11,10 +13,11 @@ from boxes import (
     TitleBox, WrapperBox, ContentBox, ItemBox, SpacerBox,
     RedBox, YellowBox, GreenBox, SelectableBoxLayout, SelectableRecycleBoxLayout,
 )
-from buttons import ButtonGreen, ButtonRed, ButtonYellow
-from labels import FieldLabel, TitleLabel
+from buttons import ButtonGreen, ButtonRed, ButtonYellow, SortDirButton
+from labels import FieldLabel, TitleLabel, ListSubLabel
 from text_inputs import MedTextInput
 from custom_dropdown import CustomDropdown
+from helpers import go_to_add_garden
 from screens import BaseScreen
 import lang
 import storage
@@ -72,6 +75,9 @@ class SelectGardenScreen(BaseScreen):
         settings_btn = ButtonYellow(text=lang.OPTIONS, size_hint_x=0.1)
         settings_btn.bind(on_press=self._on_settings)
         side_menu.add_widget(settings_btn)
+        exit_btn = ButtonRed(text=lang.EXIT_APP, size_hint_x=0.1)
+        exit_btn.bind(on_release=self._on_exit_app)
+        side_menu.add_widget(exit_btn)
         header.add_widget(side_menu)
         content_wrapper.add_widget(header)
 
@@ -97,8 +103,8 @@ class SelectGardenScreen(BaseScreen):
         self.sort_dropdown.bind(selected=self._on_sort_changed)
         toolbar.add_widget(self.sort_dropdown)
 
-        self.sort_dir_btn = ToggleButton(
-            text=lang.SORT_ASCENDING, size_hint_x=None, width="100dp",
+        self.sort_dir_btn = SortDirButton(
+            size_hint_x=None, width="44dp",
         )
         self.sort_dir_btn.bind(on_press=self._on_sort_dir_toggle)
         toolbar.add_widget(self.sort_dir_btn)
@@ -112,9 +118,37 @@ class SelectGardenScreen(BaseScreen):
         self.search_input.bind(text=self._on_search_text)
         toolbar.add_widget(self.search_input)
 
+        toolbar.add_widget(SpacerBox(size_hint_x=0.05))
+
+        # Active-only toggle
+        self.active_toggle = ToggleButton(
+            text=lang.FILTER_ACTIVE_ONLY, size_hint_x=0.2,
+        )
+        self.active_toggle.bind(on_press=self._on_active_toggle)
+        toolbar.add_widget(self.active_toggle)
+
         content_wrapper.add_widget(toolbar)
 
         content_wrapper.add_widget(SpacerBox(size_hint_y=0.02))
+
+        # ── Column legend row ──
+        legend = ContentBox(orientation="horizontal", size_hint_y=None, height="28dp")
+        legend.add_widget(SpacerBox(size_hint_x=0.02))  # match list_area left spacer
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_GARDEN_NAME, size_hint_x=0.5,
+            halign="left", valign="middle", padding=(10, 0, 0, 0),
+        ))
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_GARDEN_TYPE, size_hint_x=0.2,
+            halign="center", valign="middle",
+        ))
+        legend.add_widget(ListSubLabel(
+            text=lang.LEGEND_PLANT_COUNT, size_hint_x=0.2,
+            halign="center", valign="middle",
+        ))
+        legend.add_widget(SpacerBox(size_hint_x=0.1))   # match item trailing spacer
+        legend.add_widget(SpacerBox(size_hint_x=0.02))  # match list_area right spacer
+        content_wrapper.add_widget(legend)
 
         # Garden list (RecycleView)
         list_area = ItemBox(orientation="horizontal", size_hint_y=1)
@@ -131,7 +165,7 @@ class SelectGardenScreen(BaseScreen):
         footer = ContentBox(orientation="horizontal", size_hint_y=0.1)
         footer.add_widget(SpacerBox(size_hint_x=0.6))
         add_btn = ButtonGreen(text=lang.ADD_GARDEN)
-        add_btn.bind(on_press=self._on_add_garden)
+        add_btn.bind(on_press=go_to_add_garden)
         footer.add_widget(add_btn)
         select_btn = ButtonYellow(text=lang.ENTER_GARDEN)
         select_btn.bind(on_press=self._on_select)
@@ -147,17 +181,25 @@ class SelectGardenScreen(BaseScreen):
     # -- Lifecycle ---------------------------------------------------------------
 
     def on_enter(self):
+        super().on_enter()
         self._refresh_gardens()
 
     def _refresh_gardens(self):
         gardens = storage.load_gardens()
+        today = date.today()
         data = []
         for g in gardens:
+            plants = g.get("plants", [])
+            active_count = sum(
+                1 for p in plants
+                if isinstance(p, dict) and not self._is_harvested(p, today)
+            )
             data.append({
                 "garden_id": g.get("id", ""),
                 "garden_name": g.get("name", ""),
                 "garden_type": g.get("type", "").capitalize(),
-                "plant_count": str(len(g.get("plants", []))),
+                "plant_count": str(len(plants)),
+                "active_plant_count": active_count,
             })
         self._all_gardens = data
         self._apply_filters()
@@ -176,6 +218,11 @@ class SelectGardenScreen(BaseScreen):
                 if search_text in (g.get("garden_name") or "").lower()
                 or search_text in (g.get("garden_type") or "").lower()
             ]
+
+        # Active-only filter
+        active_only = getattr(self, 'active_toggle', None)
+        if active_only and active_only.state == "down":
+            items = [g for g in items if g.get("active_plant_count", 0) > 0]
 
         # Sort
         key = getattr(self, '_sort_key', 'garden_name')
@@ -196,16 +243,39 @@ class SelectGardenScreen(BaseScreen):
         self._apply_filters()
 
     def _on_sort_dir_toggle(self, instance):
-        if instance.state == "down":
-            self._sort_ascending = False
-            instance.text = lang.SORT_DESCENDING
-        else:
-            self._sort_ascending = True
-            instance.text = lang.SORT_ASCENDING
+        self._sort_ascending = instance.state != "down"
         self._apply_filters()
 
     def _on_search_text(self, instance, value):
         self._apply_filters()
+
+    def _on_active_toggle(self, instance):
+        self._apply_filters()
+
+    @staticmethod
+    def _is_harvested(plant, today):
+        """Check if a plant is harvested by stage or by estimated date."""
+        if plant.get("stage") == "harvested":
+            return True
+        dt_str = plant.get("date_planted")
+        if not dt_str:
+            return False
+        base_f = plant.get("days_to_flower")
+        try:
+            base_f = int(base_f) if base_f is not None else 0
+        except (ValueError, TypeError):
+            base_f = 0
+        if not base_f:
+            return False
+        penalty = int(plant.get("penalty", 0) or 0)
+        est_h = (base_f + 14 + penalty) * 2
+        try:
+            y, m, d = map(int, dt_str.split("-"))
+            planted = date(y, m, d)
+            days_since = (today - planted).days
+            return days_since > est_h
+        except Exception:
+            return False
 
     # -- Selection ---------------------------------------------------------------
 
@@ -234,11 +304,6 @@ class SelectGardenScreen(BaseScreen):
         garden_screen.refresh_plants()
         app.screen.current = "garden_view"
 
-    def _on_add_garden(self, *args):
-        app = App.get_running_app()
-        app.previous_screen = "select_garden"
-        app.screen.current = "add_garden"
-
     def _on_delete_pressed(self, *args):
         garden = self._get_selected_garden()
         if not garden:
@@ -260,3 +325,11 @@ class SelectGardenScreen(BaseScreen):
         app = App.get_running_app()
         app.previous_screen = "select_garden"
         app.screen.current = "settings"
+
+    def _on_exit_app(self, *args):
+        app = App.get_running_app()
+        are_you_sure = app.screen.get_screen("are_you_sure")
+        are_you_sure.confirm_callback = lambda *_: sys.exit(0)
+        are_you_sure.prompt_text = lang.MSG_CONFIRM_EXIT
+        app.previous_screen = "select_garden"
+        app.screen.current = "are_you_sure"

@@ -5,27 +5,25 @@ from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.spinner import Spinner
 from kivy.core.window import Window
 from kivy.properties import BooleanProperty, ListProperty
+from kivy.graphics import Color, Triangle as KvTriangle
+import hover_manager
 
 
 # Simple HoverBehavior mixin: sets `hovered` and calls `on_enter`/`on_leave`.
+# Uses the centralized hover_manager for a single Window.mouse_pos callback.
 class HoverBehavior:
     hovered = BooleanProperty(False)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        Window.bind(mouse_pos=self._on_mouse_pos)
+        hover_manager.register(self)
 
-    def _on_mouse_pos(self, window, pos):
-        if not self.get_root_window():
-            return
-        inside = self.collide_point(*self.to_widget(*pos))
-        if self.hovered == inside:
-            return
-        self.hovered = inside
-        if inside:
-            self.on_enter()
+    def on_parent(self, instance, parent):
+        """Unregister when removed from tree, re-register when added."""
+        if parent is None:
+            hover_manager.unregister(self)
         else:
-            self.on_leave()
+            hover_manager.register(self)
 
     def on_enter(self):
         pass
@@ -36,50 +34,26 @@ class HoverBehavior:
 
 class HoverButton(HoverBehavior, Button):
     hover_background_color = ListProperty([0.773, 0.847, 0.427, 1])
-    _orig_background_color = None
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        app = App.get_running_app()
-        if app and hasattr(app, 'theme'):
-            self.hover_background_color = list(app.theme.color_button_hover_bg)
+    normal_background_color = ListProperty([0.12, 0.172, 0.153, 1])
 
     def on_enter(self):
-        if self._orig_background_color is None:
-            self._orig_background_color = list(self.background_color)
         self.background_color = list(self.hover_background_color)
 
-
     def on_leave(self):
-        if self._orig_background_color is not None:
-            self.background_color = list(self._orig_background_color)
-
+        self.background_color = list(self.normal_background_color)
 
 
 class HoverToggle(HoverBehavior, ToggleButton):
     hover_background_color = ListProperty([0.773, 0.847, 0.427, 1])
-    _orig_background_color = None
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        app = App.get_running_app()
-        if app and hasattr(app, 'theme'):
-            self.hover_background_color = list(app.theme.color_button_hover_bg)
+    normal_background_color = ListProperty([0, 0, 0, 0])
 
     def on_enter(self):
-        # Only apply hover styling when the toggle is in the normal (unpressed) state.
         if self.state == 'normal':
-            if self._orig_background_color is None:
-                self._orig_background_color = list(self.background_color)
             self.background_color = list(self.hover_background_color)
 
-
     def on_leave(self):
-        # Restore original background only when leaving while in normal state.
-        if self.state == 'normal' and self._orig_background_color is not None:
-            self.background_color = list(self._orig_background_color)
-            self._orig_background_color = None
-
+        if self.state == 'normal':
+            self.background_color = list(self.normal_background_color)
 
 
 class ButtonGreen(HoverButton):
@@ -119,8 +93,44 @@ class NutrientButton(HoverToggle):
 
 class GraphButton(HoverToggle):
     pass
+
 class ResetButton(HoverToggle):
     pass
+
+
+class SortDirButton(HoverToggle):
+    """Toggle button that draws a filled up-triangle (ascending) or down-triangle (descending)."""
+
+    def __init__(self, **kwargs):
+        kwargs.setdefault('text', '')
+        super().__init__(**kwargs)
+        self.bind(pos=self._redraw, size=self._redraw, state=self._redraw)
+
+    def _redraw(self, *args):
+        self.canvas.after.clear()
+        with self.canvas.after:
+            app = App.get_running_app()
+            if app and hasattr(app, 'theme'):
+                Color(*app.theme.color_highlight)
+            else:
+                Color(1, 1, 1, 1)
+            cx = self.x + self.width / 2
+            cy = self.y + self.height / 2
+            r = min(self.width, self.height) * 0.28
+            if self.state == 'normal':
+                # Up-pointing triangle — ascending
+                KvTriangle(points=[
+                    cx,     cy + r,
+                    cx - r, cy - r,
+                    cx + r, cy - r,
+                ])
+            else:
+                # Down-pointing triangle — descending
+                KvTriangle(points=[
+                    cx,     cy - r,
+                    cx - r, cy + r,
+                    cx + r, cy + r,
+                ])
 
 
 class SelectorDropdown(Spinner):

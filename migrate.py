@@ -18,6 +18,8 @@ LOG = logging.getLogger(__name__)
 _GARDEN_DIR = storage.GARDEN_DIR
 _EVENTS_DIR = storage.EVENTS_DIR
 _INDEX_PATH = storage.INDEX_PATH
+_PHOTOS_DIR = storage.PHOTOS_DIR
+_PHOTO_INDEX = storage.PHOTO_INDEX
 
 
 def _protected_paths():
@@ -28,6 +30,12 @@ def _protected_paths():
         yield from sorted(_EVENTS_DIR.glob("*.json"))
     if _INDEX_PATH.exists():
         yield _INDEX_PATH
+    if _PHOTO_INDEX.exists():
+        yield _PHOTO_INDEX
+    if _PHOTOS_DIR.exists():
+        for plant_dir in sorted(_PHOTOS_DIR.iterdir()):
+            if plant_dir.is_dir():
+                yield from sorted(plant_dir.glob("*.blob"))
 
 
 def _atomic_write(path: Path, data: bytes) -> None:
@@ -40,7 +48,7 @@ def _atomic_write(path: Path, data: bytes) -> None:
         try:
             tmp.unlink(missing_ok=True)
         except Exception:
-            pass
+            LOG.warning("Failed to clean up temp file %s", tmp)
         raise
 
 
@@ -143,22 +151,34 @@ def migrate_db_path(old_base: Path, new_base: Path) -> None:
             except Exception:
                 LOG.exception("Failed to move %s to %s", src_file, dst_file)
 
-    src_index = old_base / "plants_index.json"
-    if src_index.exists():
-        new_base.mkdir(parents=True, exist_ok=True)
-        dst_index = new_base / "plants_index.json"
+    for idx_name in ("plants_index.json", "photos_index.json"):
+        src_index = old_base / idx_name
+        if src_index.exists():
+            new_base.mkdir(parents=True, exist_ok=True)
+            dst_index = new_base / idx_name
+            try:
+                shutil.copy2(src_index, dst_index)
+                src_index.unlink()
+                LOG.info("Moved index %s → %s", src_index, dst_index)
+            except Exception:
+                LOG.exception("Failed to move index %s to %s", src_index, dst_index)
+
+    # Move photos directory
+    src_photos = old_base / "photos"
+    if src_photos.exists():
+        dst_photos = new_base / "photos"
         try:
-            shutil.copy2(src_index, dst_index)
-            src_index.unlink()
-            LOG.info("Moved index %s → %s", src_index, dst_index)
+            shutil.copytree(src_photos, dst_photos, dirs_exist_ok=True)
+            shutil.rmtree(src_photos)
+            LOG.info("Moved photos %s → %s", src_photos, dst_photos)
         except Exception:
-            LOG.exception("Failed to move index %s to %s", src_index, dst_index)
+            LOG.exception("Failed to move photos %s to %s", src_photos, dst_photos)
 
     # Clean up now-empty old subdirectories (best-effort)
-    for subdir in ("garden", "plants"):
+    for subdir in ("garden", "plants", "photos"):
         old_sub = old_base / subdir
         try:
             if old_sub.exists() and not any(old_sub.iterdir()):
                 old_sub.rmdir()
         except Exception:
-            pass
+            LOG.warning("Failed to remove empty directory %s", old_sub)

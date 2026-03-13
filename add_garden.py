@@ -305,6 +305,7 @@ class AddGardenScreen(BaseScreen):
     # ── Lifecycle ──────────────────────────────────────────────────────────
 
     def on_enter(self):
+        super().on_enter()
         self.name_input.text = ""
         self.indoor_btn.state = "down"
         self.outdoor_btn.state = "normal"

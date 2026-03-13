@@ -1,6 +1,7 @@
 import math
 import datetime
 import logging
+from uuid import uuid4
 from kivy.properties import ObjectProperty, StringProperty
 from kivy.app import App
 from kivy.uix.recycleview import RecycleView
@@ -10,7 +11,7 @@ from kivy.clock import Clock
 
 from helpers import get_difference_days, go_to_add_event, go_to_garden, _coerce_to_date
 from storage import load_plant_events, get_plants_for_garden, save_plants_for_garden, load_garden
-from data import EventRepository
+from data import EventRepository, PhotoRepository
 from effects import shake_and_flash
 from constants import (
     EVENT_WATERING, EVENT_FEEDING, EVENT_LOG, EVENT_TOP,
@@ -22,6 +23,7 @@ from buttons import ButtonRed, ButtonGreen, ButtonYellow, NutrientButton, ResetB
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from screens import BaseScreen
 from custom_dropdown import CustomDropdown
+from photo_widgets import PhotoStrip, PhotoViewPopup, PhotoPickerPopup, bytes_to_texture
 import lang
 
 LOG = logging.getLogger(__name__)
@@ -35,6 +37,7 @@ class AddEventScreen(BaseScreen):
         super().__init__(**kwargs)
         self.plant = None
         self._selected_event_data = None
+        self._editing_event = None  # holds event dict when in edit mode
         self.genes = ""
         app = App.get_running_app()
         self._plant_set = False
@@ -149,14 +152,16 @@ class AddEventScreen(BaseScreen):
         days_passed = get_difference_days(datetime.date.today(), date_planted)
         try:
             days_passed_val = int(days_passed) if days_passed is not None else 0
-        except Exception:
+        except (ValueError, TypeError) as exc:
+            LOG.warning("days_passed int conversion failed: %s", exc)
             days_passed_val = 0
         self.days_passed = days_passed_val
         self.days_passed_value.text = str(self.days_passed) if self.days_passed is not None else lang.DASH
 
         try:
             days_to_flower_val = int(days_to_flower) if days_to_flower is not None else 0
-        except Exception:
+        except (ValueError, TypeError) as exc:
+            LOG.warning("days_to_flower int conversion failed: %s", exc)
             days_to_flower_val = 0
 
         # Only calculate flip_day if both are valid
@@ -244,7 +249,6 @@ class AddEventScreen(BaseScreen):
             text=lang.TOGGLE_FLIP, group="", allow_no_selection=True,
         )
         for tb in (self.top_toggle, self.prune_toggle, self.flip_toggle):
-            tb.bind(state=self._on_toggle_state_change)
             toggle_box.add_widget(tb)
         event_type_and_toggles_box.add_widget(toggle_box)
 
@@ -354,11 +358,13 @@ class AddEventScreen(BaseScreen):
                 days_passed = get_difference_days(datetime.date.today(), date_planted)
                 try:
                     days_passed_val = int(days_passed) if days_passed is not None else 0
-                except Exception:
+                except (ValueError, TypeError) as exc:
+                    LOG.warning("days_passed int conversion failed: %s", exc)
                     days_passed_val = 0
                 try:
                     days_to_flower_val = int(days_to_flower) if days_to_flower is not None else 0
-                except Exception:
+                except (ValueError, TypeError) as exc:
+                    LOG.warning("days_to_flower int conversion failed: %s", exc)
                     days_to_flower_val = 0
                 flip_day = days_passed_val - days_to_flower_val - 14
                 if flip_day <= 0:
@@ -388,7 +394,7 @@ class AddEventScreen(BaseScreen):
         event_details.add_widget(main_data_column)
 
 
-        water_and_food_box = WrapperBox(orientation="vertical", size_hint_x=0.4)
+        water_and_food_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
         main_data_column.add_widget(water_and_food_box)
         self.water_and_food_box = water_and_food_box
 
@@ -398,7 +404,7 @@ class AddEventScreen(BaseScreen):
         self._render_water_food_fields(event_type_value.selected)
 
 
-        right_column_box = WrapperBox(orientation="vertical", size_hint_x=0.3)
+        right_column_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
         main_data_column.add_widget(right_column_box)
 
         nutrients_box = WrapperBox(orientation="vertical", size_hint_y = 0.4)
@@ -446,6 +452,43 @@ class AddEventScreen(BaseScreen):
         notes_text_box.add_widget(notes_text)
         self.notes_input = notes_text
 
+        # -- Photo column (third column) --
+        self._pending_photos = []  # list of (photo_id, plant_id, original_name, image_bytes)
+        photo_column_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
+        main_data_column.add_widget(photo_column_box)
+
+        photo_title_box = ContentBox(orientation="horizontal", size_hint_y=0.1)
+        photo_column_box.add_widget(photo_title_box)
+        photo_title = FieldLabel(text=lang.PHOTOS_TITLE, valign="bottom", halign="left")
+        photo_title.color = app.theme.color_field_label
+        photo_title.font_size = app.theme.subtitle_size
+        photo_title_box.add_widget(photo_title)
+
+        self._photo_strip = PhotoStrip(
+            size_hint_y=0.7,
+            on_select=self._on_photo_select,
+            on_double_click=self._on_photo_double_click,
+        )
+        photo_column_box.add_widget(self._photo_strip)
+
+        photo_buttons_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
+        photo_column_box.add_widget(photo_buttons_box)
+
+        show_gallery_btn = ButtonGreen(text=lang.PHOTO_SHOW_GALLERY, size_hint_x=0.34)
+        show_gallery_btn.font_size = app.theme.small_size
+        show_gallery_btn.bind(on_release=lambda *_: self._go_to_photo_gallery())
+        photo_buttons_box.add_widget(show_gallery_btn)
+
+        add_photo_btn = ButtonYellow(text=lang.PHOTO_ADD, size_hint_x=0.33)
+        add_photo_btn.font_size = app.theme.small_size
+        add_photo_btn.bind(on_release=lambda *_: self._open_photo_picker())
+        photo_buttons_box.add_widget(add_photo_btn)
+
+        delete_photo_btn = ButtonRed(text=lang.PHOTO_DELETE, size_hint_x=0.33)
+        delete_photo_btn.font_size = app.theme.small_size
+        delete_photo_btn.bind(on_release=lambda *_: self._delete_selected_photo())
+        photo_buttons_box.add_widget(delete_photo_btn)
+
         info_box.add_widget(event_details)
 
         content_wrapper.add_widget(info_box)
@@ -462,7 +505,7 @@ class AddEventScreen(BaseScreen):
         add_event_button.font_size = app.theme.logo_size_1
         add_event_button.font_name = app.theme.font_logo_1
         def save_and_exit(instance):
-            etype = self._get_effective_event_type()
+            etype = self.event_type_dropdown.selected
             if self.on_event_save(self.plant, etype, event_date_value.text, notes_text.text):
                 self.confirm_action()
         add_event_button.bind(on_release=save_and_exit)
@@ -497,13 +540,11 @@ class AddEventScreen(BaseScreen):
 
     def validate(self):
         invalid = []
-        # Check event type
+        # Check event type (dropdown only — toggles are independent flags)
         event_type = self.event_type_dropdown.selected if hasattr(self, 'event_type_dropdown') else 'log'
 
-        # For quick event types (top, prune, flip), only notes are
-        # optional — no plant/environment/water/food fields required.
         # Harvest is handled by its own button and always valid.
-        if event_type in (EVENT_TOP, EVENT_PRUNE, EVENT_FLIP, EVENT_HARVEST):
+        if event_type == EVENT_HARVEST:
             return invalid
 
         # Plant context is guaranteed by set_plant(); no need to check display labels.
@@ -559,26 +600,27 @@ class AddEventScreen(BaseScreen):
         app.screen.current = "are_you_sure"
 
     def _get_effective_event_type(self):
-        """Return the highest-priority event type.
+        """Return the event type from the dropdown.
 
-        Priority: flip > top > prune > dropdown.
-        Harvest is handled by its own button and never enters here.
+        Toggles (top/prune/flip) are independent flags stored alongside
+        the event type — they no longer override the dropdown.
         """
-        if self.flip_toggle.state == "down":
-            return EVENT_FLIP
-        if self.top_toggle.state == "down":
-            return EVENT_TOP
-        if self.prune_toggle.state == "down":
-            return EVENT_PRUNE
         return self.event_type_dropdown.selected
 
-    def _on_toggle_state_change(self, instance, state):
-        """When a toggle changes, re-render the water/food area."""
-        self._render_water_food_fields(None, self._get_effective_event_type())
+    def _get_active_toggles(self):
+        """Return a list of active toggle event types."""
+        active = []
+        if self.top_toggle.state == "down":
+            active.append(EVENT_TOP)
+        if self.prune_toggle.state == "down":
+            active.append(EVENT_PRUNE)
+        if self.flip_toggle.state == "down":
+            active.append(EVENT_FLIP)
+        return active
 
     def _on_event_type_changed(self, instance, value):
-        """Dropdown changed — re-render using effective type."""
-        self._render_water_food_fields(None, self._get_effective_event_type())
+        """Dropdown changed — re-render water/food area."""
+        self._render_water_food_fields(None, self.event_type_dropdown.selected)
 
     def clear_fields(self):
         for w in self.walk():
@@ -602,10 +644,146 @@ class AddEventScreen(BaseScreen):
             self.soil_moisture_dropdown.select_option('moist')
         if hasattr(self, 'fungi_dropdown'):
             self.fungi_dropdown.select_option('no')
+        # Clear photo strip and pending photos
+        if hasattr(self, '_photo_strip'):
+            self._photo_strip._grid.clear_widgets()
+            self._photo_strip._thumbnails.clear()
+            self._photo_strip.selected_photo_id = ""
+        self._pending_photos = []
+        self._selected_photo_id = ""
+        # Clear edit mode
+        self._editing_event = None
+        # Reset save button text
+        app = App.get_running_app()
+        if hasattr(self, 'add_event_button'):
+            self.add_event_button.text = lang.BUTTON_PLUS
+            self.add_event_button.font_size = app.theme.logo_size_1
+            self.add_event_button.font_name = app.theme.font_logo_1
 
+    def enter_edit_mode(self, event_data):
+        """Pre-populate all fields from an existing event for editing."""
+        if not event_data or not isinstance(event_data, dict):
+            return
+        self._editing_event = event_data
+        app = App.get_running_app()
 
+        # Update save button to indicate editing
+        if hasattr(self, 'add_event_button'):
+            self.add_event_button.text = lang.BUTTON_EDIT if hasattr(lang, 'BUTTON_EDIT') else "Save"
+            self.add_event_button.font_size = app.theme.body_size
+            self.add_event_button.font_name = app.theme.font_body
 
-        # load and show events
+        # Event type (dropdown)
+        etype = event_data.get("type", EVENT_LOG)
+        if etype in (EVENT_LOG, EVENT_WATERING, EVENT_FEEDING):
+            if hasattr(self, 'event_type_dropdown'):
+                self.event_type_dropdown.select_option(etype)
+        else:
+            # Legacy events where type was top/prune/flip: default dropdown to log
+            if hasattr(self, 'event_type_dropdown'):
+                self.event_type_dropdown.select_option(EVENT_LOG)
+
+        # Restore toggle states from flags (supports both new and legacy format)
+        if event_data.get("topped") or etype == EVENT_TOP:
+            self.top_toggle.state = "down"
+        if event_data.get("pruned") or etype == EVENT_PRUNE:
+            self.prune_toggle.state = "down"
+        if event_data.get("flipped") or etype == EVENT_FLIP:
+            self.flip_toggle.state = "down"
+
+        # Notes
+        if hasattr(self, 'notes_input'):
+            self.notes_input.text = event_data.get("notes", "")
+
+        # Plant info fields
+        plant_info = event_data.get("plant", {})
+        for key in ("plant_height", "num_nodes", "node_spacing", "main_stem_number"):
+            w = getattr(self, f"{key}_input", None)
+            if w and plant_info.get(key) is not None:
+                w.text = str(plant_info[key])
+        # Dropdowns
+        for key, attr in (("leaf_color", "leaf_color_dropdown"), ("leaf_morphology", "leaf_morphology_dropdown")):
+            dd = getattr(self, attr, None)
+            val = plant_info.get(key)
+            if dd and val:
+                dd.select_option(str(val))
+
+        # Environment fields
+        env = event_data.get("environment", {})
+        if self._air_temp_input and env.get("air_temp_c") is not None:
+            self._air_temp_input.text = str(env["air_temp_c"])
+        if self._rh_input and env.get("rh_percent") is not None:
+            self._rh_input.text = str(env["rh_percent"])
+        for key in ("soil_ph", "ppfd"):
+            w = getattr(self, f"{key}_input", None)
+            if w and env.get(key) is not None:
+                w.text = str(env[key])
+        sm = getattr(self, "soil_moisture_dropdown", None)
+        if sm and env.get("soil_moisture"):
+            sm.select_option(str(env["soil_moisture"]))
+        ls = getattr(self, "light_schedule_dropdown", None)
+        if ls and env.get("light_schedule"):
+            ls.select_option(str(env["light_schedule"]))
+
+        # Render water/food fields based on the dropdown selection
+        dropdown_type = self.event_type_dropdown.selected if hasattr(self, 'event_type_dropdown') else EVENT_LOG
+        self._render_water_food_fields(None, dropdown_type)
+
+        # Water fields
+        if dropdown_type in (EVENT_WATERING, EVENT_FEEDING):
+            for attr, key in [("water_volume_input", "volume_l"), ("water_temp_input", "water_temp_c"),
+                              ("ph_input", "ph"), ("ppm_input", "ppm")]:
+                w = getattr(self, attr, None)
+                if w and event_data.get(key) is not None:
+                    w.text = str(event_data[key])
+
+        # Feeding fields
+        if dropdown_type == EVENT_FEEDING:
+            feeding = event_data.get("feeding", {})
+            feed_map = [
+                ("grow_mix", "grow_mix_input"),
+                ("root_mix", "root_mix_input"),
+                ("bloom_mix", "bloom_mix_input"),
+                ("bloom_boost", "bloom_boost_input"),
+                ("soil_boost", "soil_boost_input"),
+                ("vit_boost", "vit_boost_input"),
+                ("CalMag", "calmag_input"),
+            ]
+            for data_key, input_attr in feed_map:
+                w = getattr(self, input_attr, None)
+                if w and feeding.get(data_key) is not None:
+                    w.text = str(feeding[data_key])
+            if hasattr(self, 'fungi_dropdown') and "myco_trico" in feeding:
+                self.fungi_dropdown.select_option("yes" if feeding["myco_trico"] else "no")
+
+        # Nutrient buttons (deficiencies/excess)
+        deficiencies = plant_info.get("deficiencies", {})
+        excess = plant_info.get("excess", {})
+        nutrients = ["n", "p", "k", "ca", "mg", "s", "fe", "mn", "zn", "cu", "b", "mo"]
+        for n in nutrients:
+            for w in self.walk():
+                if hasattr(w, 'group') and w.group == n and hasattr(w, 'state'):
+                    if w.text == "+" and excess.get(n):
+                        w.state = "down"
+                    elif w.text == "-" and deficiencies.get(n):
+                        w.state = "down"
+
+        # Photos from existing event
+        photo_ids = event_data.get("photos", [])
+        if photo_ids and hasattr(self, '_photo_strip'):
+            plant_id = str((self.plant or {}).get("plant_id") or (self.plant or {}).get("id") or "")
+            for photo_id in photo_ids:
+                try:
+                    raw = PhotoRepository.load_photo_bytes(plant_id, photo_id)
+                    if raw:
+                        from photo_utils import generate_thumbnail
+                        thumb_bytes = generate_thumbnail(raw)
+                        texture = bytes_to_texture(thumb_bytes)
+                        self._photo_strip.add_thumbnail(photo_id, plant_id, texture)
+                except Exception:
+                    LOG.exception("Failed to load photo %s for edit mode", photo_id)
+
+    # load and show events
     def set_plant(self, plant: dict):
         if not plant or not isinstance(plant, dict):
             raise ValueError("set_plant must be called with a valid plant dict.")
@@ -617,6 +795,7 @@ class AddEventScreen(BaseScreen):
         plant.setdefault("id", pid)
         self.plant = plant
         self._plant_set = True
+        self._editing_event = None  # reset edit mode on new plant set
         self._update_ui()
         self._autofill_from_last_event(pid)
         self._update_flip_toggle_state(pid)
@@ -626,7 +805,7 @@ class AddEventScreen(BaseScreen):
         app = App.get_running_app()
         plant = self.plant or {}
         self.genes = plant.get("genes", "")
-        self.name_label.text = " | ".join([plant.get("name", ""), self.genes])
+        self.name_label.text = " | ".join([plant.get("seedbank", ""), self.genes])
         
         self.strain_label.text = plant.get("strain", "")
         genes = (self.genes or "").strip().lower()
@@ -869,39 +1048,9 @@ class AddEventScreen(BaseScreen):
                 spacer = SpacerBox(size_hint_y=0.75)
                 box.add_widget(spacer)
         else:
-            # For log, top, prune, flip, harvest — show contextual info
-            if selection == EVENT_TOP:
-                info_label = FieldLabel(text=lang.TOGGLE_TOP, valign="middle", halign="center")
-                info_label.font_size = app.theme.subtitle_size
-                info_label.color = app.theme.color_field_value
-                box.add_widget(info_label)
-                hint = HintLabel(text=lang.HINT_EVENT_NOTES)
-                hint.font_size = app.theme.small_size
-                box.add_widget(hint)
-            elif selection == EVENT_PRUNE:
-                info_label = FieldLabel(text=lang.TOGGLE_PRUNE, valign="middle", halign="center")
-                info_label.font_size = app.theme.subtitle_size
-                info_label.color = app.theme.color_field_value
-                box.add_widget(info_label)
-                hint = HintLabel(text=lang.HINT_EVENT_NOTES)
-                hint.font_size = app.theme.small_size
-                box.add_widget(hint)
-            elif selection == EVENT_FLIP:
-                info_label = FieldLabel(text=lang.TOGGLE_FLIP, valign="middle", halign="center")
-                info_label.font_size = app.theme.subtitle_size
-                info_label.color = app.theme.color_field_value
-                box.add_widget(info_label)
-                hint = HintLabel(text=lang.FLIP_DONE)
-                hint.font_size = app.theme.small_size
-                box.add_widget(hint)
-            elif selection == EVENT_HARVEST:
-                info_label = FieldLabel(text=lang.LEGEND_HARVEST, valign="middle", halign="center")
-                info_label.font_size = app.theme.subtitle_size
-                info_label.color = app.theme.color_field_value
-                box.add_widget(info_label)
-            else:
-                spacer = SpacerBox()
-                box.add_widget(spacer)
+            # For log — show empty space
+            spacer = SpacerBox()
+            box.add_widget(spacer)
 
     def calculate_vpd(self, air_temp_c, rh_percent):
         es = 0.6108 * math.exp((17.27 * air_temp_c) / (air_temp_c + 237.3))  # Saturation vapor pressure (kPa)
@@ -922,7 +1071,7 @@ class AddEventScreen(BaseScreen):
                     shake_and_flash(widget)
                 return False
 
-            # Determine event type (caller passes effective type from toggle/dropdown priority)
+            # Determine event type from dropdown (toggles stored separately)
             event_type = event_type or self._get_effective_event_type()
             today = datetime.date.today().isoformat()
             if notes is None:
@@ -935,17 +1084,23 @@ class AddEventScreen(BaseScreen):
                 LOG.error("No plant_id found on plant dict")
                 return False
 
-            # Generate event id from existing events
-            existing = EventRepository.get(plant_id)
-            events = existing.get("events", []) if existing else []
-            if events and "id" in events[-1]:
-                try:
-                    num = int(events[-1]["id"].split("-")[-1]) + 1
-                except Exception:
-                    num = len(events)
+            # Edit mode: reuse existing event id; otherwise generate a new one
+            is_edit = self._editing_event is not None
+            if is_edit:
+                event_id = self._editing_event.get("id", "evt-0")
             else:
-                num = 0
-            event_id = f"evt-{num}"
+                # Generate event id from existing events
+                existing = EventRepository.get(plant_id)
+                events = existing.get("events", []) if existing else []
+                if events and "id" in events[-1]:
+                    try:
+                        num = int(events[-1]["id"].split("-")[-1]) + 1
+                    except (ValueError, TypeError, IndexError) as exc:
+                        LOG.warning("Failed to parse event ID '%s': %s", events[-1].get("id"), exc)
+                        num = len(events)
+                else:
+                    num = 0
+                event_id = f"evt-{num}"
 
             # Water/food value helpers
             def get_num_input(attr):
@@ -953,7 +1108,8 @@ class AddEventScreen(BaseScreen):
                 if w and hasattr(w, "text"):
                     try:
                         return float(w.text)
-                    except Exception:
+                    except (ValueError, TypeError) as exc:
+                        LOG.warning("Numeric input conversion failed for %s: %s", attr, exc)
                         return 0.0
                 return 0.0
 
@@ -1046,29 +1202,61 @@ class AddEventScreen(BaseScreen):
                 "light_schedule": plant.get("light_schedule", "")
             }
 
+            # Collect active toggle flags
+            active_toggles = self._get_active_toggles()
+
             # Compose event
+            pending_photo_ids = [p[0] for p in getattr(self, '_pending_photos', [])]
             event = {
                 "id": event_id,
                 "ts": event_date,
                 "type": event_type,
                 "notes": notes,
+                "topped": EVENT_TOP in active_toggles,
+                "pruned": EVENT_PRUNE in active_toggles,
+                "flipped": EVENT_FLIP in active_toggles,
                 "volume_l": volume_l,
                 "water_temp_c": water_temp_c,
                 "ph": ph,
                 "ppm": ppm,
                 "feeding": feeding,
                 "plant": plant_info,
-                "environment": environment
+                "environment": environment,
             }
+            if pending_photo_ids:
+                event["photos"] = pending_photo_ids
+            elif is_edit and self._editing_event.get("photos"):
+                # Preserve existing photos when editing unless new ones were added
+                event["photos"] = self._editing_event["photos"]
 
             # Save via repository (handles encryption, atomic writes, caching)
-            ok = EventRepository.add_event(plant_id, event)
-            if ok:
-                LOG.info("Event %s saved for plant %s", event_id, plant_id)
-                # Post-save side-effects for special event types
-                self._apply_event_side_effects(event_type, plant_id)
+            if is_edit:
+                ok = EventRepository.update_event(plant_id, event_id, event)
+                if ok:
+                    LOG.info("Event %s updated for plant %s", event_id, plant_id)
+                else:
+                    LOG.error("Failed to update event %s for plant %s", event_id, plant_id)
             else:
-                LOG.error("Failed to save event %s for plant %s", event_id, plant_id)
+                ok = EventRepository.add_event(plant_id, event)
+                if ok:
+                    LOG.info("Event %s saved for plant %s", event_id, plant_id)
+                else:
+                    LOG.error("Failed to save event %s for plant %s", event_id, plant_id)
+            if ok:
+                # Persist pending photos
+                garden_id = str(app.current_garden_id or "")
+                for photo_id, p_plant_id, orig_name, img_bytes in getattr(self, '_pending_photos', []):
+                    PhotoRepository.attach(
+                        p_plant_id, event_id, garden_id,
+                        photo_id, img_bytes, orig_name,
+                    )
+                self._pending_photos = []
+                # Post-save side-effects for special event types (skip on edit)
+                if not is_edit:
+                    self._apply_event_side_effects(event_type, plant_id)
+                    # Apply side-effects for each active toggle
+                    for toggle_type in active_toggles:
+                        self._apply_event_side_effects(toggle_type, plant_id)
             return ok
         except Exception:
             LOG.exception("Exception in on_event_save")
@@ -1079,6 +1267,7 @@ class AddEventScreen(BaseScreen):
         app = App.get_running_app()
         garden_id = getattr(app, 'current_garden_id', None)
         if not garden_id:
+            LOG.error("No current_garden_id set, cannot apply side-effects for %s", event_type)
             return
 
         plants = get_plants_for_garden(garden_id)
@@ -1088,6 +1277,7 @@ class AddEventScreen(BaseScreen):
                 target = p
                 break
         if target is None:
+            LOG.error("Plant %s not found in garden %s, cannot apply side-effects", plant_id, garden_id)
             return
 
         changed = False
@@ -1110,5 +1300,98 @@ class AddEventScreen(BaseScreen):
             changed = True
 
         if changed:
-            save_plants_for_garden(garden_id, plants)
-            LOG.info("Side-effects applied for %s event on plant %s", event_type, plant_id)
+            ok = save_plants_for_garden(garden_id, plants)
+            if ok:
+                LOG.info("Side-effects applied for %s event on plant %s", event_type, plant_id)
+            else:
+                LOG.error("Failed to save plant side-effects for %s event on plant %s", event_type, plant_id)
+
+    def _on_photo_select(self, photo_id):
+        self._selected_photo_id = photo_id
+
+    def _delete_selected_photo(self):
+        """Delete the currently selected photo.
+
+        Handles both pending (unsaved) and already-persisted photos.
+        """
+        if not self._selected_photo_id:
+            return
+        app = App.get_running_app()
+        photo_id = self._selected_photo_id
+
+        # Check if it's a pending (not yet saved) photo
+        pending = getattr(self, '_pending_photos', [])
+        for i, (pid, plid, name, img_bytes) in enumerate(pending):
+            if pid == photo_id:
+                pending.pop(i)
+                self._photo_strip.remove_thumbnail(photo_id)
+                self._selected_photo_id = ""
+                return
+
+        # Persisted photo — confirm before deleting
+        def _do_delete():
+            meta = PhotoRepository.get_meta(photo_id)
+            if not meta:
+                app.screen.current = "add_event"
+                return
+            plant_id = meta.get("plant_id", "")
+            PhotoRepository.detach(plant_id, photo_id)
+            self._photo_strip.remove_thumbnail(photo_id)
+            self._selected_photo_id = ""
+            app.screen.current = "add_event"
+
+        app.previous_screen = "add_event"
+        are_you_sure = app.screen.get_screen("are_you_sure")
+        are_you_sure.prompt_text = lang.MSG_CONFIRM_DELETE_PHOTO
+        are_you_sure.confirm_callback = _do_delete
+        app.screen.current = "are_you_sure"
+
+    def _on_photo_double_click(self, photo_id, plant_id):
+        # For pending photos, find the bytes in the pending list (no navigation)
+        for pid, plid, name, img_bytes in getattr(self, '_pending_photos', []):
+            if pid == photo_id:
+                popup = PhotoViewPopup(image_bytes=img_bytes)
+                popup.open()
+                return
+        # Fallback to loaded photo — no gallery navigation in add_event
+        raw = PhotoRepository.load_photo_bytes(plant_id, photo_id)
+        if raw:
+            popup = PhotoViewPopup(image_bytes=raw)
+            popup.open()
+
+    def _go_to_photo_gallery(self):
+        app = App.get_running_app()
+        plant = self.plant or {}
+        app.previous_screen = "add_event"
+        gallery = app.screen.get_screen("photo_gallery")
+        gallery.set_plant(plant)
+        app.screen.current = "photo_gallery"
+
+    def _open_photo_picker(self):
+        plant = self.plant or {}
+        plant_id = str(plant.get("plant_id") or plant.get("id") or "")
+        if not plant_id:
+            return
+
+        def _on_file_selected(filepath):
+            try:
+                image_bytes = filepath.read_bytes()
+            except Exception:
+                return
+
+            from photo_utils import validate_image, generate_thumbnail
+            if not validate_image(image_bytes):
+                return
+
+            photo_id = str(uuid4())
+            self._pending_photos.append((photo_id, plant_id, filepath.name, image_bytes))
+
+            # Generate thumbnail and add to strip
+            try:
+                thumb_bytes = generate_thumbnail(image_bytes)
+                texture = bytes_to_texture(thumb_bytes)
+                self._photo_strip.add_thumbnail(photo_id, plant_id, texture)
+            except Exception:
+                LOG.exception("Failed to add thumbnail preview")
+
+        PhotoPickerPopup(on_file_selected=_on_file_selected).open()

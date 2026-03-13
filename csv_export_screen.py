@@ -277,6 +277,7 @@ class CsvExportScreen(BaseScreen):
     # -- Lifecycle --------------------------------------------------------------
 
     def on_enter(self):
+        super().on_enter()
         app = App.get_running_app()
         if app.previous_screen not in {"csv_export"}:
             self._origin_screen = app.previous_screen or "settings"

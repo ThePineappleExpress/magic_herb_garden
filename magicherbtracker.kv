@@ -221,6 +221,7 @@
     font_name: app.theme.font_subtitle
     color: app.theme.color_label_subtitle
     font_size: app.theme.small_size
+    text_size: self.size
 
 <LogoLabel1>:
     halign: "left"
@@ -581,20 +582,12 @@
 # ── Buttons ──
 
 <HoverButton>:
-    canvas.before:
-        Color:
-            rgba: root.hover_background_color if root.hovered else root.background_color
-        Rectangle:
-            pos: self.pos
-            size: self.size
+    hover_background_color: app.theme.color_button_hover_bg
+    normal_background_color: app.theme.color_button_bg
 
 <HoverToggle>:
-    canvas.before:
-        Color:
-            rgba: root.hover_background_color if (root.hovered and root.state == 'normal') else root.background_color
-        Rectangle:
-            pos: self.pos
-            size: self.size
+    hover_background_color: app.theme.color_button_hover_bg
+    normal_background_color: app.theme.color_transparent
 
 <Button>:
     background_normal: ""
@@ -611,6 +604,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_green_bg
+    normal_background_color: app.theme.color_button_green_bg
     color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
@@ -622,6 +616,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_yellow_bg
+    normal_background_color: app.theme.color_button_yellow_bg
     color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
@@ -633,6 +628,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_red_bg
+    normal_background_color: app.theme.color_button_red_bg
     color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
@@ -644,6 +640,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_blue_bg
+    normal_background_color: app.theme.color_button_blue_bg
     color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
@@ -655,6 +652,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_purple_bg
+    normal_background_color: app.theme.color_button_purple_bg
     color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.input_size
@@ -666,6 +664,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_transparent
+    normal_background_color: app.theme.color_transparent
     color: app.theme.color_button_transparent_text
     font_name: app.theme.font_title
     font_size: app.theme.input_size
@@ -694,6 +693,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_bg
+    normal_background_color: app.theme.color_button_bg
     color: app.theme.color_button_dark_green_text
     font_name: app.theme.font_title
     font_size: app.theme.input_size
@@ -710,6 +710,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_green_bg
+    normal_background_color: app.theme.color_button_green_bg
     color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.subtitle_size
@@ -728,6 +729,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_green_bg
+    normal_background_color: app.theme.color_button_green_bg
     color: app.theme.color_button_on_color_text
     font_name: app.theme.font_button
     font_size: app.theme.subtitle_size
@@ -740,6 +742,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_green_bg
+    normal_background_color: app.theme.color_button_green_bg
     color: app.theme.color_button_dark_green_text
     font_name: app.theme.font_input
     font_size: app.theme.body_size
@@ -754,6 +757,7 @@
     background_normal: ""
     background_down: ""
     background_color: app.theme.color_button_bg
+    normal_background_color: app.theme.color_button_bg
     color: app.theme.color_button_transparent_text
     font_name: app.theme.font_button
     font_size: app.theme.small_size
@@ -836,7 +840,7 @@
     height: "120dp"
 
     genes: ""
-    name: ""
+    seedbank: ""
     strain: ""
     notes: ""
     medium: ""
@@ -860,13 +864,13 @@
                 app.theme.leaf_sativa if root.genes == "Sativa" else \
                 app.theme.leaf_indica if root.genes == "Indica" else \
                 app.theme.leaf_hybrid if root.genes == "Hybrid" else ""
-    # middle: name / strain / notes
+    # middle: seedbank / strain / notes
     ItemBox:
         orientation: "vertical"
         size_hint_x: 0.5
         color: app.theme.color_list_item_accent if root.selected else app.theme.color_transparent
         ListSubLabel:
-            text: root.name
+            text: root.seedbank
             halign: "left"
             valign: "bottom"
             padding: app.theme.padding_left

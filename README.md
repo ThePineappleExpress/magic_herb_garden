@@ -179,22 +179,14 @@ Before any destructive encryption operation the user sees a confirmation screen:
 
 ### Threat model & limitations
 
-| Threat                              | Status                                          |
-|-------------------------------------|-------------------------------------------------|
-| Bypass UI gate by deleting          | Mitigated - data files contain                  |
-| `"password"` from `settings.json`   | unreadable ciphertext without the derived key   |
-|-------------------------------------|-------------------------------------------------|
-| Brute-force offline                 | Mitigated by 600,000-iteration PBKDF2;          |
-| password attack on `settings.json`  | exponential backoff on unlock screen            |
-|-------------------------------------|-------------------------------------------------|
-| Attacker reads source code          | No hardcoded key; key is never written anywhere |
-| to find the key                     | - only derivable from the correct password      |
-|-------------------------------------|-------------------------------------------------|
-| In-memory key extraction            | Partially mitigated - key stored as mutable     |
-|                                     | `bytearray` and zeroed on clear/replace         |
-|-------------------------------------|-------------------------------------------------|
-| `settings.json` tampered            | Results in a wrong derived key -> GCM tag check |
-| to provide a forged `enc_salt`      | fails -> data unreadable; no silent bypass      |
+| Threat | Status |
+|---|---|
+| Bypass UI gate by deleting `"password"` from `settings.json` | Mitigated - data files contain unreadable ciphertext without the derived key |
+| Brute-force offline password attack on `settings.json` | Mitigated by 600,000-iteration PBKDF2; exponential backoff on unlock screen |
+| Attacker reads source code to find the key | No hardcoded key; key is never written anywhere - only derivable from the correct password |
+| In-memory key extraction | Partially mitigated - key stored as mutable `bytearray` and zeroed on clear/replace |
+| `settings.json` tampered to provide a forged `enc_salt`| Results in a wrong derived key -> GCM tag check fails -> data unreadable; no silent bypass|
+
 
 ---
 

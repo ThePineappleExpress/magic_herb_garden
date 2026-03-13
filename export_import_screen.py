@@ -163,6 +163,7 @@ class ExportImportScreen(BaseScreen):
     # -- on_enter ---------------------------------------------------------------
 
     def on_enter(self):
+        super().on_enter()
         # Capture entry origin, but don't overwrite it when returning from our
         # own sub-screens (are_you_sure) which set previous_screen to
         # "export_import". This keeps cancel working after a round-trip.

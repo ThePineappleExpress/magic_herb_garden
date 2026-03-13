@@ -58,9 +58,20 @@ class ShaderWidget(Widget):
         self.canvas['pixel_scale'] = 1.0
 
         self.bind(size=self._update_rect, pos=self._update_rect)
-        Clock.schedule_interval(self.update_glsl, 1 / 60.0)
+        self._clock_event = None  # created by start_clock()
 
     # -- public API ----------------------------------------------------------
+
+    def start_clock(self):
+        """Begin ticking the time uniform at 60 fps."""
+        if self._clock_event is None:
+            self._clock_event = Clock.schedule_interval(self.update_glsl, 1 / 60.0)
+
+    def stop_clock(self):
+        """Pause the time uniform ticker (saves CPU when off-screen)."""
+        if self._clock_event is not None:
+            self._clock_event.cancel()
+            self._clock_event = None
 
     def update_colors(self, color_a: list, color_b: list) -> None:
         """Push new theme colours to the running shader."""

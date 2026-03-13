@@ -6,36 +6,22 @@ from kivy.properties import ObjectProperty
 from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, FadeTransition
 from kivy.core.window import Window
+from kivy.clock import Clock
 
-from empty_garden import EmptyGardenScreen
-from garden_view import GardenViewScreen
-from sow_seed import SowSeedScreen
-from set_environment import SetEnvironmentScreen
-from plant_details import PlantDetailsScreen
-from are_you_sure import AreYouSure
-from add_event import AddEventScreen
-from timeline_view import TimelineScreen
-from password_check import PasswordCheckScreen
-from settings_screen import SettingsScreen
-from add_garden import AddGardenScreen
-from select_garden import SelectGardenScreen
-from export_import_screen import ExportImportScreen
-from csv_export_screen import CsvExportScreen
 from bin.themes import load_theme, apply_theme, get_default_theme, get_shader_colors
 import lang
 import storage
 
-Window.allow_smooth_resize = False
-
 LOG = logging.getLogger(__name__)
 
 # initial window size
-Config.set("graphics", "width", "1280")
-Config.set("graphics", "height", "720")
+Config.set("graphics", "width", "1920")
+Config.set("graphics", "height", "1080")
+Config.set("graphics", "resizable", "1")
 
 # minimum size
-Config.set("graphics", "minimum_width", "1280")
-Config.set("graphics", "minimum_height", "720")
+Config.set("graphics", "minimum_width", "800")
+Config.set("graphics", "minimum_height", "600")
 
 Config.set('input', 'mouse', 'mouse,disable_multitouch')
 
@@ -55,24 +41,6 @@ class MagicHerbTracker(App):
         self.theme = Factory.Theme()
         self.screen = ScreenManager(transition=FadeTransition(duration=0.2))
         Window.size = (1920, 1080)
-        Window.minimum_width = 1920
-        Window.minimum_height = 1080
-
-        # Register all screens
-        self.screen.add_widget(EmptyGardenScreen(name="empty_garden"))
-        self.screen.add_widget(SowSeedScreen(name="sow_seed"))
-        self.screen.add_widget(SetEnvironmentScreen(name="set_environment"))
-        self.screen.add_widget(PlantDetailsScreen(name="plant_details"))
-        self.screen.add_widget(GardenViewScreen(name="garden_view"))
-        self.screen.add_widget(AreYouSure(name="are_you_sure"))
-        self.screen.add_widget(AddEventScreen(name="add_event"))
-        self.screen.add_widget(TimelineScreen(name="timeline_view"))
-        self.screen.add_widget(PasswordCheckScreen(name="password_check"))
-        self.screen.add_widget(SettingsScreen(name="settings"))
-        self.screen.add_widget(AddGardenScreen(name="add_garden"))
-        self.screen.add_widget(SelectGardenScreen(name="select_garden"))
-        self.screen.add_widget(ExportImportScreen(name="export_import"))
-        self.screen.add_widget(CsvExportScreen(name="csv_export"))
 
         # Apply saved theme
         settings = storage.load_settings()
@@ -80,36 +48,90 @@ class MagicHerbTracker(App):
         theme_data = load_theme(theme_name)
         apply_theme(self.theme, theme_data)
 
-        # Push shader colors to all screens
-        shader_name = settings.get("shader")
-        color_a, color_b = get_shader_colors(theme_data, shader_name)
-        for scr in self.screen.screens:
-            if hasattr(scr, 'update_shader_colors'):
-                scr.update_shader_colors(color_a, color_b)
-
-        # Bootstrap: password → garden selection → garden view
+        # Bootstrap: determine which screens are needed for first frame
         has_password = bool(settings.get("password"))
         gardens = storage.load_gardens()
 
+        # Build only the screens needed for the initial route
+        bootstrap_screens = set()
         if has_password:
-            # Determine where to go after unlock
+            bootstrap_screens.add("password_check")
             if len(gardens) == 1:
                 self.current_garden_id = gardens[0].get("id")
                 self.post_unlock_screen = "garden_view"
             elif len(gardens) > 1:
                 self.post_unlock_screen = "select_garden"
             else:
-                self.post_unlock_screen = "add_garden"
-            self.screen.current = "password_check"
+                self.post_unlock_screen = "select_garden"
+            initial_screen = "password_check"
         elif len(gardens) == 1:
             self.current_garden_id = gardens[0].get("id")
-            self.screen.current = "garden_view"
+            bootstrap_screens.add("garden_view")
+            initial_screen = "garden_view"
         elif len(gardens) > 1:
-            self.screen.current = "select_garden"
+            bootstrap_screens.add("select_garden")
+            initial_screen = "select_garden"
         else:
-            self.screen.current = "add_garden"
+            bootstrap_screens.add("empty_garden")
+            initial_screen = "empty_garden"
+
+        # Register bootstrap screens eagerly
+        for name in bootstrap_screens:
+            self.screen.add_widget(self._create_screen(name))
+
+        # Push shader colors to bootstrap screens
+        shader_name = settings.get("shader")
+        color_a, color_b = get_shader_colors(theme_data, shader_name)
+        for scr in self.screen.screens:
+            if hasattr(scr, 'update_shader_colors'):
+                scr.update_shader_colors(color_a, color_b)
+
+        self.screen.current = initial_screen
+
+        # Defer remaining screens — build in background after first frame
+        Clock.schedule_once(lambda dt: self._build_remaining_screens(
+            bootstrap_screens, color_a, color_b), 0.3)
 
         return self.screen
+
+    # Screen name → (module, class) mapping
+    _SCREEN_REGISTRY = {
+        "empty_garden":    ("empty_garden",         "EmptyGardenScreen"),
+        "sow_seed":        ("sow_seed",             "SowSeedScreen"),
+        "set_environment": ("set_environment",       "SetEnvironmentScreen"),
+        "plant_details":   ("plant_details",         "PlantDetailsScreen"),
+        "garden_view":     ("garden_view",           "GardenViewScreen"),
+        "are_you_sure":    ("are_you_sure",          "AreYouSure"),
+        "add_event":       ("add_event",             "AddEventScreen"),
+        "timeline_view":   ("timeline_view",         "TimelineScreen"),
+        "password_check":  ("password_check",        "PasswordCheckScreen"),
+        "settings":        ("settings_screen",       "SettingsScreen"),
+        "add_garden":      ("add_garden",            "AddGardenScreen"),
+        "select_garden":   ("select_garden",         "SelectGardenScreen"),
+        "export_import":   ("export_import_screen",  "ExportImportScreen"),
+        "csv_export":      ("csv_export_screen",     "CsvExportScreen"),
+        "photo_gallery":   ("photo_gallery",         "PhotoGalleryScreen"),
+    }
+
+    def _create_screen(self, name):
+        """Import and instantiate a screen by name."""
+        mod_name, cls_name = self._SCREEN_REGISTRY[name]
+        import importlib
+        mod = importlib.import_module(mod_name)
+        cls = getattr(mod, cls_name)
+        return cls(name=name)
+
+    def _build_remaining_screens(self, already_built, color_a, color_b):
+        """Build all screens not yet created."""
+        for name in self._SCREEN_REGISTRY:
+            if name not in already_built and not self.screen.has_screen(name):
+                try:
+                    scr = self._create_screen(name)
+                    self.screen.add_widget(scr)
+                    if hasattr(scr, 'update_shader_colors'):
+                        scr.update_shader_colors(color_a, color_b)
+                except Exception:
+                    LOG.exception("Failed to build screen '%s'", name)
 
     def go_back(self, instance=None):
         if self.previous_screen:

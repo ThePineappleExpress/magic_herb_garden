@@ -17,8 +17,11 @@ from boxes import WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox
 from storage import load_plant_events, get_plants_for_garden
 from are_you_sure import AreYouSure
 from datetime import datetime, timedelta
+import logging
 import math
 import copy
+
+LOG = logging.getLogger(__name__)
 
 # Maps data keys to their theme color attribute names
 GRAPH_KEY_COLORS = {
@@ -51,6 +54,30 @@ GRAPH_KEY_COLORS = {
 
 
 class SimpleGraph(BoxLayout):
+    # Class-level LRU-style texture cache shared across all graph instances.
+    # Maps (text, font_size, font_name) → Texture
+    _label_tex_cache: dict = {}
+    _CACHE_MAX = 500
+
+    @classmethod
+    def _get_label_texture(cls, text, font_size, font_name=None):
+        key = (text, font_size, font_name)
+        tex = cls._label_tex_cache.get(key)
+        if tex is not None:
+            return tex
+        kwargs = {"text": text, "font_size": font_size}
+        if font_name:
+            kwargs["font_name"] = font_name
+        cl = CoreLabel(**kwargs)
+        cl.refresh()
+        tex = cl.texture
+        if len(cls._label_tex_cache) >= cls._CACHE_MAX:
+            # Evict ~25% of oldest entries (insertion-order in Python 3.7+)
+            to_remove = list(cls._label_tex_cache.keys())[:cls._CACHE_MAX // 4]
+            for k in to_remove:
+                del cls._label_tex_cache[k]
+        cls._label_tex_cache[key] = tex
+        return tex
     def __init__(self, key=None, color=None, owner=None, tab_key=None, multi_keys=None, **kwargs):
         super().__init__(orientation="vertical", size_hint_y=None, height=120, **kwargs)
         app = App.get_running_app()
@@ -133,8 +160,10 @@ class SimpleGraph(BoxLayout):
         self._label_color = None
         with self.graph.canvas.after:
             self._label_color = Color(*app.theme.color_field_value)
-        # marker instruction group (recreated each redraw)
-        self._marker_group = None
+        # marker instruction group — persistent pool (no tear-down/recreate)
+        self._marker_group = InstructionGroup()
+        self.graph.canvas.after.add(self._marker_group)
+        self._marker_pool = []  # list of (Color, Ellipse) tuples
         self.graph.bind(
             xmin=lambda *a: self._schedule_grid_update(), 
             xmax=lambda *a: self._schedule_grid_update(), 
@@ -229,9 +258,7 @@ class SimpleGraph(BoxLayout):
                 fs = float(s[:-2])
             else:
                 fs = float(s)
-            cl = CoreLabel(text=text, font_size=fs, font_name=app.theme.font_body)
-            cl.refresh()
-            tex = cl.texture
+            tex = self._get_label_texture(text, fs, app.theme.font_body)
             frac = (val - ymin) / (ymax - ymin) if ymax > ymin else 0
             ypix = self.graph.y + frac * self.graph.height
             xbase = self._y_label_col.x
@@ -303,7 +330,7 @@ class SimpleGraph(BoxLayout):
                         try:
                             self.graph.canvas.after.remove(r)
                         except Exception:
-                            pass
+                            LOG.warning("Failed to remove label rect from canvas")
                     self._label_rects = []
                 else:
                     labels = []
@@ -318,14 +345,14 @@ class SimpleGraph(BoxLayout):
                         else:
                             fs = float(s)
                     except Exception:
+                        LOG.warning("Failed to parse theme body_size, using default")
                         fs = 12
                     for t in ticks:
                         days = int(round(t))
                         dt = base + timedelta(days=days)
                         txt = f"{dt.day}.{dt.month}.{dt.year % 100:02d}"
-                        cl = CoreLabel(text=txt, font_size=fs)
-                        cl.refresh()
-                        labels.append((txt, cl.texture))
+                        tex = self._get_label_texture(txt, fs)
+                        labels.append((txt, tex))
 
                     needed = len(labels)
                     # create extra Rectangles if needed
@@ -363,12 +390,11 @@ class SimpleGraph(BoxLayout):
                         last_center = center
                         last_half = half
             except Exception:
-                pass
-            
+                LOG.warning("Failed to draw x-axis labels", exc_info=True)
+
             # After drawing labels, draw point markers for plotted points so
-            # they move together with graph scrolling/zooming. We'll recreate a
-            # fresh InstructionGroup each redraw to avoid leftover instructions
-            # that cause ghosting.
+            # they move together with graph scrolling/zooming. Reuses a pooled
+            # set of Color+Ellipse instructions to avoid GC churn.
             try:
                 ymin = float(self.graph.ymin)
                 ymax = float(self.graph.ymax)
@@ -396,73 +422,48 @@ class SimpleGraph(BoxLayout):
                 y_base = float(self.graph.y) + pad_bottom
                 y_height = max(1.0, float(self.graph.height) - (pad_top + pad_bottom))
 
-                # recreate marker group
-                try:
-                    if getattr(self, '_marker_group', None) is not None:
-                        try:
-                            self.graph.canvas.after.remove(self._marker_group)
-                        except Exception:
-                            pass
-                    self._marker_group = InstructionGroup()
-                    self.graph.canvas.after.add(self._marker_group)
-                except Exception:
-                    self._marker_group = None
+                # Collect all visible markers: list of (xpix, ypix, color_val)
+                visible_markers = []
 
-                # Single-series plot: draw markers for actual plotted or raw series
-                if getattr(self, 'plot', None) is not None and not self.multi_keys and getattr(self, '_marker_group', None) is not None:
+                # Single-series plot
+                if getattr(self, 'plot', None) is not None and not self.multi_keys:
                     pts = getattr(self.plot, 'points', None)
                     if not pts:
                         pts = (getattr(self, '_last_series_map', {}) or {}).get(self.key, []) or getattr(self, 'full_points', []) or []
                     try:
-                        pass
+                        rawc = getattr(self.plot, 'color', None) or getattr(self, 'color', None) or app.theme.color_field_value
+                        cval = list(rawc) if isinstance(rawc, (list, tuple)) else list(rawc)
+                        if len(cval) == 3:
+                            cval = [cval[0], cval[1], cval[2], 1.0]
                     except Exception:
-                        pass
+                        cval = [1, 1, 1, 1]
                     for x, y in pts:
-                        # only draw if inside bounds
                         if x < xmin or x > xmax or y < ymin or y > ymax:
                             continue
                         fracx = _frac(x, xmin, xmax)
                         fracy = _frac(y, ymin, ymax)
                         xpix = x_base + fracx * x_width
-                        ypix = y_base + fracy * y_height
-                        # small visual correction: nudge single-series markers up
-                        # so they visually align with the LinePlot stroke
-                        try:
-                            ypix += dp(2)
-                        except Exception:
-                            pass
-                        d = dp(15)
-                        r = d / 2.0
-                        try:
-                            rawc = getattr(self.plot, 'color', None) or getattr(self, 'color', None) or app.theme.color_field_value
-                            cval = list(rawc) if isinstance(rawc, (list, tuple)) else list(rawc)
-                            if len(cval) == 3:
-                                cval = [cval[0], cval[1], cval[2], 1.0]
-                        except Exception:
-                            cval = (1, 1, 1, 1)
-                        self._marker_group.add(Color(*cval))
-                        self._marker_group.add(Ellipse(pos=(xpix - r, ypix - r), size=(d, d)))
+                        ypix = y_base + fracy * y_height + dp(2)
+                        visible_markers.append((xpix, ypix, cval))
 
                 # Multi-series plots
-                if self.multi_keys and getattr(self, '_marker_group', None) is not None:
+                if self.multi_keys:
                     for mk in self.multi_keys:
                         lp = self.plots.get(mk)
                         if lp is None:
                             continue
-                        # skip drawing markers for plots that are toggled off
-                        try:
-                            if not self._plot_visible.get(mk, True):
-                                continue
-                        except Exception:
-                            pass
-                        # prefer the points currently plotted on the LinePlot (this
-                        # reflects toggles and uses raw points when available).
+                        if not self._plot_visible.get(mk, True):
+                            continue
                         pts = getattr(lp, 'points', None) or []
                         if not pts:
-                            try:
-                                pts = list((getattr(self, '_last_series_map', {}) or {}).get(mk, []) or [])
-                            except Exception:
-                                pts = []
+                            pts = list((getattr(self, '_last_series_map', None) or {}).get(mk, []) or [])
+                        try:
+                            rawc = getattr(lp, 'color', None) or app.theme.color_field_value
+                            cval = list(rawc) if isinstance(rawc, (list, tuple)) else list(rawc)
+                            if len(cval) == 3:
+                                cval = [cval[0], cval[1], cval[2], 1.0]
+                        except Exception:
+                            cval = [1, 1, 1, 1]
                         for x, y in pts:
                             if x < xmin or x > xmax or y < ymin or y > ymax:
                                 continue
@@ -470,28 +471,41 @@ class SimpleGraph(BoxLayout):
                             fracy = _frac(y, ymin, ymax)
                             xpix = x_base + fracx * x_width
                             ypix = y_base + fracy * y_height
-                            d = dp(15)
-                            r = d / 2.0
-                            try:
-                                rawc = getattr(lp, 'color', None) or app.theme.color_field_value
-                                cval = list(rawc) if isinstance(rawc, (list, tuple)) else list(rawc)
-                                if len(cval) == 3:
-                                    cval = [cval[0], cval[1], cval[2], 1.0]
-                            except Exception:
-                                cval = (1, 1, 1, 1)
-                            self._marker_group.add(Color(*cval))
-                            self._marker_group.add(Ellipse(pos=(xpix - r, ypix - r), size=(d, d)))
+                            visible_markers.append((xpix, ypix, cval))
+
+                # Grow pool if needed
+                while len(self._marker_pool) < len(visible_markers):
+                    c = Color(0, 0, 0, 0)
+                    e = Ellipse(pos=(0, 0), size=(0, 0))
+                    self._marker_group.add(c)
+                    self._marker_group.add(e)
+                    self._marker_pool.append((c, e))
+
+                # Update visible markers
+                d = dp(15)
+                r = d / 2.0
+                for i, (xpix, ypix, cval) in enumerate(visible_markers):
+                    c, e = self._marker_pool[i]
+                    c.rgba = cval
+                    e.pos = (xpix - r, ypix - r)
+                    e.size = (d, d)
+
+                # Hide unused markers
+                for i in range(len(visible_markers), len(self._marker_pool)):
+                    c, e = self._marker_pool[i]
+                    c.a = 0
+                    e.size = (0, 0)
             except Exception:
-                pass
+                LOG.warning("Failed to draw point markers", exc_info=True)
             # ensure the shared label color instruction stays set to off-white
             try:
                 app = App.get_running_app()
                 if getattr(self, '_label_color', None) is not None:
                     self._label_color.rgba = list(app.theme.color_field_value)
             except Exception:
-                pass
+                LOG.warning("Failed to update label color")
         except Exception:
-            pass
+            LOG.warning("_draw_grid failed", exc_info=True)
 
     def _on_graph_touch(self, graph, touch):
         try:
@@ -514,7 +528,7 @@ class SimpleGraph(BoxLayout):
                 try:
                     touch.grab(self)
                 except Exception:
-                    pass
+                    LOG.warning("Failed to grab touch for drag")
                 self._drag_start_pos = touch.pos
                 return True
 
@@ -528,6 +542,7 @@ class SimpleGraph(BoxLayout):
                     raw_mods = getattr(Window, "_modifiers", None)
                 mods = [m.lower() for m in (raw_mods or [])]
             except Exception:
+                LOG.warning("Failed to detect keyboard modifiers")
                 mods = []
 
             if "shift" in mods:
@@ -541,9 +556,10 @@ class SimpleGraph(BoxLayout):
                 if getattr(self, "_owner", None):
                     self._owner._sync_graphs_to(self)
             except Exception:
-                pass
+                LOG.warning("Failed to sync graphs", exc_info=True)
             return True
         except Exception:
+            LOG.warning("_on_graph_touch failed", exc_info=True)
             return False
 
     def set_series(self, points):
@@ -557,6 +573,7 @@ class SimpleGraph(BoxLayout):
             try:
                 self._last_series_map = dict(points or {})
             except Exception:
+                LOG.warning("Failed to cache series map")
                 self._last_series_map = {}
             all_x = []
             all_y = []
@@ -584,6 +601,7 @@ class SimpleGraph(BoxLayout):
                 combined_filled_sorted = sorted(combined_filled, key=lambda p: p[0])
                 self.full_points = combined_filled_sorted
             except Exception:
+                LOG.warning("Failed to sort combined filled points")
                 self.full_points = combined_filled
             if not all_x:
                 self.graph.xmin = 0
@@ -596,10 +614,7 @@ class SimpleGraph(BoxLayout):
             # graph fill the available width by showing the entire data span.
             # If the graph already had a user/window set, preserve it (do not
             # reset to full span).
-            try:
-                is_initial = (getattr(self, '_xmin', None) == 0 and getattr(self, '_xmax', None) == 10 and not prev_has_points)
-            except Exception:
-                is_initial = False
+            is_initial = (getattr(self, '_xmin', None) == 0 and getattr(self, '_xmax', None) == 10 and not prev_has_points)
             if is_initial:
                 self._xmin = xmin
                 self._xmax = xmax
@@ -625,7 +640,7 @@ class SimpleGraph(BoxLayout):
             try:
                 self._update_y_labels()
             except Exception:
-                pass
+                LOG.warning("Failed to update y-axis labels", exc_info=True)
             return
 
         # legacy single-series handling
@@ -672,12 +687,10 @@ class SimpleGraph(BoxLayout):
         # y bounds
         ymin, ymax = (min(ys), max(ys)) if ys else (0, 1)
         # prefer using the most recent (last) measurement as the reference high
-        try:
+        if ys:
             last_y = ys[-1]
             if last_y is not None:
                 ymax = max(ymax, last_y)
-        except Exception:
-            pass
         # force baseline at zero for all keys except pH measurements
         key_lower = (self.key or "").lower()
         if key_lower not in ("ph", "soil_ph"):
@@ -734,6 +747,7 @@ class SimpleGraph(BoxLayout):
             try:
                 self._last_series_map = {self.key: list(pf)}
             except Exception:
+                LOG.warning("Failed to cache single-series map for key %s", self.key)
                 self._last_series_map = {self.key: []}
         self._update_y_labels()
 
@@ -796,9 +810,10 @@ class SimpleGraph(BoxLayout):
                 if getattr(self, "_owner", None):
                     self._owner._sync_graphs_to(self)
             except Exception:
-                pass
+                LOG.warning("Failed to sync graphs", exc_info=True)
             return True
         except Exception:
+            LOG.warning("_on_graph_touch_move failed", exc_info=True)
             return False
 
     def _on_graph_touch_up(self, graph, touch):
@@ -807,16 +822,17 @@ class SimpleGraph(BoxLayout):
                 try:
                     touch.ungrab(self)
                 except Exception:
-                    pass
+                    LOG.warning("Failed to ungrab touch")
             self._drag_start_pos = None
             # final sync after drag ends
             try:
                 if getattr(self, "_owner", None):
                     self._owner._sync_graphs_to(self)
             except Exception:
-                pass
+                LOG.warning("Failed to sync graphs", exc_info=True)
             return False
         except Exception:
+            LOG.warning("_on_graph_touch_up failed", exc_info=True)
             return False
 
     def show_x_labels(self, base_date=None, enabled=True, fmt="%Y-%m-%d"):
@@ -830,18 +846,15 @@ class SimpleGraph(BoxLayout):
                     try:
                         self._scheduled_x_update.cancel()
                     except Exception:
-                        pass
+                        LOG.warning("Failed to cancel scheduled x-label update")
                     self._scheduled_x_update = None
                 # remove any canvas-drawn label rectangles
-                try:
-                    for r in list(self._label_rects):
-                        try:
-                            self.graph.canvas.after.remove(r)
-                        except Exception:
-                            pass
-                    self._label_rects = []
-                except Exception:
-                    pass
+                for r in list(self._label_rects):
+                    try:
+                        self.graph.canvas.after.remove(r)
+                    except Exception:
+                        LOG.warning("Failed to remove label rect during disable")
+                self._label_rects = []
                 self._x_label_row.clear_widgets()
                 self._x_label_row.height = 0
                 return
@@ -864,22 +877,21 @@ class SimpleGraph(BoxLayout):
                     else:
                         fs = float(s)
                 except Exception:
+                    LOG.warning("Failed to parse theme body_size for x-label row height")
                     fs = 12
                 # give a little padding
                 self._x_label_row.height = int(max(20, fs + 8))
             except Exception:
-                try:
-                    self._x_label_row.height = 24
-                except Exception:
-                    pass
+                LOG.warning("Failed to set x-label row height, using fallback")
+                self._x_label_row.height = 24
             if self._scheduled_x_update is not None:
                 try:
                     self._scheduled_x_update.cancel()
                 except Exception:
-                    pass
+                    LOG.warning("Failed to cancel scheduled x-label update")
             self._scheduled_x_update = Clock.schedule_once(self._draw_grid, 0)
         except Exception:
-            pass
+            LOG.warning("show_x_labels failed", exc_info=True)
 
 
 class TimelineScreen(BaseScreen):
@@ -969,8 +981,16 @@ class TimelineScreen(BaseScreen):
         timeline_view.add_widget(right)
 
         self.add_widget(timeline_view)
+
+    def on_enter(self):
+        super().on_enter()
         Window.bind(on_mouse_scroll=self._on_mouse_scroll, on_scroll=self._on_mouse_scroll)
         Window.bind(size=self._on_window_resize)
+
+    def on_leave(self):
+        super().on_leave()
+        Window.unbind(on_mouse_scroll=self._on_mouse_scroll, on_scroll=self._on_mouse_scroll)
+        Window.unbind(size=self._on_window_resize)
 
     def _update_ui(self):
         app = App.get_running_app()
@@ -978,7 +998,7 @@ class TimelineScreen(BaseScreen):
 
 
         self.genes = plant.get("genes", "")
-        self.name_label.text = " | ".join([plant.get("name", ""), self.genes])
+        self.name_label.text = " | ".join([plant.get("seedbank", ""), self.genes])
 
         self.strain_label.text = plant.get("strain", "")
         genes = (self.genes or "").strip().lower()
@@ -1112,7 +1132,7 @@ class TimelineScreen(BaseScreen):
         self.tabbed_panel.add_widget(tab)
 
     def _on_window_resize(self, window, size):
-        self._update_graph_heights()
+        Clock.schedule_once(lambda _dt: self._update_graph_heights(), 0)
 
     def _update_graph_heights(self):
         for graphs in self.tab_graphs.values():

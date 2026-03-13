@@ -350,6 +350,17 @@ CSV_EXPORT_SUCCESS = "Export CSV terminé :"
 CSV_EXPORT_ERROR = "Échec de l'export CSV :"
 CSV_EXPORT_NO_GARDENS = "Veuillez sélectionner au moins un jardin à exporter."
 
+# Photos
+PHOTOS_TITLE = "Photos"
+PHOTO_ADD = "Ajouter une photo"
+PHOTO_VIEW = "Voir la photo"
+PHOTO_DELETE = "Supprimer la photo"
+PHOTO_VIEW_GALLERY = "Voir\nGalerie"
+PHOTO_SHOW_GALLERY = "Afficher\nGalerie"
+PHOTO_NONE = "Aucune photo"
+MSG_CONFIRM_DELETE_PHOTO = "Êtes-vous sûr de vouloir supprimer cette photo ?"
+PHOTO_GALLERY_TITLE = "Votre [color={color}]GALERIE[/color]"
+
 import sys
 
 def get(key: str) -> str:
