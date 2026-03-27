@@ -144,7 +144,7 @@ def process_image(image_bytes: bytes) -> dict | None:
         if w > MAX_DIMENSION or h > MAX_DIMENSION:
             return None
 
-        # verify() checks CRC/structure — consumes the file pointer
+        # verify() checks CRC/structure - consumes the file pointer
         img.verify()
         buf.seek(0)
         img = Image.open(buf)

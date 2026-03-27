@@ -60,7 +60,7 @@ def discover_and_run() -> tuple[int, int, list[str]]:
 
 def main() -> int:
     print("=" * 60)
-    print("Magic Herb Tracker — Unit Tests")
+    print("Magic Herb Tracker - Unit Tests")
     print("=" * 60)
     passed, failed, failures = discover_and_run()
     print("-" * 60)

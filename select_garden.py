@@ -227,7 +227,7 @@ class SelectGardenScreen(BaseScreen):
                 pid = str(p.get("id", ""))
                 idx_entry = index.get(pid, {})
                 ts = idx_entry.get("last_event_ts", "") or ""
-                # Planting counts as an event — pick the latest of
+                # Planting counts as an event - pick the latest of
                 # the index timestamp and the plant's date_planted.
                 effective_ts = max(ts, dp) if dp else ts
                 if effective_ts > last_event_ts:

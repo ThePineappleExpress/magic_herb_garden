@@ -88,7 +88,7 @@ class MagicHerbTracker(App):
 
         self.screen.current = initial_screen
 
-        # Defer remaining screens — build in background after first frame
+        # Defer remaining screens - build in background after first frame
         Clock.schedule_once(lambda dt: self._build_remaining_screens(
             bootstrap_screens, color_a, color_b), 0.3)
 

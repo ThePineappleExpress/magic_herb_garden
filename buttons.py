@@ -131,14 +131,14 @@ class SortDirButton(HoverToggle):
             cy = self.y + self.height / 2
             r = min(self.width, self.height) * 0.28
             if self.state == 'normal':
-                # Up-pointing triangle — ascending
+                # Up-pointing triangle - ascending
                 KvTriangle(points=[
                     cx,     cy + r,
                     cx - r, cy - r,
                     cx + r, cy - r,
                 ])
             else:
-                # Down-pointing triangle — descending
+                # Down-pointing triangle - descending
                 KvTriangle(points=[
                     cx,     cy - r,
                     cx - r, cy + r,

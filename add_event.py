@@ -490,7 +490,7 @@ class AddEventScreen(BaseScreen):
         self.add_event_button = add_event_button
         add_event_box.add_widget(add_event_button)
 
-        # Harvest button — right of the + button
+        # Harvest button - right of the + button
         harvest_btn = ButtonRed(text=lang.LEGEND_HARVEST)
         harvest_btn.font_size = app.theme.subtitle_size
         def harvest_and_exit(instance):
@@ -518,7 +518,7 @@ class AddEventScreen(BaseScreen):
 
     def validate(self):
         invalid = []
-        # Check event type (dropdown only — toggles are independent flags)
+        # Check event type (dropdown only - toggles are independent flags)
         event_type = self.event_type_dropdown.selected if hasattr(self, 'event_type_dropdown') else 'log'
 
         # Harvest is handled by its own button and always valid.
@@ -581,7 +581,7 @@ class AddEventScreen(BaseScreen):
         """Return the event type from the dropdown.
 
         Toggles (top/prune/flip) are independent flags stored alongside
-        the event type — they no longer override the dropdown.
+        the event type - they no longer override the dropdown.
         """
         return self.event_type_dropdown.selected
 
@@ -597,7 +597,7 @@ class AddEventScreen(BaseScreen):
         return active
 
     def _on_event_type_changed(self, instance, value):
-        """Dropdown changed — re-render water/food area."""
+        """Dropdown changed - re-render water/food area."""
         self._render_water_food_fields(None, self.event_type_dropdown.selected)
 
     def clear_fields(self):
@@ -958,7 +958,7 @@ class AddEventScreen(BaseScreen):
                 spacer = SpacerBox(size_hint_y=0.75)
                 box.add_widget(spacer)
         else:
-            # For log — show empty space
+            # For log - show empty space
             spacer = SpacerBox()
             box.add_widget(spacer)
 
@@ -1194,7 +1194,7 @@ class AddEventScreen(BaseScreen):
                 self._selected_photo_id = ""
                 return
 
-        # Persisted photo — confirm before deleting
+        # Persisted photo - confirm before deleting
         def _do_delete():
             meta = PhotoRepository.get_meta(photo_id)
             if not meta:
@@ -1219,7 +1219,7 @@ class AddEventScreen(BaseScreen):
                 popup = PhotoViewPopup(image_bytes=img_bytes)
                 popup.open()
                 return
-        # Fallback to loaded photo — no gallery navigation in add_event
+        # Fallback to loaded photo - no gallery navigation in add_event
         raw = PhotoRepository.load_photo_bytes(plant_id, photo_id)
         if raw:
             popup = PhotoViewPopup(image_bytes=raw)

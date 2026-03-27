@@ -1,4 +1,4 @@
-# breeder_trie.py — Autocomplete for breeder/seedbank names
+# breeder_trie.py - Autocomplete for breeder/seedbank names
 import json
 import os
 

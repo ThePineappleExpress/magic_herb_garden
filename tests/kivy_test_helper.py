@@ -1,4 +1,4 @@
-"""Kivy test helper — bootstraps a headless Kivy environment for widget tests.
+"""Kivy test helper - bootstraps a headless Kivy environment for widget tests.
 
 Must be imported BEFORE any widget modules.  Sets up:
 1. Kivy environment variables (suppress console log, disable args parsing)

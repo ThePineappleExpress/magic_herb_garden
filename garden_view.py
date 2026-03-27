@@ -336,7 +336,7 @@ class GardenViewScreen(BaseScreen):
             # Use the plants index for last_event_ts instead of loading full event files
             idx_entry = index.get(str(plant_id), {}) if plant_id else {}
             last_event_ts = idx_entry.get("last_event_ts") or ""
-            # Planting counts as the first event — use date_planted as
+            # Planting counts as the first event - use date_planted as
             # a fallback so freshly planted (or event-less) plants sort
             # correctly under "last event" ordering.
             if date_planted and date_planted > last_event_ts:

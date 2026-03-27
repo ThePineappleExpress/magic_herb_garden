@@ -173,7 +173,7 @@ class AddGardenScreen(BaseScreen):
         )
         self.light_hours_input.bind(text=self._on_light_hours_text)
         sched_input_box.add_widget(self.light_hours_input)
-        self._light_off_label = FieldLabel(text="/ —", size_hint_x=0.5)
+        self._light_off_label = FieldLabel(text="/ -", size_hint_x=0.5)
         sched_input_box.add_widget(self._light_off_label)
         sched_row.add_widget(sched_input_box)
         self._indoor_rows.append(sched_row)
@@ -218,7 +218,7 @@ class AddGardenScreen(BaseScreen):
         # Daylight hours (auto-calculated, display-only)
         daylight_row = ContentBox(orientation="horizontal")
         daylight_row.add_widget(FieldLabel(text=lang.LIGHT_SCHEDULE_LABEL, size_hint_x=0.3))
-        self._daylight_label = FieldLabel(text="— h")
+        self._daylight_label = FieldLabel(text="- h")
         daylight_row.add_widget(self._daylight_label)
         self._outdoor_rows.append(daylight_row)
 
@@ -232,7 +232,7 @@ class AddGardenScreen(BaseScreen):
         else:
             self.country_dropdown.select_option("")
             self.city_dropdown.options = []
-            self._daylight_label.text = "— h"
+            self._daylight_label.text = "- h"
 
     def _on_country_selected(self, instance, value):
         continent = self.continent_dropdown.selected
@@ -242,7 +242,7 @@ class AddGardenScreen(BaseScreen):
         if city_names:
             self.city_dropdown.select_option(city_names[0])
         else:
-            self._daylight_label.text = "— h"
+            self._daylight_label.text = "- h"
 
     def _on_city_selected(self, instance, value):
         city_data = self._get_selected_city_data()
@@ -252,7 +252,7 @@ class AddGardenScreen(BaseScreen):
             )
             self._daylight_label.text = f"{hours:.1f}h / {24 - hours:.1f}h"
         else:
-            self._daylight_label.text = "— h"
+            self._daylight_label.text = "- h"
 
     def _get_selected_city_data(self):
         """Return the dict for the currently selected city, or None."""
@@ -300,7 +300,7 @@ class AddGardenScreen(BaseScreen):
             if int(text) > 24:
                 instance.text = "24"
         else:
-            self._light_off_label.text = "/ —"
+            self._light_off_label.text = "/ -"
 
     # ── Lifecycle ──────────────────────────────────────────────────────────
 
@@ -314,8 +314,8 @@ class AddGardenScreen(BaseScreen):
         self.cfl_btn.state = "normal"
         self.wattage_input.text = ""
         self.light_hours_input.text = ""
-        self._light_off_label.text = "/ —"
-        self._daylight_label.text = "— h"
+        self._light_off_label.text = "/ -"
+        self._daylight_label.text = "- h"
         self._show_indoor()
 
     # ── Save ───────────────────────────────────────────────────────────────

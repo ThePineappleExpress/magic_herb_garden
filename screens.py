@@ -27,7 +27,7 @@ def _load_shader_prefs() -> tuple[bool, str, list, list]:
     return shader_enabled, shader_name, color_a, color_b
 
 
-# Module-level cache — computed once, shared by all screens
+# Module-level cache - computed once, shared by all screens
 _SHADER_PREFS_CACHE: tuple | None = None
 
 

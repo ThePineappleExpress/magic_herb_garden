@@ -1,4 +1,4 @@
-//! crypto_rs — AES-256-GCM encryption and PBKDF2-HMAC-SHA256 primitives
+//! crypto_rs - AES-256-GCM encryption and PBKDF2-HMAC-SHA256 primitives
 //! exposed to Python via PyO3 for Magic Herb Tracker.
 //!
 //! Wire format produced by encrypt_bytes():
@@ -91,7 +91,7 @@ fn decrypt_bytes<'py>(
 ) -> PyResult<Bound<'py, PyBytes>> {
     if !is_encrypted(data) {
         return Err(PyValueError::new_err(
-            "Data does not have ENC1 header — not encrypted by this app",
+            "Data does not have ENC1 header - not encrypted by this app",
         ));
     }
     if key.len() != 32 {
@@ -116,7 +116,7 @@ fn decrypt_bytes<'py>(
         Some(aad_bytes) => cipher.decrypt(nonce, Payload { msg: ciphertext, aad: aad_bytes }),
         None => cipher.decrypt(nonce, ciphertext),
     }
-    .map_err(|_| PyValueError::new_err("Decryption failed — wrong key or corrupted data"))?;
+    .map_err(|_| PyValueError::new_err("Decryption failed - wrong key or corrupted data"))?;
 
     Ok(PyBytes::new_bound(py, &plaintext))
 }
@@ -173,7 +173,7 @@ fn compare_digest_hex(a: &str, b: &str) -> bool {
 // -- weed_encrypt_payload / weed_decrypt_payload -------------------------------
 //
 // The .weed format uses a raw  IV(12) + ciphertext+tag  layout for section
-// payloads — no ENC1 prefix.  These are internal to weed_format.py and must
+// payloads - no ENC1 prefix.  These are internal to weed_format.py and must
 // not be confused with the ENC1-framed functions above.
 
 /// Encrypt *plaintext* with AES-256-GCM; return raw IV (12 bytes) + ct+tag.

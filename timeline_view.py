@@ -157,7 +157,7 @@ class SimpleGraph(BoxLayout):
             self._grid_color = Color(*app.theme.color_button_bg)
         self._label_rects = []
         self._y_label_rects = []
-        # marker instruction group — persistent pool (no tear-down/recreate)
+        # marker instruction group - persistent pool (no tear-down/recreate)
         self._marker_group = InstructionGroup()
         self.graph.canvas.after.add(self._marker_group)
         self._marker_pool = []  # list of (Color, Ellipse) tuples

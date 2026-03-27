@@ -1,4 +1,4 @@
-"""hover_manager.py — centralized mouse hover dispatch.
+"""hover_manager.py - centralized mouse hover dispatch.
 
 Instead of every HoverBehavior widget binding Window.mouse_pos individually,
 a single listener tracks which widget is hovered and dispatches on_enter /
@@ -55,7 +55,7 @@ def unregister_tree(root_widget):
                 seen.add(id(node))
                 node = node.parent
         except (ReferenceError, AttributeError):
-            # Widget partially destroyed — mark for removal anyway
+            # Widget partially destroyed - mark for removal anyway
             to_remove.append(w)
     for w in to_remove:
         unregister(w)
@@ -101,7 +101,7 @@ def _on_mouse_pos(window, pos):
     if _popup_active:
         return
 
-    # Check for open popups — suppress hover if any popup is showing
+    # Check for open popups - suppress hover if any popup is showing
     from kivy.uix.popup import Popup
     root = window
     if root:

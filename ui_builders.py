@@ -307,7 +307,7 @@ def create_feeding_fields(values=None, stage=None):
 
         value_box = ContentBox(orientation="horizontal")
         if values is not None:
-            # Display mode — stage-conditional dimming for Veg
+            # Display mode - stage-conditional dimming for Veg
             raw = values.get(val_key)
             if val_key == "grow_mix" and stage != "vegetative":
                 raw = None

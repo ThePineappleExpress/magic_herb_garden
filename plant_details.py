@@ -170,7 +170,7 @@ class PlantDetailsScreen(BaseScreen):
         add_event_box = WrapperBox(orientation="vertical", size_hint_x=0.1)
         scroll_events.add_widget(add_event_box)
 
-        # "+" button — always creates a new event
+        # "+" button - always creates a new event
         add_event_button = ButtonYellow(text=lang.BUTTON_PLUS)
         add_event_button.font_size = app.theme.logo_size_1
         add_event_button.font_name = app.theme.font_logo_1
@@ -184,7 +184,7 @@ class PlantDetailsScreen(BaseScreen):
         self.add_event_button = add_event_button
         add_event_box.add_widget(add_event_button)
 
-        # "Edit" button — edits the currently selected event
+        # "Edit" button - edits the currently selected event
         edit_event_button = ButtonGreen(
             text=lang.BUTTON_EDIT if hasattr(lang, 'BUTTON_EDIT') else "Edit",
         )

@@ -50,7 +50,7 @@ class ShaderWidget(Widget):
             self.rect = Rectangle(size=self.size, pos=self.pos)
         self.canvas.shader.fs = self.fs
 
-        # Uniforms — caller supplies colors from the active theme
+        # Uniforms - caller supplies colors from the active theme
         self.canvas['time'] = 0.0
         self.canvas['resolution'] = list(map(float, self.size))
         self.canvas['color_a'] = list(map(float, color_a or [0.12, 0.172, 0.153]))
@@ -85,7 +85,7 @@ class ShaderWidget(Widget):
         """
         source = load_shader(name)
         if source is None:
-            LOG.warning("Cannot set shader '%s' — file not found", name)
+            LOG.warning("Cannot set shader '%s' - file not found", name)
             return False
         self._shader_name = name
         if color_a is not None and color_b is not None:

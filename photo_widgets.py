@@ -303,7 +303,7 @@ class PhotoViewPopup(Popup):
 
         self._content_box = FloatLayout()
 
-        # Photo image — size/pos managed manually via _apply_transform
+        # Photo image - size/pos managed manually via _apply_transform
         self._photo_image = Image(
             size_hint=(None, None),
             allow_stretch=True,
@@ -317,7 +317,7 @@ class PhotoViewPopup(Popup):
                 self._photo_image.texture = tex
         self._content_box.add_widget(self._photo_image)
 
-        # Overlay — always rendered above the image
+        # Overlay - always rendered above the image
         self._overlay = FloatLayout(size_hint=(1, 1))
 
         self._left_arrow = ButtonTransparent(
