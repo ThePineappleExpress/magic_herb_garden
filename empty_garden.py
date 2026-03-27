@@ -1,7 +1,7 @@
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import Screen
 
-from helpers import on_plant_seed, go_to_garden
+from helpers import go_to_add_garden
 from labels import LogoLabel1, LogoLabel2, LogoLabel3
 from buttons import ButtonGreen, ButtonYellow
 from boxes import WrapperBox, ContentBox, ItemBox, TitleBox, RedBox, YellowBox, GreenBox
@@ -43,11 +43,8 @@ class EmptyGardenScreen(BaseScreen):
 
         plant_button = ItemBox(orientation="vertical", size_hint_y=0.5)
         plant_seed = ButtonGreen(text="Plant something beautiful")
-        plant_seed.bind(on_press=on_plant_seed)
+        plant_seed.bind(on_press=go_to_add_garden)
         plant_button.add_widget(plant_seed)
-        to_garden = ButtonYellow(text="Go to your garden")
-        to_garden.bind(on_press=go_to_garden)
-        plant_button.add_widget(to_garden)
         logo_holder.add_widget(plant_button)
 
         layout_holder.add_widget(logo_holder)

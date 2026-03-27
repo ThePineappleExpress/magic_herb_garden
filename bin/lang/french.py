@@ -17,6 +17,8 @@ LABEL_QUANTITY = "Quantité"
 
 # Messages
 MSG_CONFIRM_DELETE = "Êtes-vous sûr de vouloir supprimer cet élément ?"
+MSG_CONFIRM_DELETE_PLANT = "Êtes-vous sûr de vouloir supprimer la plante sélectionnée ?"
+MSG_CONFIRM_CANCEL_CHANGES = "Êtes-vous sûr de vouloir annuler et perdre toutes les modifications non enregistrées ?"
 
 # Confirmation prompt title and variants
 ARE_YOU_SURE_TITLE = "Êtes-vous sûr ?"
@@ -84,13 +86,15 @@ LAST_WATER_TEMPLATE = "Dernier arrosage : {vol} L, pH {ph}, {ppm} ppm @ {ts}"
 LAST_EVENT_TEMPLATE = "Dernier événement : {type} @ {ts}"
 
 # Screen titles (used in various views)
-SCREEN_TITLE_GARDEN = "ça a l'air [color={color}]BEAU[/color]"
+SCREEN_TITLE_GARDEN = "Mon [color={color}]JARDIN[/color] magique"
 SCREEN_TITLE_DETAILS = "Regardez-moi cette [color={color}]BEAUTÉ[/color]"
 SCREEN_TITLE_GRAPH = "Regardez-moi cette [color={color}]BEAUTÉ[/color]"
-SCREEN_TITLE_ENV = "Parlons [color={color}]ENVIRONNEMENT[/color]"
+SCREEN_TITLE_ENV = "Où vais-je le [color={color}]CULTIVER[/color] ?"
+SCREEN_TITLE_SOW_SEED = "Parlez-nous de votre [color={color}]graine[/color]"
 SCREEN_TITLE_ADD_GARDEN = "Créer un nouveau [color={color}]JARDIN[/color]"
-SCREEN_TITLE_SELECT_GARDEN = "Mes [color={color}]JARDINS[/color] magiques"
+SCREEN_TITLE_SELECT_GARDEN = "Sélectionnez un [color={color}]JARDIN[/color]"
 SCREEN_SETTINGS_TITLE = "Ajustons quelques [color={color}]PARAMÈTRES[/color]"
+SCREEN_TITLE_PASSWORD = "Entrez votre [color={color}]MOT DE PASSE[/color]"
 
 
 # Timeline tab labels
@@ -227,6 +231,9 @@ SORT_DAYS_TO_WATER = "Jours avant arrosage"
 SORT_MEDIUM = "Substrat"
 SORT_PLANT_COUNT = "Plantes"
 SORT_NEXT_EVENT = "Prochain événement"
+SORT_LAST_PLANTED = "Dernière plantation"
+SORT_LAST_EVENT = "Dernier événement"
+SORT_TYPE = "Type"
 SORT_ASCENDING = "Croissant"
 SORT_DESCENDING = "Décroissant"
 FILTER_ACTIVE_ONLY = "Afficher uniquement les actifs"
@@ -247,14 +254,24 @@ LEGEND_PLANT_COUNT = "Plantes"
 # Garden / header buttons
 OPTIONS = "Options"
 EXIT_APP = "Quitter\nl'appli"
+EXIT_GARDEN = "Quitter le\njardin"
+ENTER_GARDEN = "Entrer dans le jardin"
 ADD_PLANT = "Ajouter une plante"
-ADD_GARDEN = "Ajouter\nun jardin"
+ADD_GARDEN = "Ajouter un jardin"
 SELECT_GARDEN = "Choisir un jardin"
 VIEW_GARDENS = "Voir les\njardins"
-DELETE_GARDEN = "Supprimer\nle jardin"
+DELETE_GARDEN = "Supprimer le jardin"
 MSG_CONFIRM_DELETE_GARDEN = "Êtes-vous sûr de vouloir supprimer le jardin sélectionné et toutes ses plantes ?"
 VIEW_SELECTED_PLANT = "Voir la plante sélectionnée"
 DELETE_SELECTED_PLANT = "Supprimer la plante sélectionnée"
+
+# Password check screen
+PW_TOO_MANY_ATTEMPTS = "Trop de tentatives. Patientez {n}s."
+PW_WRONG_PASSWORD = "Mauvais mot de passe. Patientez {n}s avant de réessayer."
+PW_BUTTON_UNLOCK = "Déverrouiller"
+
+# Add event
+HINT_EVENT_NOTES = "Racontez ce qui s'est passé aujourd'hui..."
 
 # Garden management screens
 GARDEN_NAME_LABEL = "Nom du jardin : "
@@ -335,6 +352,17 @@ CSV_EXPORT_FILENAME_LABEL = "Nom du fichier :"
 CSV_EXPORT_SUCCESS = "Export CSV terminé :"
 CSV_EXPORT_ERROR = "Échec de l'export CSV :"
 CSV_EXPORT_NO_GARDENS = "Veuillez sélectionner au moins un jardin à exporter."
+
+# Photos
+PHOTOS_TITLE = "Photos"
+PHOTO_ADD = "Ajouter une photo"
+PHOTO_VIEW = "Voir la photo"
+PHOTO_DELETE = "Supprimer la photo"
+PHOTO_VIEW_GALLERY = "Voir\nGalerie"
+PHOTO_SHOW_GALLERY = "Afficher\nGalerie"
+PHOTO_NONE = "Aucune photo"
+MSG_CONFIRM_DELETE_PHOTO = "Êtes-vous sûr de vouloir supprimer cette photo ?"
+PHOTO_GALLERY_TITLE = "Votre [color={color}]GALERIE[/color]"
 
 import sys
 

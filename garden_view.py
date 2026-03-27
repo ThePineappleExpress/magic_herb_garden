@@ -1,26 +1,21 @@
-import sys, os
+import sys
 from datetime import date
-from kivy.config import Config
-from kivy.factory import Factory
-from kivy.properties import StringProperty, NumericProperty, ObjectProperty, BooleanProperty
-import xml.etree.ElementTree as ET
+from kivy.properties import StringProperty, ObjectProperty
 from kivy.app import App
-from kivy.uix.button import Button
-from kivy.uix.screenmanager import Screen
-from kivy.core.window import Window
-from kivy.lang import Builder
-from kivy.uix.recycleview import RecycleView
 from kivy.uix.widget import Widget
 from kivy.graphics.svg import Svg
 from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale
+from kivy.uix.recycleview import RecycleView
 
-from labels import TitleLabel
-from storage import load_plants, save_plants, load_plant_events
-from helpers import on_plant_seed, get_difference_days
-from boxes import TitleBox, WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox, SelectableBoxLayout, SelectableRecycleBoxLayout
-from buttons import ButtonRed, ButtonGreen, ButtonYellow
-from text_inputs import NumTextInput, MedTextInput, LargeTextInput
-from screens import BaseScreen
+from data import PlantRepository, IndexRepository
+import lang
+from helpers import (on_plant_seed, get_difference_days, go_to_add_event,
+                      go_to_timeline, go_to_plant_details, go_to_settings,
+                      go_to_select_garden, go_to_are_you_sure)
+from buttons import ButtonGreen, ButtonRed, ButtonYellow
+from list_screen import BaseListScreen
+
+
 class LeafIcon(Widget):
     source = StringProperty("")
     _svg = ObjectProperty(None, allownone=True)
@@ -30,7 +25,6 @@ class LeafIcon(Widget):
         self.bind(source=self._on_source, pos=self._redraw, size=self._redraw)
 
     def _on_source(self, *args):
-        # Recreate Svg only when source changes
         self._svg = Svg(self.source) if self.source else None
         self._redraw()
 
@@ -38,32 +32,46 @@ class LeafIcon(Widget):
         self.canvas.clear()
         if not self._svg:
             return
-
         svg = self._svg
-        # Guard against zero sizes
         if self.height <= 0 or self.width <= 0 or svg.width <= 0 or svg.height <= 0:
             return
-
-        # Scale to fit height, preserve aspect ratio
         scale = (self.height / svg.height) / 1.5
-        # Optionally center horizontally within the box
         scaled_w = svg.width * scale
         scaled_h = svg.height * scale
         x = self.x + (self.width - scaled_w) * 0.5
         y = self.y + (self.height - scaled_h) * 0.6
-
         self.canvas.add(PushMatrix())
         self.canvas.add(Translate(x, y))
         self.canvas.add(Scale(scale, scale, 1))
         self.canvas.add(svg)
         self.canvas.add(PopMatrix())
+
+
 class PlantListView(RecycleView):
     genes = StringProperty("")
     genes_icon = StringProperty("")
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.viewclass = "PlantListItem"  # uses the kv rule above
-        self.data = []                    # will fill from GardenViewScreen
+        self.viewclass = "PlantListItem"
+        self.data = []
+        self._owner = None
+        self.bind(height=self._check_scroll_needed)
+
+    def _check_scroll_needed(self, *args):
+        layout = self.children[0] if self.children else None
+        if layout and hasattr(layout, 'minimum_height'):
+            self.do_scroll_y = layout.minimum_height > self.height
+        else:
+            self.do_scroll_y = True
+
+    def on_data(self, *args):
+        from kivy.clock import Clock
+        Clock.schedule_once(lambda dt: self._check_scroll_needed(), 0)
+
+    def on_double_tap(self, index):
+        if self._owner and 0 <= index < len(self.data):
+            self._owner.on_details_button()
 
     def on_genes(self, instance, value):
         if value == "Sativa":
@@ -75,141 +83,111 @@ class PlantListView(RecycleView):
         else:
             self.genes_icon = "?"
 
-class GardenViewScreen(BaseScreen):
-    theme = ObjectProperty(None)
 
+class GardenViewScreen(BaseListScreen):
+
+    _title_text = lang.SCREEN_TITLE_GARDEN
+    _sort_options = [
+        lang.SORT_NAME, lang.SORT_BREEDER, lang.SORT_DATE_PLANTED,
+        lang.SORT_LAST_EVENT, lang.SORT_NEXT_EVENT,
+        lang.SORT_DAYS_TO_HARVEST, lang.SORT_DAYS_TO_WATER, lang.SORT_MEDIUM,
+    ]
+    _sort_label_to_key = {
+        lang.SORT_NAME: "strain",
+        lang.SORT_BREEDER: "seedbank",
+        lang.SORT_DATE_PLANTED: "date_planted",
+        lang.SORT_LAST_EVENT: "last_event_ts",
+        lang.SORT_NEXT_EVENT: "last_event_ts",
+        lang.SORT_DAYS_TO_HARVEST: "harvest_status",
+        lang.SORT_DAYS_TO_WATER: "last_watering",
+        lang.SORT_MEDIUM: "medium",
+    }
+    _default_sort_key = "last_event_ts"
+    _default_ascending = False
+    _searchable_fields = ["strain", "seedbank", "notes", "medium", "genes"]
+    _legend_columns = [
+        (lang.LEGEND_GENES, 0.1, "center"),
+        (lang.LEGEND_PLANT, 0.5, "left"),
+        (lang.LEGEND_MEDIUM, 0.10, "center"),
+        (lang.LEGEND_LAST_WATER, 0.11, "center"),
+        (lang.LEGEND_NEXT_WATER, 0.13, "center"),
+        (lang.LEGEND_FLOWER, 0.14, "center"),
+        (lang.LEGEND_HARVEST, 0.14, "center"),
+    ]
+    _list_widget_class = PlantListView
 
     def __init__(self, **kwargs):
+        self._header_buttons = [
+            (lang.VIEW_GARDENS, ButtonYellow, self.on_garden_exit, 0.1),
+            (lang.OPTIONS, ButtonYellow, self.on_options, 0.1),
+            (lang.EXIT_APP, ButtonRed, self.on_exit_app, 0.1),
+        ]
+        self._footer_buttons = [
+            (lang.ADD_PLANT, ButtonGreen, on_plant_seed, None, 0.8),
+            (lang.VIEW_SELECTED_PLANT, ButtonYellow, self.on_details_button, None, None),
+            (lang.DELETE_SELECTED_PLANT, ButtonRed, self.on_delete_pressed, None, None),
+        ]
         super().__init__(**kwargs)
-        garden_view_screen = WrapperBox(orientation="horizontal", size_hint_x=1)
-        spacer_left = SpacerBox(size_hint_x=0.2)
-        stripes_holder = ContentBox(orientation="horizontal")
-        stripe_0 = ItemBox(size_hint_x=0.45)
-        stripes_holder.add_widget(stripe_0)
-        stripe_1 = RedBox()
-        stripes_holder.add_widget(stripe_1)
-        stripe_2 = YellowBox()
-        stripes_holder.add_widget(stripe_2)
-        stripe_3 = GreenBox()
-        stripes_holder.add_widget(stripe_3)
-        stripe_4 = ItemBox(size_hint_x=0.45)
-        stripes_holder.add_widget(stripe_4)
-        spacer_left.add_widget(stripes_holder)
-        spacer_vertical = SpacerBox(size_hint_x=0.3)
-        spacer_left.add_widget(spacer_vertical)
-        title = TitleLabel(text = f"My magical [color={TitleLabel().hex_color}]GARDEN[/color]")
-        spacer_left.add_widget(title)
-        spacer_vertical = SpacerBox(size_hint_x=0.3)
-        spacer_left.add_widget(spacer_vertical)
-        garden_view_screen.add_widget(spacer_left)
-
-        content_wrapper = ContentBox(orientation="vertical", size_hint=(1, 1))
-
-        header = TitleBox(orientation="horizontal", size_hint_y=0.1)
-
-        spacer = SpacerBox(size_hint_x=0.8)
-        header.add_widget(spacer)
-        side_menu = ItemBox(orientation='horizontal', size_hint_x=0.2)
-        option_btn = ButtonYellow(text="Options", size_hint_x=0.1)
-        side_menu.add_widget(option_btn)
-        exit_btn = ButtonRed(text="Exit\nGarden", size_hint_x=0.1)
-        exit_btn.bind(on_release=self.on_garden_exit)
-        side_menu.add_widget(exit_btn)
-
-        header.add_widget(side_menu)
-
-        content_wrapper.add_widget(header)
-
-        spacer_box = SpacerBox(size_hint_y=0.02)
-        content_wrapper.add_widget(spacer_box)
-        
-        garden_list = ItemBox(orientation="horizontal", size_hint_y=1)
-
-        spacer_box = SpacerBox(size_hint_x=0.02)
-        garden_list.add_widget(spacer_box)
-
-        self.plant_list = PlantListView(size_hint_x=1)
-        garden_list.add_widget(self.plant_list)
-
-        spacer_box = SpacerBox(size_hint_x=0.02)
-        garden_list.add_widget(spacer_box)
-
-        content_wrapper.add_widget(garden_list)
-
-        spacer_box = SpacerBox(size_hint_y=0.02)
-        content_wrapper.add_widget(spacer_box)
-
-        garden_footer = ContentBox(orientation="horizontal", size_hint_y=0.1)
-        spacer_box = SpacerBox(size_hint_x=0.8)
-        garden_footer.add_widget(spacer_box)
-        add_plant_btn = ButtonGreen(text="Add Plant")
-        add_plant_btn.bind(on_press=on_plant_seed)
-        garden_footer.add_widget(add_plant_btn)
-        view_selected_btn = ButtonYellow(text="View Selected Plant")
-        view_selected_btn.bind(on_release=self.on_details_button)
-        view_selected_btn.bind(on_release=self.on_view_selected)
-        garden_footer.add_widget(view_selected_btn)
-        delete_selected_btn = ButtonRed(text="Delete Selected Plant")
-        delete_selected_btn.bind(on_release=self.on_delete_pressed)
-        garden_footer.add_widget(delete_selected_btn)
-
-        content_wrapper.add_widget(garden_footer)
-
-        garden_view_screen.add_widget(content_wrapper)
-
-        # Use add_content to ensure content is above the shader background
-        self.add_content(garden_view_screen)
         self.refresh_plants()
 
-        
+    # -- Navigation callbacks --------------------------------------------------
+
     def on_delete_pressed(self, instance):
-        app = App.get_running_app()
-        are_you_sure = app.screen.get_screen("are_you_sure")
-        are_you_sure.confirm_callback = lambda *_: self.on_delete_selected()
-        are_you_sure.prompt_text = "Are you sure you want to delete the selected plant?"
-        app.previous_screen = app.screen.current
-        app.screen.current = "are_you_sure"
+        go_to_are_you_sure(lang.MSG_CONFIRM_DELETE_PLANT,
+                           lambda *_: self.on_delete_selected())
+
+    def on_options(self, instance):
+        go_to_settings()
 
     def on_garden_exit(self, instance):
-        app = App.get_running_app()
-        are_you_sure = app.screen.get_screen("are_you_sure")
-        are_you_sure.confirm_callback =lambda *args, **kwargs: sys.exit(0)
-        are_you_sure.prompt_text = "Are you sure you want to quit?"
-        app.previous_screen = app.screen.current
-        app.screen.current = "are_you_sure"
+        go_to_select_garden()
+
+    def on_exit_app(self, instance):
+        go_to_are_you_sure(lang.MSG_CONFIRM_EXIT, lambda *_: sys.exit(0))
+
+    # -- Data ------------------------------------------------------------------
 
     def refresh_plants(self):
-        plants = load_plants()
+        app = App.get_running_app()
+        garden_id = getattr(app, 'current_garden_id', None)
+        plants = PlantRepository.list_for_garden(garden_id) if garden_id else []
         today = date.today()
+        index = IndexRepository.get_all()
+
         data = []
         for p in plants:
             if not isinstance(p, dict):
                 continue
-            # basic text fields
             plant_id = p.get("id")
-            name = p.get("name", "")
+            name = p.get("seedbank") or p.get("name", "")
             strain = p.get("strain", "")
             notes = p.get("notes", "")
             genes = p.get("genes", "")
-            date_planted  = p.get("date_planted", "")
-            self.plant_event = load_plant_events(str(plant_id)) if plant_id else None
-            events = (self.plant_event or {}).get("events", [])
-            last_event = events[-1] if events else None
-            last_event_ts = last_event.get("ts") if isinstance(last_event, dict) else None
+            date_planted = p.get("date_planted", "")
+
+            idx_entry = index.get(str(plant_id), {}) if plant_id else {}
+            last_event_ts = idx_entry.get("last_event_ts") or ""
+            if date_planted and date_planted > last_event_ts:
+                last_event_ts = date_planted
+            last_event_ts = last_event_ts or None
 
             last_watering = get_difference_days(today, last_event_ts) if last_event_ts else None
             if last_watering is None:
-                last_watering = "–"
+                last_watering = lang.DASH
             else:
                 last_watering = str(last_watering)
-            next_watering = "–"
-            flower_status = "–"
-            harvest_status = "–"
+            next_watering = lang.DASH
+            flower_status = lang.DASH
+            harvest_status = lang.DASH
 
-            # example: rough days to flower based on estimate and date_planted
             dt_str = p.get("date_planted")
-            base_f = p.get("days_to_flower") 
-            est_f = base_f + 14
+            base_f = p.get("days_to_flower")
+            try:
+                base_f = int(base_f) if base_f is not None else 0
+            except (ValueError, TypeError):
+                base_f = 0
+            penalty = int(p.get("penalty", 0) or 0)
+            est_f = base_f + 14 + penalty
             est_h = est_f * 2
             if dt_str and est_h:
                 try:
@@ -220,7 +198,7 @@ class GardenViewScreen(BaseScreen):
                     if days_left >= 0:
                         harvest_status = f"{days_left}"
                     else:
-                        harvest_status = f"Harvested!"
+                        harvest_status = lang.STATUS_HARVESTED
                 except Exception:
                     harvest_status = f"{est_h}"
 
@@ -232,19 +210,26 @@ class GardenViewScreen(BaseScreen):
                     days_left = est_f - days_since
                     if days_left > 0:
                         flower_status = f"{days_left}"
-                    elif days_left <= 0 and harvest_status != "Harvested!":
-                        flower_status = f"Flowering!"
-                    elif days_left <= 0 and harvest_status == "Harvested!":
-                        flower_status = f"Harvested!"
+                    elif days_left <= 0 and harvest_status != lang.STATUS_HARVESTED:
+                        flower_status = lang.STATUS_FLOWERING
+                    elif days_left <= 0 and harvest_status == lang.STATUS_HARVESTED:
+                        flower_status = lang.STATUS_HARVESTED
                 except Exception:
                     flower_status = f"{est_f}"
             medium = p.get("medium")
+            stage = p.get("stage", "")
 
+            if stage == "harvested":
+                harvest_status = lang.STATUS_HARVESTED
+                flower_status = lang.STATUS_HARVESTED
+            elif stage == "flowering":
+                if flower_status not in (lang.STATUS_FLOWERING, lang.STATUS_HARVESTED):
+                    flower_status = lang.STATUS_FLOWERING
 
             data.append({
                 "id": plant_id,
                 "genes": genes,
-                "name": name,
+                "seedbank": name,
                 "strain": strain,
                 "notes": notes,
                 "medium": medium,
@@ -253,74 +238,53 @@ class GardenViewScreen(BaseScreen):
                 "flower_status": flower_status,
                 "harvest_status": harvest_status,
                 "date_planted": date_planted,
+                "last_event_ts": last_event_ts or "",
             })
 
-        self.plant_list.data = data
+        self._all_items = data
+        self._apply_filters()
 
-    def get_selected_index(self):
-        lm = self.plant_list.layout_manager
-        if not lm or not lm.selected_nodes:
-            return None
-        return lm.selected_nodes[0]
-    
+    def _is_active(self, item):
+        return item.get("harvest_status") != lang.STATUS_HARVESTED
+
+    # -- Selection & actions ---------------------------------------------------
+
+    # Convenience aliases that match the old API used by button bindings
     def get_selected_plant(self):
-        idx = self.get_selected_index()
-        if idx is None:
-            return None
-        return self.plant_list.data[idx]   
-         
+        return self.get_selected_item()
+
     def on_view_selected(self, instance):
         plant = self.get_selected_plant()
         if plant is None:
             print("No plant selected")
             return
         print("Selected plant:", plant)
-    
+
     def on_delete_selected(self, *args):
         idx = self.get_selected_index()
         if idx is None:
             print("No plant selected to delete")
             return
 
-        # identify the plant (e.g. by id)
-        selected = self.plant_list.data[idx]
-        plant_id = selected.get("id") 
+        selected = self.list_widget.data[idx]
+        plant_id = selected.get("id")
 
-        # 1) delete from storage
-        if plant_id:
-            json_path = os.path.join("usr", "db", "plants", f"{plant_id}.json")
-            if os.path.exists(json_path):
-                try:
-                    os.remove(json_path)
-                except Exception as e:
-                    print(f"Error deleting {json_path}: {e}")
+        app = App.get_running_app()
+        garden_id = getattr(app, 'current_garden_id', None)
 
-        plants = load_plants()
-        if plant_id:
-            plants = [p for p in plants if isinstance(p, dict) and p.get("id") != plant_id]
-        else:
-            if 0 <= idx < len(plants):
-                plants.pop(idx)
-        save_plants(plants)
+        if plant_id and garden_id:
+            PlantRepository.remove(garden_id, plant_id)
 
+        self.list_widget.data.pop(idx)
 
-        # 3) delete from RecycleView
-        self.plant_list.data.pop(idx)
-
-        # clear selection in layout manager
-        lm = self.plant_list.layout_manager
+        lm = self.list_widget.layout_manager
         if lm and idx in lm.selected_nodes:
             lm.deselect_node(idx)
 
-        App.get_running_app().screen.current = "garden_view"
+        app.screen.current = "garden_view"
 
     def on_details_button(self, *args):
-        plant = self.get_selected_plant()  
+        plant = self.get_selected_plant()
         if not plant:
             return
-
-        app = App.get_running_app()
-        app.previous_screen = app.screen.current
-        details_screen = app.screen.get_screen("plant_details") 
-        details_screen.set_plant(plant)
-        app.screen.current = "plant_details"
+        go_to_plant_details(None, plant)

@@ -9,8 +9,14 @@ def load_trie():
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-TRIE = load_trie()
+_TRIE = None
 END_MARKER = "_end"  
+
+def _get_trie():
+    global _TRIE
+    if _TRIE is None:
+        _TRIE = load_trie()
+    return _TRIE
 
 def _walk_prefix(trie, prefix):
     node = trie.get("#", trie)
@@ -36,7 +42,7 @@ def trie_search(prefix, limit=20):
     if not prefix:
         return []
 
-    node = _walk_prefix(TRIE, prefix)
+    node = _walk_prefix(_get_trie(), prefix)
     if node is None:
         return []
 

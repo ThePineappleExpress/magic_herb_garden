@@ -32,7 +32,7 @@ class TitleLabel(Label):
         
         # guard in case this is called before theme exists
         if app and hasattr(app, "theme"):
-            self.hex_color = rgba_to_hex(app.theme.off_white)
+            self.hex_color = rgba_to_hex(app.theme.color_label_subtitle)
         else:
             self.hex_color = "#ffffff" 
             

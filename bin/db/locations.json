@@ -1,0 +1,274 @@
+{
+  "Europe": {
+    "Netherlands": [
+      {"city": "Amsterdam", "lat": 52.3676, "lon": 4.9041, "tz": "Europe/Amsterdam"},
+      {"city": "Rotterdam", "lat": 51.9225, "lon": 4.4792, "tz": "Europe/Amsterdam"},
+      {"city": "The Hague", "lat": 52.0705, "lon": 4.3007, "tz": "Europe/Amsterdam"},
+      {"city": "Utrecht", "lat": 52.0907, "lon": 5.1214, "tz": "Europe/Amsterdam"},
+      {"city": "Eindhoven", "lat": 51.4416, "lon": 5.4697, "tz": "Europe/Amsterdam"},
+      {"city": "Groningen", "lat": 53.2194, "lon": 6.5665, "tz": "Europe/Amsterdam"}
+    ],
+    "Spain": [
+      {"city": "Madrid", "lat": 40.4168, "lon": -3.7038, "tz": "Europe/Madrid"},
+      {"city": "Barcelona", "lat": 41.3851, "lon": 2.1734, "tz": "Europe/Madrid"},
+      {"city": "Valencia", "lat": 39.4699, "lon": -0.3763, "tz": "Europe/Madrid"},
+      {"city": "Seville", "lat": 37.3891, "lon": -5.9845, "tz": "Europe/Madrid"},
+      {"city": "Malaga", "lat": 36.7213, "lon": -4.4214, "tz": "Europe/Madrid"},
+      {"city": "Alicante", "lat": 38.3452, "lon": -0.4810, "tz": "Europe/Madrid"}
+    ],
+    "Portugal": [
+      {"city": "Lisbon", "lat": 38.7223, "lon": -9.1393, "tz": "Europe/Lisbon"},
+      {"city": "Porto", "lat": 41.1579, "lon": -8.6291, "tz": "Europe/Lisbon"},
+      {"city": "Faro", "lat": 37.0194, "lon": -7.9322, "tz": "Europe/Lisbon"}
+    ],
+    "Italy": [
+      {"city": "Rome", "lat": 41.9028, "lon": 12.4964, "tz": "Europe/Rome"},
+      {"city": "Milan", "lat": 45.4642, "lon": 9.1900, "tz": "Europe/Rome"},
+      {"city": "Naples", "lat": 40.8518, "lon": 14.2681, "tz": "Europe/Rome"},
+      {"city": "Turin", "lat": 45.0703, "lon": 7.6869, "tz": "Europe/Rome"},
+      {"city": "Florence", "lat": 43.7696, "lon": 11.2558, "tz": "Europe/Rome"},
+      {"city": "Palermo", "lat": 38.1157, "lon": 13.3615, "tz": "Europe/Rome"}
+    ],
+    "France": [
+      {"city": "Paris", "lat": 48.8566, "lon": 2.3522, "tz": "Europe/Paris"},
+      {"city": "Marseille", "lat": 43.2965, "lon": 5.3698, "tz": "Europe/Paris"},
+      {"city": "Lyon", "lat": 45.7640, "lon": 4.8357, "tz": "Europe/Paris"},
+      {"city": "Toulouse", "lat": 43.6047, "lon": 1.4442, "tz": "Europe/Paris"},
+      {"city": "Nice", "lat": 43.7102, "lon": 7.2620, "tz": "Europe/Paris"},
+      {"city": "Bordeaux", "lat": 44.8378, "lon": -0.5792, "tz": "Europe/Paris"}
+    ],
+    "Germany": [
+      {"city": "Berlin", "lat": 52.5200, "lon": 13.4050, "tz": "Europe/Berlin"},
+      {"city": "Munich", "lat": 48.1351, "lon": 11.5820, "tz": "Europe/Berlin"},
+      {"city": "Hamburg", "lat": 53.5511, "lon": 9.9937, "tz": "Europe/Berlin"},
+      {"city": "Frankfurt", "lat": 50.1109, "lon": 8.6821, "tz": "Europe/Berlin"},
+      {"city": "Cologne", "lat": 50.9375, "lon": 6.9603, "tz": "Europe/Berlin"},
+      {"city": "Stuttgart", "lat": 48.7758, "lon": 9.1829, "tz": "Europe/Berlin"}
+    ],
+    "United Kingdom": [
+      {"city": "London", "lat": 51.5074, "lon": -0.1278, "tz": "Europe/London"},
+      {"city": "Manchester", "lat": 53.4808, "lon": -2.2426, "tz": "Europe/London"},
+      {"city": "Birmingham", "lat": 52.4862, "lon": -1.8904, "tz": "Europe/London"},
+      {"city": "Edinburgh", "lat": 55.9533, "lon": -3.1883, "tz": "Europe/London"},
+      {"city": "Glasgow", "lat": 55.8642, "lon": -4.2518, "tz": "Europe/London"},
+      {"city": "Bristol", "lat": 51.4545, "lon": -2.5879, "tz": "Europe/London"}
+    ],
+    "Czech Republic": [
+      {"city": "Prague", "lat": 50.0755, "lon": 14.4378, "tz": "Europe/Prague"},
+      {"city": "Brno", "lat": 49.1951, "lon": 16.6068, "tz": "Europe/Prague"}
+    ],
+    "Switzerland": [
+      {"city": "Zurich", "lat": 47.3769, "lon": 8.5417, "tz": "Europe/Zurich"},
+      {"city": "Geneva", "lat": 46.2044, "lon": 6.1432, "tz": "Europe/Zurich"},
+      {"city": "Bern", "lat": 46.9480, "lon": 7.4474, "tz": "Europe/Zurich"}
+    ],
+    "Belgium": [
+      {"city": "Brussels", "lat": 50.8503, "lon": 4.3517, "tz": "Europe/Brussels"},
+      {"city": "Antwerp", "lat": 51.2194, "lon": 4.4025, "tz": "Europe/Brussels"},
+      {"city": "Ghent", "lat": 51.0543, "lon": 3.7174, "tz": "Europe/Brussels"}
+    ],
+    "Austria": [
+      {"city": "Vienna", "lat": 48.2082, "lon": 16.3738, "tz": "Europe/Vienna"},
+      {"city": "Graz", "lat": 47.0707, "lon": 15.4395, "tz": "Europe/Vienna"},
+      {"city": "Salzburg", "lat": 47.8095, "lon": 13.0550, "tz": "Europe/Vienna"}
+    ],
+    "Poland": [
+      {"city": "Warsaw", "lat": 52.2297, "lon": 21.0122, "tz": "Europe/Warsaw"},
+      {"city": "Krakow", "lat": 50.0647, "lon": 19.9450, "tz": "Europe/Warsaw"},
+      {"city": "Gdansk", "lat": 54.3520, "lon": 18.6466, "tz": "Europe/Warsaw"},
+      {"city": "Wroclaw", "lat": 51.1079, "lon": 17.0385, "tz": "Europe/Warsaw"}
+    ],
+    "Denmark": [
+      {"city": "Copenhagen", "lat": 55.6761, "lon": 12.5683, "tz": "Europe/Copenhagen"}
+    ],
+    "Sweden": [
+      {"city": "Stockholm", "lat": 59.3293, "lon": 18.0686, "tz": "Europe/Stockholm"},
+      {"city": "Gothenburg", "lat": 57.7089, "lon": 11.9746, "tz": "Europe/Stockholm"},
+      {"city": "Malmo", "lat": 55.6050, "lon": 13.0038, "tz": "Europe/Stockholm"}
+    ],
+    "Norway": [
+      {"city": "Oslo", "lat": 59.9139, "lon": 10.7522, "tz": "Europe/Oslo"},
+      {"city": "Bergen", "lat": 60.3913, "lon": 5.3221, "tz": "Europe/Oslo"}
+    ],
+    "Finland": [
+      {"city": "Helsinki", "lat": 60.1699, "lon": 24.9384, "tz": "Europe/Helsinki"}
+    ],
+    "Greece": [
+      {"city": "Athens", "lat": 37.9838, "lon": 23.7275, "tz": "Europe/Athens"},
+      {"city": "Thessaloniki", "lat": 40.6401, "lon": 22.9444, "tz": "Europe/Athens"},
+      {"city": "Heraklion", "lat": 35.3387, "lon": 25.1442, "tz": "Europe/Athens"}
+    ],
+    "Croatia": [
+      {"city": "Zagreb", "lat": 45.8150, "lon": 15.9819, "tz": "Europe/Zagreb"},
+      {"city": "Split", "lat": 43.5081, "lon": 16.4402, "tz": "Europe/Zagreb"}
+    ],
+    "Ireland": [
+      {"city": "Dublin", "lat": 53.3498, "lon": -6.2603, "tz": "Europe/Dublin"},
+      {"city": "Cork", "lat": 51.8969, "lon": -8.4863, "tz": "Europe/Dublin"}
+    ]
+  },
+  "North America": {
+    "United States": [
+      {"city": "Los Angeles", "lat": 34.0522, "lon": -118.2437, "tz": "America/Los_Angeles"},
+      {"city": "San Francisco", "lat": 37.7749, "lon": -122.4194, "tz": "America/Los_Angeles"},
+      {"city": "San Diego", "lat": 32.7157, "lon": -117.1611, "tz": "America/Los_Angeles"},
+      {"city": "Portland", "lat": 45.5152, "lon": -122.6784, "tz": "America/Los_Angeles"},
+      {"city": "Seattle", "lat": 47.6062, "lon": -122.3321, "tz": "America/Los_Angeles"},
+      {"city": "Denver", "lat": 39.7392, "lon": -104.9903, "tz": "America/Denver"},
+      {"city": "Phoenix", "lat": 33.4484, "lon": -112.0740, "tz": "America/Phoenix"},
+      {"city": "Las Vegas", "lat": 36.1699, "lon": -115.1398, "tz": "America/Los_Angeles"},
+      {"city": "Chicago", "lat": 41.8781, "lon": -87.6298, "tz": "America/Chicago"},
+      {"city": "Detroit", "lat": 42.3314, "lon": -83.0458, "tz": "America/Detroit"},
+      {"city": "New York", "lat": 40.7128, "lon": -74.0060, "tz": "America/New_York"},
+      {"city": "Boston", "lat": 42.3601, "lon": -71.0589, "tz": "America/New_York"},
+      {"city": "Miami", "lat": 25.7617, "lon": -80.1918, "tz": "America/New_York"},
+      {"city": "Atlanta", "lat": 33.7490, "lon": -84.3880, "tz": "America/New_York"},
+      {"city": "Dallas", "lat": 32.7767, "lon": -96.7970, "tz": "America/Chicago"},
+      {"city": "Houston", "lat": 29.7604, "lon": -95.3698, "tz": "America/Chicago"},
+      {"city": "Anchorage", "lat": 61.2181, "lon": -149.9003, "tz": "America/Anchorage"},
+      {"city": "Honolulu", "lat": 21.3069, "lon": -157.8583, "tz": "Pacific/Honolulu"}
+    ],
+    "Canada": [
+      {"city": "Toronto", "lat": 43.6532, "lon": -79.3832, "tz": "America/Toronto"},
+      {"city": "Vancouver", "lat": 49.2827, "lon": -123.1207, "tz": "America/Vancouver"},
+      {"city": "Montreal", "lat": 45.5017, "lon": -73.5673, "tz": "America/Montreal"},
+      {"city": "Calgary", "lat": 51.0447, "lon": -114.0719, "tz": "America/Edmonton"},
+      {"city": "Edmonton", "lat": 53.5461, "lon": -113.4938, "tz": "America/Edmonton"},
+      {"city": "Ottawa", "lat": 45.4215, "lon": -75.6972, "tz": "America/Toronto"},
+      {"city": "Winnipeg", "lat": 49.8951, "lon": -97.1384, "tz": "America/Winnipeg"},
+      {"city": "Halifax", "lat": 44.6488, "lon": -63.5752, "tz": "America/Halifax"}
+    ],
+    "Mexico": [
+      {"city": "Mexico City", "lat": 19.4326, "lon": -99.1332, "tz": "America/Mexico_City"},
+      {"city": "Guadalajara", "lat": 20.6597, "lon": -103.3496, "tz": "America/Mexico_City"},
+      {"city": "Monterrey", "lat": 25.6866, "lon": -100.3161, "tz": "America/Monterrey"},
+      {"city": "Cancun", "lat": 21.1619, "lon": -86.8515, "tz": "America/Cancun"}
+    ]
+  },
+  "South America": {
+    "Colombia": [
+      {"city": "Bogota", "lat": 4.7110, "lon": -74.0721, "tz": "America/Bogota"},
+      {"city": "Medellin", "lat": 6.2476, "lon": -75.5658, "tz": "America/Bogota"},
+      {"city": "Cali", "lat": 3.4516, "lon": -76.5320, "tz": "America/Bogota"}
+    ],
+    "Uruguay": [
+      {"city": "Montevideo", "lat": -34.9011, "lon": -56.1645, "tz": "America/Montevideo"},
+      {"city": "Punta del Este", "lat": -34.9667, "lon": -54.9500, "tz": "America/Montevideo"}
+    ],
+    "Argentina": [
+      {"city": "Buenos Aires", "lat": -34.6037, "lon": -58.3816, "tz": "America/Argentina/Buenos_Aires"},
+      {"city": "Cordoba", "lat": -31.4201, "lon": -64.1888, "tz": "America/Argentina/Cordoba"},
+      {"city": "Mendoza", "lat": -32.8895, "lon": -68.8458, "tz": "America/Argentina/Mendoza"}
+    ],
+    "Chile": [
+      {"city": "Santiago", "lat": -33.4489, "lon": -70.6693, "tz": "America/Santiago"},
+      {"city": "Valparaiso", "lat": -33.0472, "lon": -71.6127, "tz": "America/Santiago"}
+    ],
+    "Brazil": [
+      {"city": "Sao Paulo", "lat": -23.5505, "lon": -46.6333, "tz": "America/Sao_Paulo"},
+      {"city": "Rio de Janeiro", "lat": -22.9068, "lon": -43.1729, "tz": "America/Sao_Paulo"},
+      {"city": "Brasilia", "lat": -15.7975, "lon": -47.8919, "tz": "America/Sao_Paulo"}
+    ],
+    "Peru": [
+      {"city": "Lima", "lat": -12.0464, "lon": -77.0428, "tz": "America/Lima"}
+    ],
+    "Ecuador": [
+      {"city": "Quito", "lat": -0.1807, "lon": -78.4678, "tz": "America/Guayaquil"}
+    ]
+  },
+  "Africa": {
+    "South Africa": [
+      {"city": "Cape Town", "lat": -33.9249, "lon": 18.4241, "tz": "Africa/Johannesburg"},
+      {"city": "Johannesburg", "lat": -26.2041, "lon": 28.0473, "tz": "Africa/Johannesburg"},
+      {"city": "Durban", "lat": -29.8587, "lon": 31.0218, "tz": "Africa/Johannesburg"}
+    ],
+    "Morocco": [
+      {"city": "Casablanca", "lat": 33.5731, "lon": -7.5898, "tz": "Africa/Casablanca"},
+      {"city": "Marrakech", "lat": 31.6295, "lon": -7.9811, "tz": "Africa/Casablanca"},
+      {"city": "Tangier", "lat": 35.7595, "lon": -5.8340, "tz": "Africa/Casablanca"}
+    ],
+    "Kenya": [
+      {"city": "Nairobi", "lat": -1.2921, "lon": 36.8219, "tz": "Africa/Nairobi"}
+    ],
+    "Nigeria": [
+      {"city": "Lagos", "lat": 6.5244, "lon": 3.3792, "tz": "Africa/Lagos"}
+    ],
+    "Egypt": [
+      {"city": "Cairo", "lat": 30.0444, "lon": 31.2357, "tz": "Africa/Cairo"}
+    ],
+    "Lesotho": [
+      {"city": "Maseru", "lat": -29.3167, "lon": 27.4833, "tz": "Africa/Maseru"}
+    ],
+    "Malawi": [
+      {"city": "Lilongwe", "lat": -13.9626, "lon": 33.7741, "tz": "Africa/Blantyre"}
+    ],
+    "Eswatini": [
+      {"city": "Mbabane", "lat": -26.3054, "lon": 31.1367, "tz": "Africa/Mbabane"}
+    ]
+  },
+  "Asia": {
+    "Thailand": [
+      {"city": "Bangkok", "lat": 13.7563, "lon": 100.5018, "tz": "Asia/Bangkok"},
+      {"city": "Chiang Mai", "lat": 18.7883, "lon": 98.9853, "tz": "Asia/Bangkok"},
+      {"city": "Phuket", "lat": 7.8804, "lon": 98.3923, "tz": "Asia/Bangkok"}
+    ],
+    "India": [
+      {"city": "Mumbai", "lat": 19.0760, "lon": 72.8777, "tz": "Asia/Kolkata"},
+      {"city": "Delhi", "lat": 28.7041, "lon": 77.1025, "tz": "Asia/Kolkata"},
+      {"city": "Bangalore", "lat": 12.9716, "lon": 77.5946, "tz": "Asia/Kolkata"},
+      {"city": "Chennai", "lat": 13.0827, "lon": 80.2707, "tz": "Asia/Kolkata"}
+    ],
+    "Japan": [
+      {"city": "Tokyo", "lat": 35.6762, "lon": 139.6503, "tz": "Asia/Tokyo"},
+      {"city": "Osaka", "lat": 34.6937, "lon": 135.5023, "tz": "Asia/Tokyo"}
+    ],
+    "South Korea": [
+      {"city": "Seoul", "lat": 37.5665, "lon": 126.9780, "tz": "Asia/Seoul"}
+    ],
+    "Israel": [
+      {"city": "Tel Aviv", "lat": 32.0853, "lon": 34.7818, "tz": "Asia/Jerusalem"},
+      {"city": "Haifa", "lat": 32.7940, "lon": 34.9896, "tz": "Asia/Jerusalem"}
+    ],
+    "Lebanon": [
+      {"city": "Beirut", "lat": 33.8938, "lon": 35.5018, "tz": "Asia/Beirut"}
+    ],
+    "Georgia": [
+      {"city": "Tbilisi", "lat": 41.7151, "lon": 44.8271, "tz": "Asia/Tbilisi"}
+    ],
+    "Philippines": [
+      {"city": "Manila", "lat": 14.5995, "lon": 120.9842, "tz": "Asia/Manila"}
+    ],
+    "Nepal": [
+      {"city": "Kathmandu", "lat": 27.7172, "lon": 85.3240, "tz": "Asia/Kathmandu"}
+    ]
+  },
+  "Oceania": {
+    "Australia": [
+      {"city": "Sydney", "lat": -33.8688, "lon": 151.2093, "tz": "Australia/Sydney"},
+      {"city": "Melbourne", "lat": -37.8136, "lon": 144.9631, "tz": "Australia/Melbourne"},
+      {"city": "Brisbane", "lat": -27.4698, "lon": 153.0251, "tz": "Australia/Brisbane"},
+      {"city": "Perth", "lat": -31.9505, "lon": 115.8605, "tz": "Australia/Perth"},
+      {"city": "Adelaide", "lat": -34.9285, "lon": 138.6007, "tz": "Australia/Adelaide"},
+      {"city": "Canberra", "lat": -35.2809, "lon": 149.1300, "tz": "Australia/Sydney"}
+    ],
+    "New Zealand": [
+      {"city": "Auckland", "lat": -36.8485, "lon": 174.7633, "tz": "Pacific/Auckland"},
+      {"city": "Wellington", "lat": -41.2865, "lon": 174.7762, "tz": "Pacific/Auckland"},
+      {"city": "Christchurch", "lat": -43.5321, "lon": 172.6362, "tz": "Pacific/Auckland"}
+    ]
+  },
+  "Caribbean": {
+    "Jamaica": [
+      {"city": "Kingston", "lat": 17.9714, "lon": -76.7920, "tz": "America/Jamaica"}
+    ],
+    "Trinidad and Tobago": [
+      {"city": "Port of Spain", "lat": 10.6596, "lon": -61.5086, "tz": "America/Port_of_Spain"}
+    ],
+    "Puerto Rico": [
+      {"city": "San Juan", "lat": 18.4655, "lon": -66.1057, "tz": "America/Puerto_Rico"}
+    ],
+    "US Virgin Islands": [
+      {"city": "Charlotte Amalie", "lat": 18.3358, "lon": -64.9307, "tz": "America/Virgin"}
+    ]
+  }
+}

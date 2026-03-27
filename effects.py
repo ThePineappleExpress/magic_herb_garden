@@ -1,8 +1,16 @@
 from kivy.animation import Animation
 
 
-def shake_and_flash(widget, use_bg=False, use_text=True, flash_color=(0.827, 0.247, 0.286, 1), offset=15):
+def shake_and_flash(widget, use_bg=False, use_text=True, flash_color=None, offset=15):
     from kivy.animation import Animation
+    from kivy.app import App
+
+    if flash_color is None:
+        app = App.get_running_app()
+        if app and hasattr(app, 'theme'):
+            flash_color = list(app.theme.color_accent_1)
+        else:
+            flash_color = (0.827, 0.247, 0.286, 1)
 
     orig_x = widget.x
 

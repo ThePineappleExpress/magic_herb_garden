@@ -1,9 +1,10 @@
 """csv_export_screen.py - Export selected gardens to a single flat CSV file."""
 
-import csv
 import logging
 from datetime import date
 from pathlib import Path
+
+import pandas as pd
 
 from kivy.app import App
 from kivy.properties import ObjectProperty
@@ -18,8 +19,8 @@ from buttons import ButtonGreen, ButtonRed, ButtonYellow
 from labels import FieldLabel, TitleLabel
 from screens import BaseScreen
 from ui_builders import create_initial_layout
+from data import GardenRepository, EventRepository
 import lang
-import storage
 
 LOG = logging.getLogger(__name__)
 
@@ -133,13 +134,13 @@ def _event_row(event: dict) -> dict:
         "ph": event.get("ph", ""),
         "ppm": event.get("ppm", ""),
         # nutrients
-        "feeding_veg": feeding.get("veg", ""),
-        "feeding_root": feeding.get("root", ""),
-        "feeding_soil": feeding.get("soil", ""),
-        "feeding_vit": feeding.get("vit", ""),
-        "feeding_flower": feeding.get("flower", ""),
-        "feeding_tops": feeding.get("tops", ""),
-        "feeding_calmag": feeding.get("calmag", ""),
+        "feeding_grow_mix": feeding.get("grow_mix", ""),
+        "feeding_root_mix": feeding.get("root_mix", ""),
+        "feeding_bloom_mix": feeding.get("bloom_mix", ""),
+        "feeding_bloom_boost": feeding.get("bloom_boost", ""),
+        "feeding_soil_boost": feeding.get("soil_boost", ""),
+        "feeding_vit_boost": feeding.get("vit_boost", ""),
+        "feeding_calmag": feeding.get("CalMag", ""),
         "feeding_myco_trico": feeding.get("myco_trico", ""),
         # plant observations
         "plant_height": plant_obs.get("plant_height", ""),
@@ -194,10 +195,8 @@ def write_gardens_csv(dest: Path, gardens_data: list) -> None:
         r.get("event_ts", ""),
     ))
 
-    with dest.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=CSV_COLUMNS, extrasaction="ignore")
-        writer.writeheader()
-        writer.writerows(rows)
+    df = pd.DataFrame(rows, columns=CSV_COLUMNS)
+    df.to_csv(dest, index=False, encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -274,11 +273,11 @@ class CsvExportScreen(BaseScreen):
 
         screen_wrapper.add_widget(layout)
         screen_wrapper.add_widget(SpacerBox(size_hint_x=0.1))
-        self.add_widget(screen_wrapper)
 
     # -- Lifecycle --------------------------------------------------------------
 
     def on_enter(self):
+        super().on_enter()
         app = App.get_running_app()
         if app.previous_screen not in {"csv_export"}:
             self._origin_screen = app.previous_screen or "settings"
@@ -289,7 +288,7 @@ class CsvExportScreen(BaseScreen):
     def _rebuild_checkboxes(self):
         self._checkbox_container.clear_widgets()
         self._garden_checkboxes.clear()
-        for garden in storage.load_gardens():
+        for garden in GardenRepository.list_all():
             gid = garden.get("id", "")
             name = garden.get("name", gid)
             row = BoxLayout(
@@ -401,7 +400,7 @@ class CsvExportScreen(BaseScreen):
         """Return [{garden: {...}, events: {plant_id: {...}}}, …] for CSV writing."""
         result = []
         for gid in garden_ids:
-            garden = storage.load_garden(gid)
+            garden = GardenRepository.get(gid)
             if not garden:
                 LOG.warning("Garden %s not found during CSV export - skipping", gid)
                 continue
@@ -409,7 +408,7 @@ class CsvExportScreen(BaseScreen):
             for plant in garden.get("plants", []):
                 pid = plant.get("id")
                 if pid:
-                    ev = storage.load_plant_events(pid)
+                    ev = EventRepository.get(pid)
                     if ev:
                         events_map[pid] = ev
             result.append({"garden": garden, "events": events_map})

@@ -49,6 +49,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 import crypto_rs
+import filetype
 
 __all__ = [
     "write_weed",
@@ -71,6 +72,7 @@ FLAG_COMPRESSED = 0x02
 SECT_MANIFEST = 0x0001
 SECT_GARDEN = 0x0002
 SECT_EVENTS = 0x0003
+SECT_PHOTO = 0x0004
 
 APP_VERSION = "0.1.0"
 _PBKDF2_ITERS = 600_000
@@ -150,6 +152,7 @@ def write_weed(
     path: str | Path,
     gardens_data: List[Dict],
     export_password: Optional[str] = None,
+    include_photos: bool = True,
 ) -> None:
     """Write a .weed export file.
 
@@ -165,6 +168,7 @@ def write_weed(
         export_password If supplied every payload is AES-256-GCM encrypted
                         using a PBKDF2 key derived from this password and a
                         fresh random salt stored in the file header.
+        include_photos If True, photo blobs are included as SECT_PHOTO sections.
     """
     flags = FLAG_COMPRESSED
     export_salt = b"\x00" * 16
@@ -209,6 +213,33 @@ def write_weed(
                 _encode_payload(json.dumps(events, ensure_ascii=False).encode(), key),
             ))
 
+        # PHOTO sections for each plant in the garden
+        if include_photos:
+            try:
+                import photo_storage
+                from data import PhotoRepository
+                plants = garden.get("plants", [])
+                for plant in plants:
+                    plant_id = plant.get("id", "")
+                    if not plant_id:
+                        continue
+                    photo_metas = PhotoRepository.list_for_plant(str(plant_id))
+                    for meta in photo_metas:
+                        pid = meta.get("id", "")
+                        raw = photo_storage.load_photo(str(plant_id), pid)
+                        if not raw:
+                            continue
+                        # Payload = JSON metadata + null byte + raw image bytes
+                        meta_json = json.dumps(meta, ensure_ascii=False).encode()
+                        photo_payload = meta_json + b"\x00" + raw
+                        sections.append((
+                            SECT_PHOTO,
+                            _uuid_to_bytes(pid),
+                            _encode_payload(photo_payload, key),
+                        ))
+            except ImportError:
+                pass
+
     # Serialise
     buf = bytearray()
     buf += _HDR.pack(WEED_MAGIC, WEED_VERSION, flags, len(sections), export_salt)
@@ -246,6 +277,13 @@ def read_weed(
     """
     data = Path(path).read_bytes()
 
+    # -- reject files identified as a known non-.weed format ---------------
+    kind = filetype.guess(data)
+    if kind is not None:
+        raise WeedCorrupted(
+            f"Not a .weed file - detected as {kind.extension} ({kind.mime})"
+        )
+
     # -- structural minimum size check -------------------------------------
     min_size = _HDR.size + 32
     if len(data) < min_size:
@@ -278,6 +316,7 @@ def read_weed(
         "manifest": None,
         "gardens": [],
         "events": {},
+        "photos": [],
         "encrypted": encrypted,
     }
     offset = _HDR.size
@@ -296,15 +335,26 @@ def read_weed(
         payload = data[offset: offset + payload_len]
         offset += payload_len
 
-        json_bytes = _decode_payload(payload, key)
-        obj = json.loads(json_bytes.decode("utf-8"))
+        raw_bytes = _decode_payload(payload, key)
 
-        if sect_type == SECT_MANIFEST:
-            result["manifest"] = obj
-        elif sect_type == SECT_GARDEN:
-            result["gardens"].append(obj)
-        elif sect_type == SECT_EVENTS:
-            plant_id = obj.get("plant_id") or _bytes_to_uuid(uuid_bytes)
-            result["events"][plant_id] = obj
+        if sect_type == SECT_PHOTO:
+            # Photo payload: JSON metadata + \x00 + raw image bytes
+            null_idx = raw_bytes.index(b"\x00") if b"\x00" in raw_bytes else -1
+            if null_idx >= 0:
+                meta = json.loads(raw_bytes[:null_idx].decode("utf-8"))
+                image_bytes = raw_bytes[null_idx + 1:]
+                result["photos"].append({
+                    "meta": meta,
+                    "image_bytes": image_bytes,
+                })
+        else:
+            obj = json.loads(raw_bytes.decode("utf-8"))
+            if sect_type == SECT_MANIFEST:
+                result["manifest"] = obj
+            elif sect_type == SECT_GARDEN:
+                result["gardens"].append(obj)
+            elif sect_type == SECT_EVENTS:
+                plant_id = obj.get("plant_id") or _bytes_to_uuid(uuid_bytes)
+                result["events"][plant_id] = obj
 
     return result
