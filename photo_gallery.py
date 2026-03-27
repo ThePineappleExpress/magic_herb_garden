@@ -18,7 +18,7 @@ from boxes import WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox
 from buttons import ButtonRed, ButtonGreen, ButtonYellow
 from photo_widgets import PhotoStrip, PhotoViewPopup, PhotoPickerPopup, bytes_to_texture
 from data import PhotoRepository
-from are_you_sure import AreYouSure
+from helpers import go_to_are_you_sure
 import lang
 
 LOG = logging.getLogger(__name__)
@@ -236,11 +236,7 @@ class PhotoGalleryScreen(BaseScreen):
             self._selected_photo_id = ""
             app.screen.current = "photo_gallery"
 
-        app.previous_screen = "photo_gallery"
-        are_you_sure = app.screen.get_screen("are_you_sure")
-        are_you_sure.prompt_text = lang.MSG_CONFIRM_DELETE_PHOTO
-        are_you_sure.confirm_callback = _do_delete
-        app.screen.current = "are_you_sure"
+        go_to_are_you_sure(lang.MSG_CONFIRM_DELETE_PHOTO, _do_delete)
 
     def _open_file_picker(self):
         app = App.get_running_app()

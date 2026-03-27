@@ -306,7 +306,7 @@ class SetEnvironmentScreen(BaseScreen):
             return
 
         app = App.get_running_app()
-        pending = getattr(app, "pending_plant_data", {})
+        pending = getattr(app, "wizard_data", {})
         # only reach here if all fields are valid
         plant = {
             "id": str(uuid.uuid4()),
@@ -328,7 +328,7 @@ class SetEnvironmentScreen(BaseScreen):
         if garden_id:
             create_plant(garden_id, plant)
         self.clear_fields()
-        app.pending_plant_data = {}
+        app.wizard_data = {}
         garden_screen = app.screen.get_screen("garden_view")
         garden_screen.refresh_plants()
         app.screen.current = "garden_view"

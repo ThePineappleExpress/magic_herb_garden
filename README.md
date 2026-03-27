@@ -191,52 +191,97 @@ Before any destructive encryption operation the user sees a confirmation screen:
 
 ---
 
-## Quick start
+## Installation (pre-built binaries)
+
+Download the latest release from the [Releases](https://github.com/ThePineappleExpress/magic_herb_tracker/releases) page.
+
+### Linux
+
+```bash
+tar xzf magic-herb-tracker-*-linux-x86_64.tar.gz
+cd magic-herb-tracker-*-linux-x86_64
+chmod +x magic-herb-tracker
+./magic-herb-tracker
+```
+
+The archive includes a `.desktop` file - copy it to `~/.local/share/applications/` for menu integration.
+
+If you get missing library errors, install the SDL2/OpenGL runtime:
+
+```bash
+sudo apt install libsdl2-2.0-0 libsdl2-image-2.0-0 libsdl2-mixer-2.0-0 \
+  libsdl2-ttf-2.0-0 libgl1-mesa-glx
+```
+
+### Windows
+
+- **Installer:** Download the `-setup.exe`, run it, follow the wizard. Creates a desktop shortcut and Start Menu entry.
+- **Portable:** Download the `.zip`, extract anywhere, run `magic-herb-tracker.exe`.
+
+> Windows SmartScreen may warn "Windows protected your PC" because the binary is not code-signed.
+> Click **More info** → **Run anyway**.
+
+### Data location
+
+Your grow data is stored in your OS data directory, separate from the application:
+
+- **Linux:** `~/.local/share/MagicHerbTracker/db/`
+- **Windows:** `%APPDATA%\MagicHerbTracker\db\`
+
+Uninstalling the app does not delete your data.
+
+---
+
+## Development setup
 
 ```bash
 # 1. Clone and enter the project
-git clone <repo-url>
+git clone https://github.com/ThePineappleExpress/magic_herb_tracker.git
 cd magic_herb_tracker
 
-# 2. Create a virtual environment
-python3.13 -m venv .venv
-source .venv/bin/activate # Windows: .venv\Scripts\activate
+# 2. Install dependencies (requires uv and Rust toolchain)
+uv sync --group build
 
 # 3. Build the Rust crypto extension
-pip install maturin
-cd crypto_rs && maturin develop --release && cd ..
+uv run maturin develop --release --manifest-path crypto_rs/Cargo.toml
 
-# 4. Install dependencies
-pip install -e .
-
-# 5. Run
-python main.py
+# 4. Run the app
+uv run python main.py
 ```
 
 Run the test suite:
 
 ```bash
-python run_unit_tests.py
+uv run python run_unit_tests.py
 ```
 
 ### Building a standalone binary
 
 ```bash
 # Full build: Rust extension + Nuitka compilation + archive
-python build.py
+uv run python build.py
 
 # Skip Rust step if already built
-python build.py --skip-maturin
+uv run python build.py --skip-maturin
 
 # Folder mode (faster, useful for debugging)
-python build.py --no-onefile
+uv run python build.py --no-onefile
 ```
 
-Output lands in `dist/magic-herb-tracker-<version>-<platform>.zip` (or `.dmg` on macOS).
+Output lands in `dist/magic-herb-tracker-<version>-<platform>.zip`.
+
+CI builds for both Linux and Windows are triggered automatically by pushing a version tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
 
 ---
 
 ## Use manual
+
+> Full instructions with screenshots are available on the [landing page](https://thepineapple.express/instructions.html).
 
 ### First launch
 

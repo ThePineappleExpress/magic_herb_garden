@@ -32,9 +32,8 @@ class MagicHerbTracker(App):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.pending_plant_data = {}
+        self.wizard_data = {}
         self.current_garden_id = None
-        self.post_garden_select_screen = "garden_view"
         self.post_unlock_screen = None
 
     def build(self):

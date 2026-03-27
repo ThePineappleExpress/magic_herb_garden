@@ -281,7 +281,7 @@ def read_weed(
     kind = filetype.guess(data)
     if kind is not None:
         raise WeedCorrupted(
-            f"Not a .weed file — detected as {kind.extension} ({kind.mime})"
+            f"Not a .weed file - detected as {kind.extension} ({kind.mime})"
         )
 
     # -- structural minimum size check -------------------------------------

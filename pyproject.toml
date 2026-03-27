@@ -18,6 +18,13 @@ dependencies = [
     "watchdog>=6.0.0",
 ]
 
+[dependency-groups]
+build = [
+    "nuitka>=2.6",
+    "maturin>=1.7",
+    "ordered-set>=4.1",
+]
+
 [tool.uv.workspace]
 members = [
     "magic_herb_tracker",

@@ -12,7 +12,7 @@ from kivy.uix.spinner import Spinner
 from boxes import ContentBox, ItemBox, SpacerBox, WrapperBox
 from buttons import ButtonGreen, ButtonRed, ButtonYellow, PasswordEyeToggle
 from effects import shake_and_flash
-from helpers import derive_encryption_key, hash_password, verify_password
+from helpers import derive_encryption_key, hash_password, verify_password, go_to_are_you_sure
 from labels import FieldLabel, TitleLabel
 from screens import BaseScreen, invalidate_shader_prefs_cache
 from text_inputs import MedTextInput
@@ -355,12 +355,8 @@ class SettingsScreen(BaseScreen):
                 return
 
             # Confirm via are_you_sure
-            app = App.get_running_app()
-            are_you_sure = app.screen.get_screen("are_you_sure")
-            are_you_sure.prompt_text = lang.WARN_SET_PASSWORD
-            are_you_sure.confirm_callback = lambda *_: self._do_set_password(settings, new_pw)
-            app.previous_screen = "settings"
-            app.screen.current = "are_you_sure"
+            go_to_are_you_sure(lang.WARN_SET_PASSWORD,
+                               lambda *_: self._do_set_password(settings, new_pw))
             return
 
         # DB path change
@@ -429,12 +425,8 @@ class SettingsScreen(BaseScreen):
             shake_and_flash(self.cur_pw)
             return
 
-        app = App.get_running_app()
-        are_you_sure = app.screen.get_screen("are_you_sure")
-        are_you_sure.prompt_text = lang.WARN_REMOVE_PASSWORD
-        are_you_sure.confirm_callback = lambda *_: self._do_remove_password(settings)
-        app.previous_screen = "settings"
-        app.screen.current = "are_you_sure"
+        go_to_are_you_sure(lang.WARN_REMOVE_PASSWORD,
+                           lambda *_: self._do_remove_password(settings))
 
     def _do_remove_password(self, settings):
         from crypto import CryptoContext
@@ -456,12 +448,12 @@ class SettingsScreen(BaseScreen):
 
     def _on_export_import(self, *args):
         app = App.get_running_app()
-        app.previous_screen = "settings"
+        app.previous_screen = app.screen.current
         app.screen.current = "export_import"
 
     def _on_csv_export(self, *args):
         app = App.get_running_app()
-        app.previous_screen = "settings"
+        app.previous_screen = app.screen.current
         app.screen.current = "csv_export"
 
     def _on_back(self, *args):

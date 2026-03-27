@@ -8,18 +8,19 @@ from kivy.clock import Clock
 
 from uuid import uuid4
 
-from helpers import get_difference_days, go_to_add_event, go_to_garden, go_to_timeline
+from helpers import (get_difference_days, go_to_add_event, go_to_garden,
+                      go_to_timeline, go_to_photo_gallery, go_to_are_you_sure)
 from data import EventRepository, PhotoRepository
 from constants import (
     EVENT_WATERING, EVENT_FEEDING, EVENT_PLANTING, EVENT_HARVEST,
 )
-from labels import TitleLabel, FieldLabel, HintLabel, ListTitleLabel, LogoLabel2
-from boxes import ItemBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
+from labels import FieldLabel, HintLabel
+from boxes import ItemBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableEventBox
 from buttons import ButtonRed, ButtonGreen, ButtonYellow, ButtonTransparent
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
-from screens import BaseScreen
+from plant_screen import BasePlantScreen
 from ui_builders import create_water_fields, create_feeding_fields, create_nutrients_panel
-from photo_widgets import PhotoStrip, PhotoViewPopup, PhotoPickerPopup, bytes_to_texture
+from photo_widgets import PhotoViewPopup, PhotoPickerPopup
 import lang
 
 class HorizontalScrollView(ScrollView):
@@ -48,106 +49,17 @@ class HorizontalScrollView(ScrollView):
                     return True
         return super().on_touch_down(touch)
 
-class PlantDetailsScreen(BaseScreen):
+class PlantDetailsScreen(BasePlantScreen):
     theme = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.plant = None
         self._selected_event_item = None
         app = App.get_running_app()
 
-        # build UI 
-        plant_details_screen = WrapperBox(orientation="horizontal")
-        spacer_left = SpacerBox(size_hint_x=0.2)
-        stripes_holder = WrapperBox(orientation="horizontal")
-        stripe_0 = ContentBox(size_hint_x=0.45); stripes_holder.add_widget(stripe_0)
-        stripe_1 = RedBox(); stripes_holder.add_widget(stripe_1)
-        stripe_2 = YellowBox(); stripes_holder.add_widget(stripe_2)
-        stripe_3 = GreenBox(); stripes_holder.add_widget(stripe_3)
-        stripe_4 = ContentBox(size_hint_x=0.45); stripes_holder.add_widget(stripe_4)
-        spacer_left.add_widget(stripes_holder)
-        spacer_vertical = SpacerBox(size_hint_x=0.3)
-        spacer_left.add_widget(spacer_vertical)
-        title = TitleLabel(text=lang.SCREEN_TITLE_DETAILS.format(color=TitleLabel().hex_color))
-        spacer_left.add_widget(title)
-        spacer_vertical = SpacerBox(size_hint_x=0.3)
-        spacer_left.add_widget(spacer_vertical)
-        plant_details_screen.add_widget(spacer_left)
-
-        content_wrapper = WrapperBox(orientation="vertical", size_hint=(1, 1))
-
-        spacer_box = SpacerBox(size_hint_y=0.1)
-        content_wrapper.add_widget(spacer_box)
-
-        header = WrapperBox(orientation="horizontal", size_hint_y=0.3)
-        content_wrapper.add_widget(header)
-
-        title_box = ContentBox(orientation="vertical")
-        header.add_widget(title_box)
-        spacer_box = SpacerBox(size_hint_y=0.2)
-        title_box.add_widget(spacer_box)
-        
-        name_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
-        self.name_label = FieldLabel(text="", valign="middle", halign="left")
-        self.name_label.font_size = app.theme.subtitle_size
-        self.name_label.color = app.theme.color_field_value
-        name_box.add_widget(self.name_label)
-        title_box.add_widget(name_box)
-
-        strain_box = ContentBox(orientation="horizontal", size_hint_y=0.3)
-        self.strain_label = FieldLabel(text="", valign="middle", halign="left")
-        self.strain_label.font_size = app.theme.logo_size_2
-        self.strain_label.color = app.theme.color_field_value
-
-        strain_box.add_widget(self.strain_label)
-        title_box.add_widget(strain_box)
-
-        notes_box = ContentBox(orientation="horizontal", size_hint_y=0.15)
-        self.notes_label = FieldLabel(text="", valign="middle", halign="left")
-        self.notes_label.font_size = app.theme.body_size
-        self.notes_label.color = app.theme.color_field_value
-
-        notes_box.add_widget(self.notes_label)
-        title_box.add_widget(notes_box)
-
-        water_data_box = ContentBox(orientation="horizontal", size_hint_y=0.15)
-        self.last_water_label = FieldLabel(text="", valign="middle", halign="left")
-        self.last_water_label.font_size = app.theme.body_size
-        
-        water_data_box.add_widget(self.last_water_label)
-        title_box.add_widget(water_data_box)
-
-        spacer = SpacerBox(size_hint_x=0.1)
-        header.add_widget(spacer)
-        days_passed_box = ContentBox(orientation="vertical", size_hint_x=0.2)
-        header.add_widget(days_passed_box)
-        
-        spacer_box = SpacerBox(size_hint_y=0.3)
-        days_passed_box.add_widget(spacer_box)
-
-        days_passed_title_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
-        days_passed_box.add_widget(days_passed_title_box)
-        days_passed_title = FieldLabel(text=lang.DAY_LABEL, valign="middle", halign="right")
-        days_passed_title.font_size = app.theme.subtitle_size        
-        days_passed_title_box.add_widget(days_passed_title)
-
-        days_passed_value_box = ContentBox(orientation="horizontal", size_hint_y=0.5)
-        days_passed_box.add_widget(days_passed_value_box)
-        self.days_passed_value = FieldLabel(text="", valign="middle", halign="right")
-        self.days_passed_value.font_size = app.theme.logo_size_1
-        self.days_passed_value.color = app.theme.color_field_value
-        days_passed_value_box.add_widget(self.days_passed_value)
-
-        days_stage_box = ContentBox(orientation="vertical", size_hint_y=0.1)
-        days_passed_box.add_widget(days_stage_box)
-        self.days_stage_value = FieldLabel(text="", valign="middle", halign="right")
-        self.days_stage_value.font_size = app.theme.body_size
-        self.days_stage_value.color = app.theme.color_field_value
-        days_stage_box.add_widget(self.days_stage_value)
-
-        spacer_box = SpacerBox(size_hint_y=0.02)
-        content_wrapper.add_widget(spacer_box)
+        plant_details_screen, content_wrapper = self._build_sidebar_and_header(
+            lang.SCREEN_TITLE_DETAILS,
+        )
 
         self.info_box = WrapperBox(orientation="vertical", size_hint_x=1, size_hint_y=0.8)
 
@@ -218,7 +130,7 @@ class PlantDetailsScreen(BaseScreen):
         plant_details_screen.add_widget(content_wrapper)
         spacer_right = SpacerBox(size_hint_x=0.1)
         plant_details_screen.add_widget(spacer_right)
-        self.add_widget(plant_details_screen)
+        self.add_content(plant_details_screen)
 
         # load and show events
         self._load_and_display_events()
@@ -228,24 +140,7 @@ class PlantDetailsScreen(BaseScreen):
         self._update_ui()
 
     def _update_ui(self):
-        app = App.get_running_app()
-        plant = self.plant or {}
-        self.genes = plant.get("genes", "")
-        self.name_label.text = " | ".join([plant.get("seedbank", ""), self.genes])
-        
-        self.strain_label.text = plant.get("strain", "")
-        genes = (self.genes or "").strip().lower()
-        if genes == "sativa":
-            self.strain_label.color = app.theme.color_strain_sativa
-        elif genes == "indica":
-            self.strain_label.color = app.theme.color_strain_indica
-        elif genes == "hybrid":
-            self.strain_label.color = app.theme.color_strain_hybrid
-        else:
-            self.strain_label.color = app.theme.color_strain_unknown
-        self.notes_label.text = plant.get("notes") or ""
-        days_passed = get_difference_days(datetime.datetime.now(), plant.get("date_planted", ""))
-        self.days_passed_value.text = str(days_passed) if days_passed is not None else "–"
+        super()._update_ui()
         self._load_and_display_events()
 
     def _select_event_item(self, item, event):
@@ -646,51 +541,26 @@ class PlantDetailsScreen(BaseScreen):
         notes_text.font_size = app.theme.small_size
         notes_text.color = app.theme.color_field_value
         notes_text_box.add_widget(notes_text)
-        spacer = SpacerBox(size_hint_x=0.01)
-        main_data_column.add_widget(spacer)
+        main_data_column.add_widget(SpacerBox(size_hint_x=0.01))
+
         # -- Photo column (third column) --
-        photo_column_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
-        main_data_column.add_widget(photo_column_box)
-
-        photo_title_box = ContentBox(orientation="horizontal", size_hint_y=0.1)
-        photo_column_box.add_widget(photo_title_box)
-        photo_title = FieldLabel(text=lang.PHOTOS_TITLE, valign="bottom", halign="left")
-        photo_title.color = app.theme.color_field_label
-        photo_title.font_size = app.theme.subtitle_size
-        photo_title_box.add_widget(photo_title)
-
         event_id = event.get("id", "")
         plant_id = str(plant.get("id") or plant.get("plant_id") or "")
         photo_metas = PhotoRepository.list_for_event(event_id, plant_id=plant_id) if event_id else []
 
-        self._photo_strip = PhotoStrip(
-            size_hint_y=0.7,
+        photo_column, self._photo_strip = self.build_photo_strip(
             on_select=self._on_photo_select,
             on_double_click=self._on_photo_double_click,
+            gallery_callback=self._go_to_photo_gallery,
+            add_callback=self._open_file_picker,
+            delete_callback=self._delete_selected_photo,
+            gallery_text=lang.PHOTO_VIEW_GALLERY,
         )
         self._photo_strip.set_photos(
             photo_metas,
             load_thumb_fn=PhotoRepository.load_thumb_bytes,
         )
-        photo_column_box.add_widget(self._photo_strip)
-
-        photo_buttons_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
-        photo_column_box.add_widget(photo_buttons_box)
-
-        view_gallery_btn = ButtonGreen(text=lang.PHOTO_VIEW_GALLERY, size_hint_x=0.34)
-        view_gallery_btn.font_size = app.theme.small_size
-        view_gallery_btn.bind(on_release=lambda *_: self._go_to_photo_gallery())
-        photo_buttons_box.add_widget(view_gallery_btn)
-
-        add_photo_btn = ButtonYellow(text=lang.PHOTO_ADD, size_hint_x=0.33)
-        add_photo_btn.font_size = app.theme.small_size
-        add_photo_btn.bind(on_release=lambda *_: self._open_file_picker())
-        photo_buttons_box.add_widget(add_photo_btn)
-
-        delete_photo_btn = ButtonRed(text=lang.PHOTO_DELETE, size_hint_x=0.33)
-        delete_photo_btn.font_size = app.theme.small_size
-        delete_photo_btn.bind(on_release=lambda *_: self._delete_selected_photo())
-        photo_buttons_box.add_widget(delete_photo_btn)
+        main_data_column.add_widget(photo_column)
 
         self.info_box.add_widget(event_details)
 
@@ -716,11 +586,7 @@ class PlantDetailsScreen(BaseScreen):
             self._selected_photo_id = ""
             app.screen.current = "plant_details"
 
-        app.previous_screen = "plant_details"
-        are_you_sure = app.screen.get_screen("are_you_sure")
-        are_you_sure.prompt_text = lang.MSG_CONFIRM_DELETE_PHOTO
-        are_you_sure.confirm_callback = _do_delete
-        app.screen.current = "are_you_sure"
+        go_to_are_you_sure(lang.MSG_CONFIRM_DELETE_PHOTO, _do_delete)
 
     def _on_photo_double_click(self, photo_id, plant_id):
         """Open full-size photo viewer on double-click (same-event photos)."""
@@ -748,12 +614,7 @@ class PlantDetailsScreen(BaseScreen):
 
     def _go_to_photo_gallery(self):
         """Navigate to the per-plant photo gallery screen."""
-        app = App.get_running_app()
-        plant = self.plant or {}
-        app.previous_screen = "plant_details"
-        gallery = app.screen.get_screen("photo_gallery")
-        gallery.set_plant(plant)
-        app.screen.current = "photo_gallery"
+        go_to_photo_gallery(None, self.plant or {})
 
     def _open_file_picker(self):
         """Open a file picker to attach a photo to the current event."""

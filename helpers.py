@@ -51,29 +51,46 @@ def go_to_add_garden(*args):
 def go_to_timeline(instance, plant):
     app = App.get_running_app()
     timeline_screen = app.screen.get_screen("timeline_view")
-
-    # best-effort: call set_plant if available; otherwise set plant_id and trigger update_timeline
-    try:
-        if hasattr(timeline_screen, 'set_plant'):
-            timeline_screen.set_plant(plant)
-        else:
-            # fallback: set plant_id and call update_timeline if present
-            pid = plant.get('id') if isinstance(plant, dict) else str(plant)
-            if pid:
-                try:
-                    timeline_screen.plant_id = str(pid)
-                except Exception:
-                    pass
-            if hasattr(timeline_screen, 'update_timeline'):
-                try:
-                    timeline_screen.update_timeline(pid)
-                except Exception:
-                    pass
-    except Exception:
-        # final fallback: ignore and let screen initialization handle it
-        pass
+    timeline_screen.set_plant(plant)
     app.previous_screen = app.screen.current
     app.screen.current = "timeline_view"
+
+
+def go_to_plant_details(instance, plant):
+    app = App.get_running_app()
+    details_screen = app.screen.get_screen("plant_details")
+    details_screen.set_plant(plant)
+    app.previous_screen = app.screen.current
+    app.screen.current = "plant_details"
+
+
+def go_to_photo_gallery(instance, plant):
+    app = App.get_running_app()
+    gallery = app.screen.get_screen("photo_gallery")
+    gallery.set_plant(plant)
+    app.previous_screen = app.screen.current
+    app.screen.current = "photo_gallery"
+
+
+def go_to_settings(instance=None):
+    app = App.get_running_app()
+    app.previous_screen = app.screen.current
+    app.screen.current = "settings"
+
+
+def go_to_select_garden(instance=None):
+    app = App.get_running_app()
+    app.previous_screen = app.screen.current
+    app.screen.current = "select_garden"
+
+
+def go_to_are_you_sure(prompt_text, confirm_callback):
+    app = App.get_running_app()
+    are_you_sure = app.screen.get_screen("are_you_sure")
+    are_you_sure.prompt_text = prompt_text
+    are_you_sure.confirm_callback = confirm_callback
+    app.previous_screen = app.screen.current
+    app.screen.current = "are_you_sure"
 
 def _coerce_to_date(value):
     if value is None:

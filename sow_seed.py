@@ -23,6 +23,7 @@ from boxes import WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox,
 from buttons import ButtonRed, ButtonGreen, ButtonYellow
 from text_inputs import MedTextInput, LargeTextInput, DaysTextInput
 from screens import BaseScreen
+from helpers import go_to_are_you_sure
 
 CATALOG_FILE = "bin/db/seed_catalog.json"
 
@@ -254,7 +255,7 @@ class SowSeedScreen(BaseScreen):
             Clock.schedule_once(self._end_validation, 0.5)
             return
         app = App.get_running_app()
-        app.pending_plant_data = {
+        app.wizard_data = {
             "seedbank": self.input_plant_name.text.strip(),
             "strain": self.input_plant_strain.text.strip(),
             "notes": self.input_plant_description.text.strip(),
@@ -272,12 +273,8 @@ class SowSeedScreen(BaseScreen):
         app.screen.current = "set_environment"
 
     def on_cancel(self, instance):
-        app = App.get_running_app()
-        are_you_sure = app.screen.get_screen("are_you_sure")
-        are_you_sure.confirm_callback = lambda *_: self.confirm_action()
-        are_you_sure.prompt_text = lang.MSG_CONFIRM_CANCEL_CHANGES
-        app.previous_screen = app.screen.current
-        app.screen.current = "are_you_sure"
+        go_to_are_you_sure(lang.MSG_CONFIRM_CANCEL_CHANGES,
+                           lambda *_: self.confirm_action())
     
     def on_strain_text(self, instance, value):
         self.current_prefix = value

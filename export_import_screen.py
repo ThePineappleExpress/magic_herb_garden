@@ -28,6 +28,7 @@ from weed_format import (
     read_weed,
     write_weed,
 )
+from helpers import go_to_are_you_sure
 import lang
 
 LOG = logging.getLogger(__name__)
@@ -410,12 +411,8 @@ class ExportImportScreen(BaseScreen):
 
         if conflicts:
             n = len(conflicts)
-            app = App.get_running_app()
-            are_you_sure = app.screen.get_screen("are_you_sure")
-            are_you_sure.prompt_text = lang.IMPORT_CONFLICT_WARNING.format(n=n)
-            are_you_sure.confirm_callback = lambda *_: self._do_import(data)
-            app.previous_screen = "export_import"
-            app.screen.current = "are_you_sure"
+            go_to_are_you_sure(lang.IMPORT_CONFLICT_WARNING.format(n=n),
+                               lambda *_: self._do_import(data))
         else:
             self._do_import(data)
 

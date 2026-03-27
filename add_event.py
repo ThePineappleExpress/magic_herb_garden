@@ -9,7 +9,8 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.togglebutton import ToggleButton
 from kivy.clock import Clock
 
-from helpers import get_difference_days, go_to_add_event, go_to_garden, _coerce_to_date
+from helpers import (get_difference_days, go_to_add_event, go_to_garden,
+                      go_to_photo_gallery, go_to_are_you_sure, _coerce_to_date)
 from data import GardenRepository, EventRepository, PhotoRepository
 from services.plant_service import apply_event_side_effects
 from effects import shake_and_flash
@@ -17,126 +18,33 @@ from constants import (
     EVENT_WATERING, EVENT_FEEDING, EVENT_LOG, EVENT_TOP,
     EVENT_PRUNE, EVENT_FLIP, EVENT_HARVEST,
 )
-from labels import TitleLabel, FieldLabel, HintLabel, ListTitleLabel, LogoLabel2
-from boxes import ItemBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
+from labels import FieldLabel, HintLabel
+from boxes import ItemBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox
 from buttons import ButtonRed, ButtonGreen, ButtonYellow
 from ui_builders import create_water_fields, create_feeding_fields, create_nutrients_panel
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
-from screens import BaseScreen
+from plant_screen import BasePlantScreen
 from custom_dropdown import CustomDropdown
-from photo_widgets import PhotoStrip, PhotoViewPopup, PhotoPickerPopup, bytes_to_texture
+from photo_widgets import PhotoViewPopup, PhotoPickerPopup, bytes_to_texture
 import lang
 
 LOG = logging.getLogger(__name__)
 
 
-class AddEventScreen(BaseScreen):
+class AddEventScreen(BasePlantScreen):
 
     theme = ObjectProperty(None)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.plant = None
         self._selected_event_data = None
         self._editing_event = None  # holds event dict when in edit mode
-        self.genes = ""
         app = App.get_running_app()
         self._plant_set = False
 
-        # build UI 
-        plant_details_screen = WrapperBox(orientation="horizontal")
-        spacer_left = SpacerBox(size_hint_x=0.2)
-        stripes_holder = WrapperBox(orientation="horizontal")
-        stripe_0 = ContentBox(size_hint_x=0.45); stripes_holder.add_widget(stripe_0)
-        stripe_1 = RedBox(); stripes_holder.add_widget(stripe_1)
-        stripe_2 = YellowBox(); stripes_holder.add_widget(stripe_2)
-        stripe_3 = GreenBox(); stripes_holder.add_widget(stripe_3)
-        stripe_4 = ContentBox(size_hint_x=0.45); stripes_holder.add_widget(stripe_4)
-        spacer_left.add_widget(stripes_holder)
-        spacer_vertical = SpacerBox(size_hint_x=0.3)
-        spacer_left.add_widget(spacer_vertical)
-        title = TitleLabel(text=lang.SCREEN_TITLE_DETAILS.format(color=TitleLabel().hex_color))
-        spacer_left.add_widget(title)
-        spacer_vertical = SpacerBox(size_hint_x=0.3)
-        spacer_left.add_widget(spacer_vertical)
-        plant_details_screen.add_widget(spacer_left)
-
-
-        content_wrapper = WrapperBox(orientation="vertical", size_hint=(1, 1))
-
-        spacer_box = SpacerBox(size_hint_y=0.1)
-        content_wrapper.add_widget(spacer_box)
-
-        header = WrapperBox(orientation="horizontal", size_hint_y=0.3)
-        content_wrapper.add_widget(header)
-
-        title_box = ContentBox(orientation="vertical")
-        header.add_widget(title_box)
-        spacer_box = SpacerBox(size_hint_y=0.2)
-        title_box.add_widget(spacer_box)
-        
-        name_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
-        self.name_label = FieldLabel(text="", valign="middle", halign="left")
-        self.name_label.font_size = app.theme.subtitle_size
-        self.name_label.color = app.theme.color_field_value
-        name_box.add_widget(self.name_label)
-        title_box.add_widget(name_box)
-
-        strain_box = ContentBox(orientation="horizontal", size_hint_y=0.3)
-        self.strain_label = FieldLabel(text="", valign="middle", halign="left")
-        self.strain_label.font_size = app.theme.logo_size_2
-        self.strain_label.color = app.theme.color_field_value
-
-        strain_box.add_widget(self.strain_label)
-        title_box.add_widget(strain_box)
-
-        notes_box = ContentBox(orientation="horizontal", size_hint_y=0.15)
-        self.notes_label = FieldLabel(text="", valign="middle", halign="left")
-        self.notes_label.font_size = app.theme.body_size
-        self.notes_label.color = app.theme.color_field_value
-
-        notes_box.add_widget(self.notes_label)
-        title_box.add_widget(notes_box)
-
-        water_data_box = ContentBox(orientation="horizontal", size_hint_y=0.15)
-        self.last_water_label = FieldLabel(text="", valign="middle", halign="left")
-        self.last_water_label.font_size = app.theme.body_size
-        
-        water_data_box.add_widget(self.last_water_label)
-        title_box.add_widget(water_data_box)
-
-        spacer = SpacerBox(size_hint_x=0.1)
-        header.add_widget(spacer)
-        days_passed_box = ContentBox(orientation="vertical", size_hint_x=0.2)
-        header.add_widget(days_passed_box)
-        
-        spacer_box = SpacerBox(size_hint_y=0.3)
-        days_passed_box.add_widget(spacer_box)
-
-        days_passed_title_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
-        days_passed_box.add_widget(days_passed_title_box)
-        days_passed_title = FieldLabel(text=lang.DAY_LABEL, valign="middle", halign="right")
-        days_passed_title.font_size = app.theme.subtitle_size        
-        days_passed_title_box.add_widget(days_passed_title)
-
-        days_passed_value_box = ContentBox(orientation="horizontal", size_hint_y=0.5)
-        days_passed_box.add_widget(days_passed_value_box)
-        self.days_passed_value = FieldLabel(text="", valign="middle", halign="right")
-        self.days_passed_value.font_size = app.theme.logo_size_1
-        self.days_passed_value.color = app.theme.color_field_value
-        days_passed_value_box.add_widget(self.days_passed_value)
-
-        days_stage_box = ContentBox(orientation="vertical", size_hint_y=0.1)
-        days_passed_box.add_widget(days_stage_box)
-        self.days_stage_value = FieldLabel(text="", valign="middle", halign="right")
-        self.days_stage_value.font_size = app.theme.body_size
-        self.days_stage_value.color = app.theme.color_field_value
-        days_stage_box.add_widget(self.days_stage_value)
-
-
-
-        spacer_box = SpacerBox(size_hint_y=0.02)
-        content_wrapper.add_widget(spacer_box)
+        plant_details_screen, content_wrapper = self._build_sidebar_and_header(
+            lang.SCREEN_TITLE_DETAILS,
+        )
 
         info_box = WrapperBox(orientation="vertical", size_hint_x=1, size_hint_y=0.8)
 
@@ -432,40 +340,15 @@ class AddEventScreen(BaseScreen):
 
         # -- Photo column (third column) --
         self._pending_photos = []  # list of (photo_id, plant_id, original_name, image_bytes)
-        photo_column_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
-        main_data_column.add_widget(photo_column_box)
-
-        photo_title_box = ContentBox(orientation="horizontal", size_hint_y=0.1)
-        photo_column_box.add_widget(photo_title_box)
-        photo_title = FieldLabel(text=lang.PHOTOS_TITLE, valign="bottom", halign="left")
-        photo_title.color = app.theme.color_field_label
-        photo_title.font_size = app.theme.subtitle_size
-        photo_title_box.add_widget(photo_title)
-
-        self._photo_strip = PhotoStrip(
-            size_hint_y=0.7,
+        photo_column, self._photo_strip = self.build_photo_strip(
             on_select=self._on_photo_select,
             on_double_click=self._on_photo_double_click,
+            gallery_callback=self._go_to_photo_gallery,
+            add_callback=self._open_photo_picker,
+            delete_callback=self._delete_selected_photo,
+            gallery_text=lang.PHOTO_SHOW_GALLERY,
         )
-        photo_column_box.add_widget(self._photo_strip)
-
-        photo_buttons_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
-        photo_column_box.add_widget(photo_buttons_box)
-
-        show_gallery_btn = ButtonGreen(text=lang.PHOTO_SHOW_GALLERY, size_hint_x=0.34)
-        show_gallery_btn.font_size = app.theme.small_size
-        show_gallery_btn.bind(on_release=lambda *_: self._go_to_photo_gallery())
-        photo_buttons_box.add_widget(show_gallery_btn)
-
-        add_photo_btn = ButtonYellow(text=lang.PHOTO_ADD, size_hint_x=0.33)
-        add_photo_btn.font_size = app.theme.small_size
-        add_photo_btn.bind(on_release=lambda *_: self._open_photo_picker())
-        photo_buttons_box.add_widget(add_photo_btn)
-
-        delete_photo_btn = ButtonRed(text=lang.PHOTO_DELETE, size_hint_x=0.33)
-        delete_photo_btn.font_size = app.theme.small_size
-        delete_photo_btn.bind(on_release=lambda *_: self._delete_selected_photo())
-        photo_buttons_box.add_widget(delete_photo_btn)
+        main_data_column.add_widget(photo_column)
 
         info_box.add_widget(event_details)
 
@@ -514,7 +397,7 @@ class AddEventScreen(BaseScreen):
         plant_details_screen.add_widget(content_wrapper)
         spacer_right = SpacerBox(size_hint_x=0.1)
         plant_details_screen.add_widget(spacer_right)
-        self.add_widget(plant_details_screen)
+        self.add_content(plant_details_screen)
 
     def validate(self):
         invalid = []
@@ -570,12 +453,8 @@ class AddEventScreen(BaseScreen):
         return app.screen
     
     def on_cancel(self, instance):
-        app = App.get_running_app()
-        are_you_sure = app.screen.get_screen("are_you_sure")
-        are_you_sure.confirm_callback = lambda *_: self.confirm_action()
-        are_you_sure.prompt_text = lang.MSG_CONFIRM_CANCEL_CHANGES
-        app.previous_screen = app.screen.current
-        app.screen.current = "are_you_sure"
+        go_to_are_you_sure(lang.MSG_CONFIRM_CANCEL_CHANGES,
+                           lambda *_: self.confirm_action())
 
     def _get_effective_event_type(self):
         """Return the event type from the dropdown.
@@ -782,27 +661,9 @@ class AddEventScreen(BaseScreen):
         self._update_harvest_button_state(pid)
 
     def _update_ui(self):
+        super()._update_ui()
         app = App.get_running_app()
-        plant = self.plant or {}
-        self.genes = plant.get("genes", "")
-        self.name_label.text = " | ".join([plant.get("seedbank", ""), self.genes])
-        
-        self.strain_label.text = plant.get("strain", "")
-        genes = (self.genes or "").strip().lower()
-        if genes == "sativa":
-            self.strain_label.color = app.theme.color_strain_sativa
-        elif genes == "indica":
-            self.strain_label.color = app.theme.color_strain_indica
-        elif genes == "hybrid":
-            self.strain_label.color = app.theme.color_strain_hybrid
-        else:
-            self.strain_label.color = app.theme.color_strain_unknown
-        self.notes_label.text = plant.get("notes") or ""
-        days_passed = get_difference_days(datetime.datetime.today(), plant.get("date_planted", ""))
-        self.days_passed_value.text = str(days_passed) if days_passed is not None else lang.DASH
-
-        # Pre-select light schedule from current garden config
-        self._prefill_light_schedule(app, plant)
+        self._prefill_light_schedule(app, self.plant or {})
 
     def _autofill_from_last_event(self, plant_id):
         """Pre-populate all editable fields from the last saved event."""
@@ -1206,11 +1067,7 @@ class AddEventScreen(BaseScreen):
             self._selected_photo_id = ""
             app.screen.current = "add_event"
 
-        app.previous_screen = "add_event"
-        are_you_sure = app.screen.get_screen("are_you_sure")
-        are_you_sure.prompt_text = lang.MSG_CONFIRM_DELETE_PHOTO
-        are_you_sure.confirm_callback = _do_delete
-        app.screen.current = "are_you_sure"
+        go_to_are_you_sure(lang.MSG_CONFIRM_DELETE_PHOTO, _do_delete)
 
     def _on_photo_double_click(self, photo_id, plant_id):
         # For pending photos, find the bytes in the pending list (no navigation)
@@ -1226,12 +1083,7 @@ class AddEventScreen(BaseScreen):
             popup.open()
 
     def _go_to_photo_gallery(self):
-        app = App.get_running_app()
-        plant = self.plant or {}
-        app.previous_screen = "add_event"
-        gallery = app.screen.get_screen("photo_gallery")
-        gallery.set_plant(plant)
-        app.screen.current = "photo_gallery"
+        go_to_photo_gallery(None, self.plant or {})
 
     def _open_photo_picker(self):
         plant = self.plant or {}
