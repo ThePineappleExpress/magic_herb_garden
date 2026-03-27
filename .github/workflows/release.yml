@@ -1,0 +1,197 @@
+name: Release
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    name: Test before release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libgles2-mesa-dev libgl1-mesa-dev libglib2.0-dev xvfb
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Install deps
+        run: uv sync --group build
+
+      - name: Build crypto_rs
+        run: uv run maturin develop --release --manifest-path crypto_rs/Cargo.toml
+
+      - name: Run tests
+        run: xvfb-run -a uv run python run_unit_tests.py
+  build:
+    name: Build (${{ matrix.os }})
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+            build_dir: build/linux-x86_64
+
+          - os: windows-latest
+            platform: windows
+            arch: amd64
+            build_dir: build/windows-amd64
+
+          - os: macos-latest
+            platform: macos
+            arch: arm64
+            build_dir: build/macos-arm64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system deps (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libgles2-mesa-dev libgl1-mesa-dev libglib2.0-dev \
+            patchelf ccache
+
+      - name: Install system deps (macOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install create-dmg || true
+
+      - name: Install Inno Setup (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - uses: astral-sh/setup-uv@v5
+      - name: Install Python deps (build group)
+        run: uv sync --group build
+      - name: Build crypto_rs (maturin)
+        run: uv run maturin develop --release --manifest-path crypto_rs/Cargo.toml
+      - name: Compile with Nuitka
+        run: uv run python build.py --skip-maturin --no-onefile --no-archive
+      - name: Extract version
+        id: version
+        shell: bash
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Package (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir -p dist
+          ARTIFACT="magic-herb-tracker-${{ steps.version.outputs.version }}-linux-x86_64"
+          BUILD="${{ matrix.build_dir }}"
+          mv "${BUILD}/magic-herb-tracker.dist" "${BUILD}/${ARTIFACT}"
+          cp packaging/magic-herb-tracker.desktop "${BUILD}/${ARTIFACT}/"
+          cp res/branding/mht.png "${BUILD}/${ARTIFACT}/magic-herb-tracker.png"
+          tar -C "${BUILD}" -czf "dist/${ARTIFACT}.tar.gz" "${ARTIFACT}"
+          echo "Archive: dist/${ARTIFACT}.tar.gz"
+      - name: Package (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          mkdir -p dist
+          VERSION="${{ steps.version.outputs.version }}"
+          STEM="magic-herb-tracker-${VERSION}-macos-arm64"
+          BUILD="${{ matrix.build_dir }}"
+
+          # Optional: macOS code signing (requires APPLE_CERT secret)
+          if [[ -n "${{ secrets.APPLE_CERT }}" ]]; then
+            echo "${{ secrets.APPLE_CERT }}" | base64 --decode > /tmp/cert.p12
+            security create-keychain -p "" build.keychain
+            security import /tmp/cert.p12 -k build.keychain \
+              -P "${{ secrets.APPLE_CERT_PASSWORD }}" -A
+            security set-key-partition-list -S apple-tool:,apple: -s \
+              -k "" build.keychain
+            security list-keychains -s build.keychain
+            codesign --deep --force --verify --verbose \
+              --sign "Developer ID Application" \
+              "${BUILD}/magic-herb-tracker.dist/magic-herb-tracker"
+          fi
+          if command -v create-dmg &>/dev/null; then
+            create-dmg \
+              --volname "MagicHerbTracker" \
+              --window-size 540 380 \
+              --app-drop-link 380 170 \
+              "dist/${STEM}.dmg" \
+              "${BUILD}/magic-herb-tracker.dist"
+            echo "DMG: dist/${STEM}.dmg"
+          else
+            # Fallback: plain zip
+            mv "${BUILD}/magic-herb-tracker.dist" "${BUILD}/${STEM}"
+            zip -r "dist/${STEM}.zip" "${BUILD}/${STEM}"
+            echo "Zip: dist/${STEM}.zip"
+          fi
+      - name: Package (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $version  = "${{ steps.version.outputs.version }}"
+          $stem     = "magic-herb-tracker-${version}-windows-amd64"
+          $buildDir = "${{ matrix.build_dir }}"
+          $iscc     = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          New-Item -ItemType Directory -Force dist | Out-Null
+
+          # Rename .dist folder to include version + platform for both outputs
+          Rename-Item "${buildDir}\magic-herb-tracker.dist" $stem
+          if (Test-Path $iscc) {
+            & $iscc `
+              "/DAppVersion=${version}" `
+              "/DSourceDir=${buildDir}\${stem}" `
+              "/DOutputDir=dist" `
+              "packaging\inno_setup.iss"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            Write-Host "Installer built: dist\${stem}-setup.exe"
+          } else {
+            Write-Warning "Inno Setup not found — skipping installer"
+          }
+          Compress-Archive -Path "${buildDir}\${stem}" `
+                           -DestinationPath "dist\${stem}.zip"
+          Write-Host "Portable zip: dist\${stem}.zip"
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}-${{ matrix.arch }}-${{ steps.version.outputs.version }} 
+          path: dist/
+          retention-days: 7
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -lh dist/
+
+      - name: Create / update GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Magic Herb Tracker ${{ github.ref_name }}"
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') || contains(github.ref_name, '-rc') }}
+          generate_release_notes: true
+          files: dist/**

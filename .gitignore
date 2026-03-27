@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+pyvenv.cfg
+lib/
+lib64
+
+# Rust build artifacts
+crypto_rs/target/
+
+# User data (generated at runtime)
+usr/db/
+
+# Export files
+*.weed
+
+# Temp / dev scripts
+tmp_*
+dev_*
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+.python-version
+uv.lock
+unique.json
+CLAUDE.md
+photos.md
+performance.md
+refactor_plan.md
+rebuild_audit.md
+todo_.md
+fix_todo.md
+summary.md
+# Landing page (not part of the app)
+landing/
+
+# Packaging output
+packaging/
+
+# Build script (local tooling)
+build.py
+
+# Private language packs
+bin/lang/righteous.py
+
+.gitignore
+
+

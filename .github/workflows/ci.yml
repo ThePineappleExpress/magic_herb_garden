@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["v*"]   # release.yml handles tagged pushes
+  pull_request:
+
+jobs:
+  test:
+    name: Test (Python 3.13 / Ubuntu)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps (Kivy / OpenGL / Xvfb)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev \
+            libgles2-mesa-dev libgl1-mesa-dev libglib2.0-dev xvfb
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install deps + build group (maturin)
+        run: uv sync --group build
+
+      - name: Build crypto_rs
+        run: uv run maturin develop --release --manifest-path crypto_rs/Cargo.toml
+
+      - name: Run tests
+        run: xvfb-run -a uv run python run_unit_tests.py

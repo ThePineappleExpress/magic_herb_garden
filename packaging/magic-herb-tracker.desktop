@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Magic Herb Tracker
+Comment=Track your plants through their lifecycle
+Exec=magic-herb-tracker
+Icon=magic-herb-tracker
+Terminal=false
+Categories=Utility;
+StartupWMClass=MagicHerbTracker
