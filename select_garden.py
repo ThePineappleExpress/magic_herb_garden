@@ -19,8 +19,8 @@ from text_inputs import MedTextInput
 from custom_dropdown import CustomDropdown
 from helpers import go_to_add_garden
 from screens import BaseScreen
+from data import GardenRepository, IndexRepository
 import lang
-import storage
 
 LOG = logging.getLogger(__name__)
 
@@ -31,6 +31,19 @@ class GardenListView(RecycleView):
         self.viewclass = "GardenListItem"
         self.data = []
         self._owner = None  # set by SelectGardenScreen
+        self.bind(height=self._check_scroll_needed)
+
+    def _check_scroll_needed(self, *args):
+        """Disable vertical scroll when all items fit in the viewport."""
+        layout = self.children[0] if self.children else None
+        if layout and hasattr(layout, 'minimum_height'):
+            self.do_scroll_y = layout.minimum_height > self.height
+        else:
+            self.do_scroll_y = True
+
+    def on_data(self, *args):
+        from kivy.clock import Clock
+        Clock.schedule_once(lambda dt: self._check_scroll_needed(), 0)
 
     def on_double_tap(self, index):
         """Called by SelectableBoxLayout on double-tap; enters the garden."""
@@ -86,27 +99,34 @@ class SelectGardenScreen(BaseScreen):
         # ── Sort / Search toolbar ──
         toolbar = ContentBox(orientation="horizontal", size_hint_y=None, height="40dp")
 
-        self._sort_key = "garden_name"
-        self._sort_ascending = True
-        sort_options = [lang.SORT_NAME, lang.SORT_PLANT_COUNT]
+        self._sort_key = "last_event_ts"
+        self._sort_ascending = False
+        sort_options = [
+            lang.SORT_NAME, lang.SORT_PLANT_COUNT, lang.SORT_TYPE,
+            lang.SORT_LAST_PLANTED, lang.SORT_LAST_EVENT, lang.SORT_NEXT_EVENT,
+        ]
         self._sort_label_to_key = {
             lang.SORT_NAME: "garden_name",
             lang.SORT_PLANT_COUNT: "plant_count",
+            lang.SORT_TYPE: "garden_type",
+            lang.SORT_LAST_PLANTED: "last_planted",
+            lang.SORT_LAST_EVENT: "last_event_ts",
+            lang.SORT_NEXT_EVENT: "last_event_ts",
         }
         sort_label = FieldLabel(text=lang.SORT_BY, size_hint_x=None, width="60dp")
         toolbar.add_widget(sort_label)
         self.sort_dropdown = CustomDropdown(
             options=sort_options, size_hint_x=0.2,
         )
-        self.sort_dropdown.selected = lang.SORT_NAME
-        self.sort_dropdown.main_button.text = lang.SORT_NAME
+        self.sort_dropdown.selected = lang.SORT_LAST_EVENT
+        self.sort_dropdown.main_button.text = lang.SORT_LAST_EVENT
         self.sort_dropdown.bind(selected=self._on_sort_changed)
         toolbar.add_widget(self.sort_dropdown)
 
         self.sort_dir_btn = SortDirButton(
-            size_hint_x=None, width="44dp",
+            size_hint_x=None, width="44dp", state="down",
         )
-        self.sort_dir_btn.bind(on_press=self._on_sort_dir_toggle)
+        self.sort_dir_btn.bind(state=self._on_sort_dir_toggle)
         toolbar.add_widget(self.sort_dir_btn)
 
         toolbar.add_widget(SpacerBox(size_hint_x=0.05))
@@ -185,8 +205,9 @@ class SelectGardenScreen(BaseScreen):
         self._refresh_gardens()
 
     def _refresh_gardens(self):
-        gardens = storage.load_gardens()
+        gardens = GardenRepository.list_all()
         today = date.today()
+        index = IndexRepository.get_all()
         data = []
         for g in gardens:
             plants = g.get("plants", [])
@@ -194,12 +215,31 @@ class SelectGardenScreen(BaseScreen):
                 1 for p in plants
                 if isinstance(p, dict) and not self._is_harvested(p, today)
             )
+            # Compute last_planted: most recent date_planted across all plants
+            last_planted = ""
+            last_event_ts = ""
+            for p in plants:
+                if not isinstance(p, dict):
+                    continue
+                dp = p.get("date_planted", "") or ""
+                if dp > last_planted:
+                    last_planted = dp
+                pid = str(p.get("id", ""))
+                idx_entry = index.get(pid, {})
+                ts = idx_entry.get("last_event_ts", "") or ""
+                # Planting counts as an event — pick the latest of
+                # the index timestamp and the plant's date_planted.
+                effective_ts = max(ts, dp) if dp else ts
+                if effective_ts > last_event_ts:
+                    last_event_ts = effective_ts
             data.append({
                 "garden_id": g.get("id", ""),
                 "garden_name": g.get("name", ""),
                 "garden_type": g.get("type", "").capitalize(),
                 "plant_count": str(len(plants)),
                 "active_plant_count": active_count,
+                "last_planted": last_planted,
+                "last_event_ts": last_event_ts,
             })
         self._all_gardens = data
         self._apply_filters()
@@ -240,10 +280,18 @@ class SelectGardenScreen(BaseScreen):
 
     def _on_sort_changed(self, instance, value):
         self._sort_key = self._sort_label_to_key.get(value, "garden_name")
+        # Auto-flip direction: "Next Event" → ascending (oldest first),
+        # "Last Event" → descending (newest first)
+        if value == lang.SORT_NEXT_EVENT:
+            self._sort_ascending = True
+            self.sort_dir_btn.state = "normal"
+        elif value == lang.SORT_LAST_EVENT:
+            self._sort_ascending = False
+            self.sort_dir_btn.state = "down"
         self._apply_filters()
 
-    def _on_sort_dir_toggle(self, instance):
-        self._sort_ascending = instance.state != "down"
+    def _on_sort_dir_toggle(self, instance, state):
+        self._sort_ascending = state != "down"
         self._apply_filters()
 
     def _on_search_text(self, instance, value):
@@ -316,7 +364,7 @@ class SelectGardenScreen(BaseScreen):
         app.screen.current = "are_you_sure"
 
     def _do_delete(self, garden_id):
-        storage.delete_garden(garden_id)
+        GardenRepository.delete(garden_id)
         LOG.info("Deleted garden %s", garden_id)
         app = App.get_running_app()
         app.screen.current = "select_garden"

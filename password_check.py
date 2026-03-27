@@ -20,8 +20,9 @@ from labels import FieldLabel, TitleLabel
 from screens import BaseScreen
 from text_inputs import MedTextInput
 from ui_builders import create_initial_layout
+from services.settings_service import get_settings, set_setting
+from data import SettingsRepository, GardenRepository
 import lang
-import storage
 
 LOG = logging.getLogger(__name__)
 
@@ -84,7 +85,7 @@ class PasswordCheckScreen(BaseScreen):
         self._eye.reset()
         self.status_label.text = ""
         # Load persisted fail count from settings
-        settings = storage.load_settings()
+        settings = get_settings()
         self._fail_count = settings.get("pw_fail_count", 0)
         self._locked_until = settings.get("pw_locked_until", 0)
 
@@ -101,7 +102,7 @@ class PasswordCheckScreen(BaseScreen):
             shake_and_flash(self.pw_input)
             return
 
-        settings = storage.load_settings()
+        settings = get_settings()
         stored = settings.get("password", {})
 
         if not verify_password(pw, stored):
@@ -109,9 +110,8 @@ class PasswordCheckScreen(BaseScreen):
             backoff = 2 ** (self._fail_count - 1)
             self._locked_until = time.time() + backoff
             # Persist fail state
-            settings["pw_fail_count"] = self._fail_count
-            settings["pw_locked_until"] = self._locked_until
-            storage.save_settings(settings)
+            set_setting("pw_fail_count", self._fail_count)
+            set_setting("pw_locked_until", self._locked_until)
 
             self.status_label.text = lang.PW_WRONG_PASSWORD.format(n=backoff)
             shake_and_flash(self.pw_input)
@@ -124,9 +124,11 @@ class PasswordCheckScreen(BaseScreen):
 
         # Reset fail counter
         self._fail_count = 0
-        settings["pw_fail_count"] = 0
-        settings.pop("pw_locked_until", None)
-        storage.save_settings(settings)
+        set_setting("pw_fail_count", 0)
+        settings = get_settings()
+        if "pw_locked_until" in settings:
+            settings.pop("pw_locked_until")
+            SettingsRepository.save_all(settings)
 
         LOG.info("Password unlock successful")
 
@@ -136,7 +138,7 @@ class PasswordCheckScreen(BaseScreen):
             app.screen.current = target
         else:
             # Default: go to garden selection or garden view
-            gardens = storage.load_gardens()
+            gardens = GardenRepository.list_all()
             if len(gardens) == 1:
                 app.current_garden_id = gardens[0].get("id")
                 app.screen.current = "garden_view"

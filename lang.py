@@ -22,8 +22,8 @@ _DEFAULT_LANG = "english"
 def _get_preferred_language() -> str:
     """Read language preference from settings (without importing storage at module level)."""
     try:
-        import storage
-        settings = storage.load_settings()
+        from data import SettingsRepository
+        settings = SettingsRepository.get_all()
         return settings.get("language", _DEFAULT_LANG).lower()
     except Exception:
         return _DEFAULT_LANG

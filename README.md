@@ -44,9 +44,10 @@ Rust-backed crypto layer).
 | UI framework | Kivy 2.3.x + KV language                        |
 | Charts       | kivy-garden (Graph / LinePlot)                  |
 | Data         | Local JSON (jsonschema validation)              |
+| Architecture | Repository pattern + service layer (no Kivy)    |
 | Paths        | platformdirs (OS-appropriate data directories)  |
 | Build        | maturin (Rust) + Nuitka (native binary)         |
-| Tests        | Custom runner + pytest                          |
+| Tests        | Custom runner (463 tests)                       |
 | CI           | GitHub Actions (Python 3.13 / Ubuntu)           |
 
 ---
@@ -358,10 +359,23 @@ main.py                 App entry point, ScreenManager setup, theme/lang init
 magicherbtracker.kv     Theme colours, fonts, KV layout rules
 screens.py              BaseScreen (GLSL shader background via fx.py)
 fx.py                   SmokeShaderWidget - RenderContext GLSL rendering with live uniforms
-data.py                 PlantRepository, EventRepository, GardenRepository, SettingsRepository
-storage.py              JSON read/write with transparent encryption, atomic writes, platformdirs migration
-validators.py           jsonschema definitions for plants/events/gardens
+
+# Data layer (repository pattern)
+data.py                 PlantRepository, EventRepository, GardenRepository, SettingsRepository,
+                        IndexRepository, PhotoRepository - cached CRUD with schema validation
+storage.py              Low-level JSON read/write with transparent encryption, atomic writes
+validators.py           jsonschema definitions + error-list validators (check_plant/event/garden)
 constants.py            Canonical event type strings + normalize_event_type()
+
+# Service layer (pure Python, no Kivy imports)
+services/
+  garden_service.py     Garden plants view, filtering, sorting
+  plant_service.py      Plant lifecycle: create, update, event side-effects
+  event_service.py      Event CRUD wrappers, sorted loading
+  settings_service.py   Settings read/write, shader prefs, password checks
+  catalog_service.py    Seed catalog lookup, strain/breeder resolution
+  formatting.py         Relative time, health indicators, nutrient status
+
 helpers.py              Date helpers, password hashing (PBKDF2), key derivation, nav utils
 crypto.py               CryptoContext singleton, delegates to crypto_rs for AES-256-GCM
 crypto_rs/              Rust PyO3 extension: AES-256-GCM, PBKDF2, constant-time comparison
@@ -371,9 +385,11 @@ export_import_screen.py Export & Import screen (.weed file handling)
 csv_export_screen.py    CSV Export screen (flat 89-column export)
 build.py                Production build script (maturin + Nuitka + archive)
 effects.py              Shake-and-flash animation helper
-ui_builders.py          Reusable layout builder functions
+ui_builders.py          Reusable layout builders: screen scaffolding, water/feeding fields,
+                        nutrients panel (dual-mode: input widgets or read-only display)
 lang.py                 Language proxy - reads preference, loads module dynamically
 
+# Screens (Kivy UI - no direct storage imports)
 password_check.py       Password gate screen (exponential backoff)
 select_garden.py        Multi-garden picker
 add_garden.py           New garden creation
@@ -386,6 +402,7 @@ timeline_view.py        Tabbed timeline + native Kivy graphs (Plant / Env / Wate
 are_you_sure.py         Confirmation dialog screen
 settings_screen.py      Language, theme, shader, password, db path, export/import navigation
 
+# Custom Kivy widgets
 boxes.py                Custom Kivy BoxLayout subclasses
 buttons.py              Custom buttons + HoverBehavior mixin
 labels.py               Custom label widgets
@@ -393,6 +410,34 @@ text_inputs.py          Custom text input widgets
 custom_dropdown.py      Styled dropdown widget
 strain_trie.py          Trie for strain/breeder autocomplete
 
+# Tests (463 total)
+tests/
+  test_widgets.py            Kivy widget smoke tests (67)
+  test_services.py           Service layer + event side-effects (50)
+  test_screen_logic.py       VPD, graphs, health, harvest, export logic (45)
+  test_data_repos.py         Repository + index + validator tests (40)
+  test_constants.py          Event type normalisation (31)
+  test_helpers.py            Date/password/colour helpers (29)
+  test_validators.py         JSON schema validation (27)
+  test_photo_utils.py        Image processing + thumbnails (23)
+  test_storage.py            JSON read/write + atomic writes (22)
+  test_crypto.py             AES-256-GCM encryption round-trips (22)
+  test_photo_storage.py      Photo file I/O (12)
+  test_weed_format.py        Binary .weed export/import (11)
+  test_csv_export.py         CSV row builders (11)
+  test_theme_loader.py       TOML theme loading + shader colours (9)
+  test_catalog_service.py    Strain catalog lookups (9)
+  test_breeder_trie.py       Breeder trie search (9)
+  test_strain_trie.py        Strain trie search (8)
+  test_migrate.py            Encrypt/decrypt/re-encrypt migrations (8)
+  test_lang.py               Language module loading (8)
+  test_integration.py        Multi-layer lifecycle workflows (8)
+  test_daylight.py           Astral daylight calculations (6)
+  test_storage_helpers.py    Plant list normalisation (4)
+  test_shader_loader.py      GLSL shader discovery + loading (4)
+  kivy_test_helper.py        Headless Kivy test harness (shared fixture)
+
+# Resources
 bin/db/                 Read-only seed catalog + pre-built trie JSON files + locations
 bin/lang/               Language modules + loader
 bin/themes/             TOML theme files (dark, green, light, retro, vaporwave, water)
@@ -428,7 +473,6 @@ bin/db/
 ---
 
 ## Known limitations
-
 
 - `_apply_catalog_for_strain()` assumes trie and catalog are in sync; mismatches log an error.
 

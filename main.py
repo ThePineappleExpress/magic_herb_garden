@@ -9,8 +9,8 @@ from kivy.core.window import Window
 from kivy.clock import Clock
 
 from bin.themes import load_theme, apply_theme, get_default_theme, get_shader_colors
+from data import SettingsRepository, GardenRepository
 import lang
-import storage
 
 LOG = logging.getLogger(__name__)
 
@@ -39,18 +39,18 @@ class MagicHerbTracker(App):
 
     def build(self):
         self.theme = Factory.Theme()
-        self.screen = ScreenManager(transition=FadeTransition(duration=0.2))
+        self.screen = ScreenManager(transition=FadeTransition(duration=0.1))
         Window.size = (1920, 1080)
 
         # Apply saved theme
-        settings = storage.load_settings()
+        settings = SettingsRepository.get_all()
         theme_name = settings.get("theme", get_default_theme())
         theme_data = load_theme(theme_name)
         apply_theme(self.theme, theme_data)
 
         # Bootstrap: determine which screens are needed for first frame
         has_password = bool(settings.get("password"))
-        gardens = storage.load_gardens()
+        gardens = GardenRepository.list_all()
 
         # Build only the screens needed for the initial route
         bootstrap_screens = set()

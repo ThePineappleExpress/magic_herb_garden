@@ -32,6 +32,35 @@ def unregister(widget):
         _current_hovered = None
 
 
+def unregister_tree(root_widget):
+    """Unregister *root_widget* and every tracked descendant.
+
+    Call this when a container is removed from the widget tree so that
+    deeply-nested registered widgets (e.g. PhotoThumbnails inside an
+    orphaned PhotoStrip) do not leak in ``_tracked_widgets``.
+    """
+    if not _tracked_widgets:
+        return
+    to_remove = []
+    for w in _tracked_widgets:
+        try:
+            node = w
+            seen = set()
+            while node is not None:
+                if id(node) in seen:
+                    break  # cycle guard
+                if node is root_widget:
+                    to_remove.append(w)
+                    break
+                seen.add(id(node))
+                node = node.parent
+        except (ReferenceError, AttributeError):
+            # Widget partially destroyed — mark for removal anyway
+            to_remove.append(w)
+    for w in to_remove:
+        unregister(w)
+
+
 def set_popup_active(active: bool):
     """Call when a popup opens/closes to suppress hover."""
     global _popup_active, _current_hovered
@@ -43,6 +72,28 @@ def set_popup_active(active: bool):
         except Exception:
             pass
         _current_hovered = None
+
+
+def _is_visible_in_scrollview(widget):
+    """Return False if *widget* is clipped outside a parent ScrollView."""
+    try:
+        from kivy.uix.scrollview import ScrollView
+        wcx, wcy = widget.to_window(widget.center_x, widget.center_y)
+        parent = widget.parent
+        seen = set()
+        while parent is not None:
+            pid = id(parent)
+            if pid in seen:
+                break  # cycle guard
+            seen.add(pid)
+            if isinstance(parent, ScrollView):
+                local = parent.to_widget(wcx, wcy)
+                if not parent.collide_point(*local):
+                    return False
+            parent = parent.parent
+        return True
+    except Exception:
+        return False
 
 
 def _on_mouse_pos(window, pos):
@@ -70,6 +121,9 @@ def _on_mouse_pos(window, pos):
     for w in reversed(_tracked_widgets):
         try:
             if w.get_root_window() and w.collide_point(*w.to_widget(*pos)):
+                # Ensure the widget is not scrolled out of view
+                if not _is_visible_in_scrollview(w):
+                    continue
                 hit = w
                 break
         except Exception:

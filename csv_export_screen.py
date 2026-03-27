@@ -19,8 +19,8 @@ from buttons import ButtonGreen, ButtonRed, ButtonYellow
 from labels import FieldLabel, TitleLabel
 from screens import BaseScreen
 from ui_builders import create_initial_layout
+from data import GardenRepository, EventRepository
 import lang
-import storage
 
 LOG = logging.getLogger(__name__)
 
@@ -288,7 +288,7 @@ class CsvExportScreen(BaseScreen):
     def _rebuild_checkboxes(self):
         self._checkbox_container.clear_widgets()
         self._garden_checkboxes.clear()
-        for garden in storage.load_gardens():
+        for garden in GardenRepository.list_all():
             gid = garden.get("id", "")
             name = garden.get("name", gid)
             row = BoxLayout(
@@ -400,7 +400,7 @@ class CsvExportScreen(BaseScreen):
         """Return [{garden: {...}, events: {plant_id: {...}}}, …] for CSV writing."""
         result = []
         for gid in garden_ids:
-            garden = storage.load_garden(gid)
+            garden = GardenRepository.get(gid)
             if not garden:
                 LOG.warning("Garden %s not found during CSV export - skipping", gid)
                 continue
@@ -408,7 +408,7 @@ class CsvExportScreen(BaseScreen):
             for plant in garden.get("plants", []):
                 pid = plant.get("id")
                 if pid:
-                    ev = storage.load_plant_events(pid)
+                    ev = EventRepository.get(pid)
                     if ev:
                         events_map[pid] = ev
             result.append({"garden": garden, "events": events_map})

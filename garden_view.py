@@ -16,7 +16,7 @@ from kivy.graphics.svg import Svg
 from kivy.graphics import PushMatrix, PopMatrix, Translate, Scale
 
 from labels import TitleLabel, FieldLabel, ListSubLabel
-from storage import get_plants_for_garden, save_plants_for_garden, remove_plant_from_garden
+from data import PlantRepository, IndexRepository
 import lang
 from helpers import on_plant_seed, get_difference_days
 from boxes import TitleBox, WrapperBox, ContentBox, ItemBox, SpacerBox, RedBox, YellowBox, GreenBox, SelectableBoxLayout, SelectableRecycleBoxLayout
@@ -68,6 +68,19 @@ class PlantListView(RecycleView):
         self.viewclass = "PlantListItem"  # uses the kv rule above
         self.data = []                    # will fill from GardenViewScreen
         self._owner = None                # set by GardenViewScreen
+        self.bind(height=self._check_scroll_needed)
+
+    def _check_scroll_needed(self, *args):
+        """Disable vertical scroll when all items fit in the viewport."""
+        layout = self.children[0] if self.children else None
+        if layout and hasattr(layout, 'minimum_height'):
+            self.do_scroll_y = layout.minimum_height > self.height
+        else:
+            self.do_scroll_y = True
+
+    def on_data(self, *args):
+        from kivy.clock import Clock
+        Clock.schedule_once(lambda dt: self._check_scroll_needed(), 0)
 
     def on_double_tap(self, index):
         """Called by SelectableBoxLayout on double-tap; opens plant details."""
@@ -140,16 +153,19 @@ class GardenViewScreen(BaseScreen):
         toolbar = ContentBox(orientation="horizontal", size_hint_y=None, height="40dp")
 
         # Sort dropdown
-        self._sort_key = "strain"
-        self._sort_ascending = True
+        self._sort_key = "last_event_ts"
+        self._sort_ascending = False
         sort_options = [
             lang.SORT_NAME, lang.SORT_BREEDER, lang.SORT_DATE_PLANTED,
+            lang.SORT_LAST_EVENT, lang.SORT_NEXT_EVENT,
             lang.SORT_DAYS_TO_HARVEST, lang.SORT_DAYS_TO_WATER, lang.SORT_MEDIUM,
         ]
         self._sort_label_to_key = {
             lang.SORT_NAME: "strain",
             lang.SORT_BREEDER: "seedbank",
             lang.SORT_DATE_PLANTED: "date_planted",
+            lang.SORT_LAST_EVENT: "last_event_ts",
+            lang.SORT_NEXT_EVENT: "last_event_ts",
             lang.SORT_DAYS_TO_HARVEST: "harvest_status",
             lang.SORT_DAYS_TO_WATER: "last_watering",
             lang.SORT_MEDIUM: "medium",
@@ -160,16 +176,16 @@ class GardenViewScreen(BaseScreen):
             options=sort_options,
             size_hint_x=0.2,
         )
-        self.sort_dropdown.selected = lang.SORT_NAME
-        self.sort_dropdown.main_button.text = lang.SORT_NAME
+        self.sort_dropdown.selected = lang.SORT_LAST_EVENT
+        self.sort_dropdown.main_button.text = lang.SORT_LAST_EVENT
         self.sort_dropdown.bind(selected=self._on_sort_changed)
         toolbar.add_widget(self.sort_dropdown)
 
         # Asc / Desc toggle
         self.sort_dir_btn = SortDirButton(
-            size_hint_x=None, width="44dp",
+            size_hint_x=None, width="44dp", state="down",
         )
-        self.sort_dir_btn.bind(on_press=self._on_sort_dir_toggle)
+        self.sort_dir_btn.bind(state=self._on_sort_dir_toggle)
         toolbar.add_widget(self.sort_dir_btn)
 
         toolbar.add_widget(SpacerBox(size_hint_x=0.05))
@@ -299,12 +315,11 @@ class GardenViewScreen(BaseScreen):
     def refresh_plants(self):
         app = App.get_running_app()
         garden_id = getattr(app, 'current_garden_id', None)
-        plants = get_plants_for_garden(garden_id) if garden_id else []
+        plants = PlantRepository.list_for_garden(garden_id) if garden_id else []
         today = date.today()
 
         # Single read: load the lightweight index instead of N event files
-        from storage import load_index
-        index = load_index()
+        index = IndexRepository.get_all()
 
         data = []
         for p in plants:
@@ -320,7 +335,13 @@ class GardenViewScreen(BaseScreen):
 
             # Use the plants index for last_event_ts instead of loading full event files
             idx_entry = index.get(str(plant_id), {}) if plant_id else {}
-            last_event_ts = idx_entry.get("last_event_ts")
+            last_event_ts = idx_entry.get("last_event_ts") or ""
+            # Planting counts as the first event — use date_planted as
+            # a fallback so freshly planted (or event-less) plants sort
+            # correctly under "last event" ordering.
+            if date_planted and date_planted > last_event_ts:
+                last_event_ts = date_planted
+            last_event_ts = last_event_ts or None
 
             last_watering = get_difference_days(today, last_event_ts) if last_event_ts else None
             if last_watering is None:
@@ -392,6 +413,7 @@ class GardenViewScreen(BaseScreen):
                 "flower_status": flower_status,
                 "harvest_status": harvest_status,
                 "date_planted": date_planted,
+                "last_event_ts": last_event_ts or "",
             })
 
         self._all_plants = data
@@ -441,10 +463,18 @@ class GardenViewScreen(BaseScreen):
 
     def _on_sort_changed(self, instance, value):
         self._sort_key = self._sort_label_to_key.get(value, "strain")
+        # Auto-flip direction: "Next Event" → ascending (oldest first),
+        # "Last Event" → descending (newest first)
+        if value == lang.SORT_NEXT_EVENT:
+            self._sort_ascending = True
+            self.sort_dir_btn.state = "normal"
+        elif value == lang.SORT_LAST_EVENT:
+            self._sort_ascending = False
+            self.sort_dir_btn.state = "down"
         self._apply_filters()
 
-    def _on_sort_dir_toggle(self, instance):
-        self._sort_ascending = instance.state != "down"
+    def _on_sort_dir_toggle(self, instance, state):
+        self._sort_ascending = state != "down"
         self._apply_filters()
 
     def _on_search_text(self, instance, value):
@@ -485,7 +515,7 @@ class GardenViewScreen(BaseScreen):
         garden_id = getattr(app, 'current_garden_id', None)
 
         if plant_id and garden_id:
-            remove_plant_from_garden(garden_id, plant_id)
+            PlantRepository.remove(garden_id, plant_id)
 
         # delete from RecycleView
         self.plant_list.data.pop(idx)

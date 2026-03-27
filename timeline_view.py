@@ -14,7 +14,7 @@ from buttons import ButtonRed, NutrientButton, GraphButton
 from labels import TitleLabel, FieldLabel
 from screens import BaseScreen
 from boxes import WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox
-from storage import load_plant_events, get_plants_for_garden
+from data import EventRepository, PlantRepository
 from are_you_sure import AreYouSure
 from datetime import datetime, timedelta
 import logging
@@ -157,13 +157,17 @@ class SimpleGraph(BoxLayout):
             self._grid_color = Color(*app.theme.color_button_bg)
         self._label_rects = []
         self._y_label_rects = []
-        self._label_color = None
-        with self.graph.canvas.after:
-            self._label_color = Color(*app.theme.color_field_value)
         # marker instruction group — persistent pool (no tear-down/recreate)
         self._marker_group = InstructionGroup()
         self.graph.canvas.after.add(self._marker_group)
         self._marker_pool = []  # list of (Color, Ellipse) tuples
+        # Label color MUST come AFTER the marker group so that marker Color
+        # instructions (which may set alpha=0 for hidden series) don't bleed
+        # into the axis labels.  Dynamically-added label Rectangles are
+        # appended to canvas.after and therefore always follow this Color.
+        self._label_color = None
+        with self.graph.canvas.after:
+            self._label_color = Color(*app.theme.color_field_value)
         self.graph.bind(
             xmin=lambda *a: self._schedule_grid_update(), 
             xmax=lambda *a: self._schedule_grid_update(), 
@@ -618,6 +622,9 @@ class SimpleGraph(BoxLayout):
             if is_initial:
                 self._xmin = xmin
                 self._xmax = xmax
+                # ensure a minimum visible width of 1 day to avoid zero-range
+                if self._xmax - self._xmin < 1:
+                    self._xmin = self._xmax - 1
             else:
                 # For non-initial visuals, prefer a wider default window anchored to most recent
                 DEFAULT_WINDOW = 60
@@ -677,6 +684,9 @@ class SimpleGraph(BoxLayout):
         if is_initial:
             self._xmin = xmin
             self._xmax = xmax
+            # ensure a minimum visible width of 1 day to avoid zero-range
+            if self._xmax - self._xmin < 1:
+                self._xmin = self._xmax - 1
         else:
             DEFAULT_WINDOW = 60
             self._xmax = xmax
@@ -1080,7 +1090,7 @@ class TimelineScreen(BaseScreen):
             container.add_widget(btn_row)
 
             # Add Relative/Absolute toggle on the right side
-            rel_btn = GraphButton(text='Absolute', state='normal')
+            rel_btn = GraphButton(text='ml', state='normal')
             rel_btn.background_color = app.theme.color_transparent
             rel_btn.color = app.theme.color_label_title
             def _rel_state_cb(inst, value):
@@ -1165,7 +1175,7 @@ class TimelineScreen(BaseScreen):
     def load_plant(self, plant):
         self.plant = plant
         plant_id = plant.get("id")
-        data = load_plant_events(plant_id)
+        data = EventRepository.get(plant_id)
         events = data.get("events", []) if data else []
         series_map, base_date = self._prepare_series(events)
         mapping = {
@@ -1261,7 +1271,7 @@ class TimelineScreen(BaseScreen):
         from kivy.app import App as _App
         app = _App.get_running_app()
         garden_id = getattr(app, 'current_garden_id', None)
-        plants = get_plants_for_garden(garden_id) if garden_id else []
+        plants = PlantRepository.list_for_garden(garden_id) if garden_id else []
         for p in plants:
             if str(p.get("id")) == str(plant):
                 self.load_plant(p)
@@ -1271,7 +1281,7 @@ class TimelineScreen(BaseScreen):
         from kivy.app import App as _App
         app = _App.get_running_app()
         garden_id = getattr(app, 'current_garden_id', None)
-        plants = get_plants_for_garden(garden_id) if garden_id else []
+        plants = PlantRepository.list_for_garden(garden_id) if garden_id else []
         for p in plants:
             if str(p.get("id")) == str(plant_id):
                 self.load_plant(p)

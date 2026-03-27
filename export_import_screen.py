@@ -15,7 +15,7 @@ from kivy.uix.togglebutton import ToggleButton
 
 from boxes import ContentBox, ItemBox, SpacerBox, WrapperBox
 from buttons import ButtonGreen, ButtonRed, ButtonYellow, PasswordEyeToggle
-from data import GardenRepository, PlantRepository
+from data import GardenRepository, PlantRepository, EventRepository
 from labels import FieldLabel, TitleLabel
 from screens import BaseScreen
 from text_inputs import MedTextInput
@@ -29,7 +29,6 @@ from weed_format import (
     write_weed,
 )
 import lang
-import storage
 
 LOG = logging.getLogger(__name__)
 
@@ -187,7 +186,7 @@ class ExportImportScreen(BaseScreen):
         """Reload garden list from storage and rebuild the checkbox rows."""
         self._checkbox_container.clear_widgets()
         self._garden_checkboxes.clear()
-        gardens = storage.load_gardens()
+        gardens = GardenRepository.list_all()
         for garden in gardens:
             gid = garden.get("id", "")
             name = garden.get("name", gid)
@@ -330,7 +329,7 @@ class ExportImportScreen(BaseScreen):
         """Return [{garden: {...}, events: {plant_id: {...}}}, ...] for export."""
         result = []
         for gid in garden_ids:
-            garden = storage.load_garden(gid)
+            garden = GardenRepository.get(gid)
             if not garden:
                 LOG.warning("Garden %s not found during export - skipping", gid)
                 continue
@@ -338,7 +337,7 @@ class ExportImportScreen(BaseScreen):
             for plant in garden.get("plants", []):
                 pid = plant.get("id")
                 if pid:
-                    ev = storage.load_plant_events(pid)
+                    ev = EventRepository.get(pid)
                     if ev:
                         events_map[pid] = ev
             result.append({"garden": garden, "events": events_map})
@@ -405,7 +404,7 @@ class ExportImportScreen(BaseScreen):
             return
 
         # Check for conflicting garden IDs
-        existing_ids = {g.get("id") for g in storage.load_gardens() if g.get("id")}
+        existing_ids = {g.get("id") for g in GardenRepository.list_all() if g.get("id")}
         import_ids = [g.get("id") for g in data.get("gardens", []) if g.get("id")]
         conflicts = [gid for gid in import_ids if gid in existing_ids]
 
@@ -470,13 +469,13 @@ class ExportImportScreen(BaseScreen):
             gid = garden.get("id")
             if not gid:
                 continue
-            if storage.save_garden(garden):
+            if GardenRepository.save(garden):
                 imported_gardens += 1
             for plant in garden.get("plants", []):
                 pid = plant.get("id")
                 if pid:
                     ev = events_by_plant.get(pid)
-                    if ev and storage.save_plant_events(pid, ev):
+                    if ev and EventRepository.save(pid, ev):
                         imported_events += 1
 
         # Invalidate in-memory repository caches so next read sees fresh data

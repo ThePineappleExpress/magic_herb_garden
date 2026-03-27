@@ -184,6 +184,11 @@ class PhotoStrip(BoxLayout):
         self.add_widget(self._scroll)
         self.bind(width=self._update_cols)
 
+    def on_parent(self, instance, parent):
+        """Clean up all thumbnails from hover_manager when orphaned."""
+        if parent is None and hasattr(self, '_grid'):
+            hover_manager.unregister_tree(self._grid)
+
     def _update_cols(self, *_):
         available = max(self.width - 10, THUMB_SIZE)
         cols = max(1, int(available // (THUMB_SIZE + 5)))

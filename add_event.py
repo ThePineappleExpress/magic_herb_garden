@@ -10,16 +10,17 @@ from kivy.uix.togglebutton import ToggleButton
 from kivy.clock import Clock
 
 from helpers import get_difference_days, go_to_add_event, go_to_garden, _coerce_to_date
-from storage import load_plant_events, get_plants_for_garden, save_plants_for_garden, load_garden
-from data import EventRepository, PhotoRepository
+from data import GardenRepository, EventRepository, PhotoRepository
+from services.plant_service import apply_event_side_effects
 from effects import shake_and_flash
 from constants import (
     EVENT_WATERING, EVENT_FEEDING, EVENT_LOG, EVENT_TOP,
     EVENT_PRUNE, EVENT_FLIP, EVENT_HARVEST,
 )
-from labels import TitleLabel, FieldLabel, HintLabel, NutrientLabel, ListTitleLabel, LogoLabel2
+from labels import TitleLabel, FieldLabel, HintLabel, ListTitleLabel, LogoLabel2
 from boxes import ItemBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
-from buttons import ButtonRed, ButtonGreen, ButtonYellow, NutrientButton, ResetButton
+from buttons import ButtonRed, ButtonGreen, ButtonYellow
+from ui_builders import create_water_fields, create_feeding_fields, create_nutrients_panel
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from screens import BaseScreen
 from custom_dropdown import CustomDropdown
@@ -240,13 +241,13 @@ class AddEventScreen(BaseScreen):
         # Toggle buttons: Top / Prune / Flip (right of dropdown)
         toggle_box = ItemBox(orientation="horizontal", size_hint_x=0.6)
         self.top_toggle = ToggleButton(
-            text=lang.TOGGLE_TOP, group="", allow_no_selection=True,
+            text=lang.TOGGLE_TOP, allow_no_selection=True,
         )
         self.prune_toggle = ToggleButton(
-            text=lang.TOGGLE_PRUNE, group="", allow_no_selection=True,
+            text=lang.TOGGLE_PRUNE, allow_no_selection=True,
         )
         self.flip_toggle = ToggleButton(
-            text=lang.TOGGLE_FLIP, group="", allow_no_selection=True,
+            text=lang.TOGGLE_FLIP, allow_no_selection=True,
         )
         for tb in (self.top_toggle, self.prune_toggle, self.flip_toggle):
             toggle_box.add_widget(tb)
@@ -407,31 +408,8 @@ class AddEventScreen(BaseScreen):
         right_column_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
         main_data_column.add_widget(right_column_box)
 
-        nutrients_box = WrapperBox(orientation="vertical", size_hint_y = 0.4)
+        nutrients_box = create_nutrients_panel()  # interactive toggle mode
         right_column_box.add_widget(nutrients_box)
-
-        nutrients_title_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
-        nutrients_box.add_widget(nutrients_title_box)
-
-        nutrients_title = FieldLabel(text=lang.NUTRIENTS, valign="bottom", halign="left")
-        nutrients_title.color = app.theme.color_field_label
-        nutrients_title.font_size = app.theme.body_size
-        nutrients_title_box.add_widget(nutrients_title)
-
-        nutrients_data_box = ContentBox(orientation="horizontal", size_hint_y=0.8, spacing=0)
-        nutrients_box.add_widget(nutrients_data_box)
-        
-        for nutrient in ["n","p","k","ca","mg","s","fe","mn","zn","cu","b","mo"]:
-            box = GreenBox(orientation="vertical", spacing=0, padding=0, size_hint=(1, 1))
-            nutrients_data_box.add_widget(box)
-            for text in ["+", nutrient.capitalize(), "-"]:
-                if text == "+":
-                    btn = NutrientButton(text=text, group=nutrient, size_hint=(1, 1/3))
-                elif text == "-":
-                    btn = NutrientButton(text=text, group=nutrient, size_hint=(1, 1/3))
-                else:
-                    btn = ResetButton(text=text, group=nutrient, size_hint=(1, 1/3))
-                box.add_widget(btn)
 
 
         notes_box = WrapperBox(orientation="vertical", size_hint_y = 0.6)
@@ -646,6 +624,8 @@ class AddEventScreen(BaseScreen):
             self.fungi_dropdown.select_option('no')
         # Clear photo strip and pending photos
         if hasattr(self, '_photo_strip'):
+            import hover_manager
+            hover_manager.unregister_tree(self._photo_strip._grid)
             self._photo_strip._grid.clear_widgets()
             self._photo_strip._thumbnails.clear()
             self._photo_strip.selected_photo_id = ""
@@ -907,7 +887,7 @@ class AddEventScreen(BaseScreen):
             return
 
         garden_id = getattr(app, 'current_garden_id', None)
-        garden = load_garden(garden_id) if garden_id else None
+        garden = GardenRepository.get(garden_id) if garden_id else None
 
         if garden:
             sched = garden.get("light_schedule", [])
@@ -960,88 +940,18 @@ class AddEventScreen(BaseScreen):
         if box is None:
             return
         box.clear_widgets()
-        app = App.get_running_app()
 
         if selection in (EVENT_WATERING, EVENT_FEEDING):
-            water_row = WrapperBox(orientation="horizontal", size_hint_y=0.2)
+            water_row, water_refs = create_water_fields()
             box.add_widget(water_row)
-            water_fields = [
-                ("Volume", "water_volume_input"),
-                ("Temp", "water_temp_input"),
-                ("pH", "ph_input"),
-                ("PPM", "ppm_input"),
-            ]
-            for title, attr in water_fields:
-                wbox = WrapperBox(orientation="vertical")
-                title_box = ContentBox(orientation="horizontal")
-                label = FieldLabel(text=title, valign="bottom", halign="left")
-                label.color = app.theme.color_water_label
-                label.font_size = app.theme.small_size
-                title_box.add_widget(label)
-                wbox.add_widget(title_box)
-                value_box = ContentBox(orientation="horizontal")
-                value_label = NumTextInput(hint_text=lang.HINT_NUM_DEFAULT)
-                value_label.font_size = app.theme.subtitle_size
-                value_label.color = app.theme.color_field_value
-                value_box.add_widget(value_label)
-                wbox.add_widget(value_box)
-                water_row.add_widget(wbox)
-                setattr(self, attr, value_label)
+            for attr, widget in water_refs.items():
+                setattr(self, attr, widget)
 
             if selection == EVENT_FEEDING:
-                feeding_row_1 = WrapperBox(orientation="horizontal", size_hint_y=0.33)
-                box.add_widget(feeding_row_1)
-                feeding_fields_1 = [
-                    ("Veg", "grow_mix_input"),
-                    ("Root", "root_mix_input"),
-                    ("Soil", "soil_boost_input"),
-                    ("Vit", "vit_boost_input"),
-                ]
-                for title, attr in feeding_fields_1:
-                    wbox = WrapperBox(orientation="vertical")
-                    title_box = ContentBox(orientation="horizontal")
-                    label = FieldLabel(text=title, valign="bottom", halign="left")
-                    label.color = app.theme.color_feed_label
-                    label.font_size = app.theme.small_size
-                    title_box.add_widget(label)
-                    wbox.add_widget(title_box)
-                    value_box = ContentBox(orientation="horizontal")
-                    value_label = NumTextInput(hint_text=lang.HINT_NUM_DEFAULT)
-                    value_label.font_size = app.theme.subtitle_size
-                    value_label.color = app.theme.color_field_value
-                    value_box.add_widget(value_label)
-                    wbox.add_widget(value_box)
-                    feeding_row_1.add_widget(wbox)
-                    setattr(self, attr, value_label)
-
-                feeding_row_2 = WrapperBox(orientation="horizontal", size_hint_y=0.33)
-                box.add_widget(feeding_row_2)
-                feeding_fields_2 = [
-                    ("Flower", "bloom_mix_input"),
-                    ("Tops", "bloom_boost_input"),
-                    ("CalMag", "calmag_input"),
-                    ("Fungi", "fungi_dropdown"),
-                ]
-                for title, attr in feeding_fields_2:
-                    wbox = WrapperBox(orientation="vertical")
-                    title_box = ContentBox(orientation="horizontal")
-                    label = FieldLabel(text=title, valign="bottom", halign="left")
-                    label.color = app.theme.color_feed_label
-                    label.font_size = app.theme.small_size
-                    title_box.add_widget(label)
-                    wbox.add_widget(title_box)
-                    value_box = ContentBox(orientation="horizontal")
-                    if title == "Fungi":
-                        value_label = CustomDropdown(selected="no", values=["yes", "no"])
-                        setattr(self, attr, value_label)
-                    else:
-                        value_label = NumTextInput(hint_text=lang.HINT_NUM_DEFAULT)
-                        value_label.font_size = app.theme.subtitle_size
-                        value_label.color = app.theme.color_field_value
-                        setattr(self, attr, value_label)
-                    value_box.add_widget(value_label)
-                    wbox.add_widget(value_box)
-                    feeding_row_2.add_widget(wbox)
+                feeding_container, feeding_refs = create_feeding_fields()
+                box.add_widget(feeding_container)
+                for attr, widget in feeding_refs.items():
+                    setattr(self, attr, widget)
                 spacer = SpacerBox(size_hint_y=0.34)
                 box.add_widget(spacer)
             else:
@@ -1153,9 +1063,9 @@ class AddEventScreen(BaseScreen):
 
             plant_info = {
                 "plant_height": get_num_input("plant_height_input"),
-                "num_nodes": get_num_input("num_nodes_input"),
+                "num_nodes": int(get_num_input("num_nodes_input")),
                 "node_spacing": get_num_input("node_spacing_input"),
-                "main_stem_number": get_num_input("main_stem_number_input"),
+                "main_stem_number": int(get_num_input("main_stem_number_input")),
                 "leaf_color": get_dropdown_val("leaf_color_dropdown", "normal"),
                 "leaf_morphology": get_dropdown_val("leaf_morphology_dropdown", "normal"),
             }
@@ -1253,58 +1163,14 @@ class AddEventScreen(BaseScreen):
                 self._pending_photos = []
                 # Post-save side-effects for special event types (skip on edit)
                 if not is_edit:
-                    self._apply_event_side_effects(event_type, plant_id)
+                    apply_event_side_effects(garden_id, plant_id, event_type)
                     # Apply side-effects for each active toggle
                     for toggle_type in active_toggles:
-                        self._apply_event_side_effects(toggle_type, plant_id)
+                        apply_event_side_effects(garden_id, plant_id, toggle_type)
             return ok
         except Exception:
             LOG.exception("Exception in on_event_save")
             return False
-
-    def _apply_event_side_effects(self, event_type, plant_id):
-        """Update the plant record after special event types (top, prune, flip, harvest)."""
-        app = App.get_running_app()
-        garden_id = getattr(app, 'current_garden_id', None)
-        if not garden_id:
-            LOG.error("No current_garden_id set, cannot apply side-effects for %s", event_type)
-            return
-
-        plants = get_plants_for_garden(garden_id)
-        target = None
-        for p in plants:
-            if isinstance(p, dict) and (p.get("id") == plant_id or p.get("plant_id") == plant_id):
-                target = p
-                break
-        if target is None:
-            LOG.error("Plant %s not found in garden %s, cannot apply side-effects", plant_id, garden_id)
-            return
-
-        changed = False
-
-        if event_type in (EVENT_TOP, EVENT_PRUNE):
-            # Each top/prune adds 7 penalty days to harvest estimate
-            penalty = int(target.get("penalty", 0) or 0)
-            target["penalty"] = penalty + 7
-            changed = True
-
-        if event_type == EVENT_FLIP:
-            # Record flip date; plant enters flowering
-            target["flip_date"] = datetime.date.today().isoformat()
-            target["stage"] = "flowering"
-            changed = True
-
-        if event_type == EVENT_HARVEST:
-            target["harvest_date"] = datetime.date.today().isoformat()
-            target["stage"] = "harvested"
-            changed = True
-
-        if changed:
-            ok = save_plants_for_garden(garden_id, plants)
-            if ok:
-                LOG.info("Side-effects applied for %s event on plant %s", event_type, plant_id)
-            else:
-                LOG.error("Failed to save plant side-effects for %s event on plant %s", event_type, plant_id)
 
     def _on_photo_select(self, photo_id):
         self._selected_photo_id = photo_id

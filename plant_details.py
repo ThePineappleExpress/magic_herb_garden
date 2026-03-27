@@ -9,17 +9,17 @@ from kivy.clock import Clock
 from uuid import uuid4
 
 from helpers import get_difference_days, go_to_add_event, go_to_garden, go_to_timeline
-from storage import load_plant_events
+from data import EventRepository, PhotoRepository
 from constants import (
     EVENT_WATERING, EVENT_FEEDING, EVENT_PLANTING, EVENT_HARVEST,
 )
-from labels import TitleLabel, FieldLabel, HintLabel, NutrientLabel, ListTitleLabel, LogoLabel2
+from labels import TitleLabel, FieldLabel, HintLabel, ListTitleLabel, LogoLabel2
 from boxes import ItemBox, WrapperBox, ContentBox, SpacerBox, RedBox, YellowBox, GreenBox, EventBox, SelectableBoxLayout, SelectableEventBox
 from buttons import ButtonRed, ButtonGreen, ButtonYellow, ButtonTransparent
 from text_inputs import NumTextInput, MedTextInput, LargeTextInput
 from screens import BaseScreen
+from ui_builders import create_water_fields, create_feeding_fields, create_nutrients_panel
 from photo_widgets import PhotoStrip, PhotoViewPopup, PhotoPickerPopup, bytes_to_texture
-from data import PhotoRepository
 import lang
 
 class HorizontalScrollView(ScrollView):
@@ -260,6 +260,8 @@ class PlantDetailsScreen(BaseScreen):
         self.selected_event_view()
 
     def _load_and_display_events(self):
+        import hover_manager
+        hover_manager.unregister_tree(self.events_container)
         self.events_container.clear_widgets()
         self._selected_event_item = None
 
@@ -268,7 +270,7 @@ class PlantDetailsScreen(BaseScreen):
         if not plant_id:
             return
 
-        data = load_plant_events(str(plant_id))
+        data = EventRepository.get(str(plant_id))
         if not data:
             return
         events = data.get("events", [])
@@ -415,6 +417,8 @@ class PlantDetailsScreen(BaseScreen):
             return "Minor issues"
 
     def selected_event_view(self):
+        import hover_manager
+        hover_manager.unregister_tree(self.info_box)
         self.info_box.clear_widgets()
         app = App.get_running_app()
         plant = self.plant or {}
@@ -586,96 +590,33 @@ class PlantDetailsScreen(BaseScreen):
 
         # Watering/Feeding fields (no units, looped)
         if event_type in (EVENT_WATERING, EVENT_FEEDING):
-            water_row = WrapperBox(orientation="horizontal", size_hint_y=0.2)
+            water_row, _ = create_water_fields(values={
+                "volume": water_volume,
+                "temp": water_temperature,
+                "ph": ph,
+                "ppm": ppm,
+            })
             water_and_food_box.add_widget(water_row)
-            water_fields = [
-                ("Volume", water_volume),
-                ("Temp", water_temperature),
-                ("pH", ph),
-                ("PPM", ppm),
-            ]
-            for title, value in water_fields:
-                box = WrapperBox(orientation="vertical")
-                title_box = ContentBox(orientation="horizontal")
-                label = FieldLabel(text=title, valign="bottom", halign="left")
-                label.color = app.theme.color_water_label
-                label.font_size = app.theme.small_size
-                title_box.add_widget(label)
-                box.add_widget(title_box)
-                value_box = ContentBox(orientation="horizontal")
-                value_label = FieldLabel(text=str(value) if value not in (None, "") else "–", valign="top", halign="left")
-                value_label.font_size = app.theme.subtitle_size
-                value_label.color = app.theme.color_field_value
-                value_box.add_widget(value_label)
-                box.add_widget(value_box)
-                water_row.add_widget(box)
         else:
             spacer = SpacerBox(size_hint_y=0.2)
             water_and_food_box.add_widget(spacer)
 
         # Feeding fields (looped, special logic for stage)
         if event_type == EVENT_FEEDING:
-            # Row 1: Veg/Root/Soil/Vit
-            feeding_row_1 = WrapperBox(orientation="horizontal", size_hint_y=0.2)
-            water_and_food_box.add_widget(feeding_row_1)
-            feeding_fields_1 = []
-            if stage == "vegetative":
-                feeding_fields_1.append(("Veg", grow_mix))
-            else:
-                feeding_fields_1.append(("Veg", None))
-            feeding_fields_1 += [
-                ("Root", root_mix),
-                ("Soil", soil_boost),
-                ("Vit", vit_boost),
-            ]
-            for title, value in feeding_fields_1:
-                box = WrapperBox(orientation="vertical")
-                title_box = ContentBox(orientation="horizontal")
-                label = FieldLabel(text=title, valign="bottom", halign="left")
-                label.color = app.theme.color_feed_label
-                label.font_size = app.theme.small_size
-                title_box.add_widget(label)
-                box.add_widget(title_box)
-                value_box = ContentBox(orientation="horizontal")
-                value_label = FieldLabel(text=str(value) if value not in (None, "") else "–", valign="top", halign="left")
-                value_label.font_size = app.theme.subtitle_size
-                value_label.color = app.theme.color_field_value
-                value_box.add_widget(value_label)
-                box.add_widget(value_box)
-                feeding_row_1.add_widget(box)
-
-            # Row 2: Flower/Tops/CalMag/Fungi
-            feeding_row_2 = WrapperBox(orientation="horizontal", size_hint_y=0.2)
-            water_and_food_box.add_widget(feeding_row_2)
-            feeding_fields_2 = []
-            if stage == "flowering":
-                feeding_fields_2.append(("Flower", bloom_mix))
-                feeding_fields_2.append(("Tops", bloom_boost))
-            else:
-                feeding_fields_2.append(("Flower", None))
-                feeding_fields_2.append(("Tops", None))
-            feeding_fields_2.append(("CalMag", CalMag))
-            # Fungi special logic
-            fungi_val = "Yes" if myco_trico else "No"
-            feeding_fields_2.append(("Fungi", fungi_val))
-            for i, (title, value) in enumerate(feeding_fields_2):
-                box = WrapperBox(orientation="vertical")
-                title_box = ContentBox(orientation="horizontal")
-                label = FieldLabel(text=title, valign="bottom", halign="left")
-                label.color = app.theme.color_feed_label
-                label.font_size = app.theme.small_size
-                title_box.add_widget(label)
-                box.add_widget(title_box)
-                value_box = ContentBox(orientation="horizontal")
-                value_label = FieldLabel(text=str(value) if value not in (None, "") else "–", valign="top", halign="left")
-                value_label.font_size = app.theme.subtitle_size
-                if title == "Fungi":
-                    value_label.color = app.theme.color_field_label if value == "Yes" else app.theme.color_label_body
-                else:
-                    value_label.color = app.theme.color_field_value
-                value_box.add_widget(value_label)
-                box.add_widget(value_box)
-                feeding_row_2.add_widget(box)
+            feeding_container, _ = create_feeding_fields(
+                values={
+                    "grow_mix": grow_mix,
+                    "root_mix": root_mix,
+                    "soil_boost": soil_boost,
+                    "vit_boost": vit_boost,
+                    "bloom_mix": bloom_mix,
+                    "bloom_boost": bloom_boost,
+                    "calmag": CalMag,
+                    "fungi": myco_trico,
+                },
+                stage=stage,
+            )
+            water_and_food_box.add_widget(feeding_container)
         else:
             spacer = SpacerBox(size_hint_y=0.2)
             water_and_food_box.add_widget(spacer)
@@ -683,45 +624,11 @@ class PlantDetailsScreen(BaseScreen):
         right_column_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
         main_data_column.add_widget(right_column_box)
 
-        nutrients_box = WrapperBox(orientation="vertical", size_hint_y = 0.4)
+        nutrients_box = create_nutrients_panel(
+            plant_data=plant_obs,
+            get_nutrient_fn=self.get_nutrient,
+        )
         right_column_box.add_widget(nutrients_box)
-
-        nutrients_title_box = ContentBox(orientation="horizontal", size_hint_y=0.2)
-        nutrients_box.add_widget(nutrients_title_box)
-
-        nutrients_title = FieldLabel(text=lang.NUTRIENTS, valign="bottom", halign="left")
-        nutrients_title.color = app.theme.color_field_label
-        nutrients_title.font_size = app.theme.body_size
-        nutrients_title_box.add_widget(nutrients_title)
-
-        nutrients_data_box = ContentBox(orientation="horizontal", size_hint_y=0.8, spacing=0)
-        nutrients_box.add_widget(nutrients_data_box)
-        
-
-        for nutrient in ["n","p","k","ca","mg","s","fe","mn","zn","cu","b","mo"]:
-            box = GreenBox(orientation="vertical", spacing=0, padding=0, size_hint=(1, 1))
-            nutrients_data_box.add_widget(box)
-            for text in ["+", nutrient.capitalize(), "-"]:
-                if text == "+":
-                    if self.get_nutrient(plant_obs, nutrient) == "excess":
-                        sub_box = YellowBox(orientation="vertical")
-                    else:
-                        sub_box = GreenBox(orientation="vertical")        
-                elif text == "-":
-                    if self.get_nutrient(plant_obs, nutrient) == "deficient":
-                        sub_box = YellowBox(orientation="vertical")
-                    else:
-                        sub_box = GreenBox(orientation="vertical")        
-                else:
-                    sub_box = GreenBox(orientation="vertical", size_hint_x=1)
-                    label = NutrientLabel(text=nutrient.capitalize(), valign="middle", halign="center", size_hint_x=1)
-                    label.font_name = app.theme.font_logo_2
-                    label.color = app.theme.color_button_bg
-                    label.font_size = app.theme.subtitle_size
-                    label.text_size = label.size
-                    label.bind(size=lambda instance, value: setattr(instance, 'text_size', value))
-                    sub_box.add_widget(label)
-                box.add_widget(sub_box)
 
         notes_box = WrapperBox(orientation="vertical", size_hint_y = 0.6)
         right_column_box.add_widget(notes_box)
@@ -739,7 +646,8 @@ class PlantDetailsScreen(BaseScreen):
         notes_text.font_size = app.theme.small_size
         notes_text.color = app.theme.color_field_value
         notes_text_box.add_widget(notes_text)
-
+        spacer = SpacerBox(size_hint_x=0.01)
+        main_data_column.add_widget(spacer)
         # -- Photo column (third column) --
         photo_column_box = WrapperBox(orientation="vertical", size_hint_x=0.33)
         main_data_column.add_widget(photo_column_box)
@@ -873,10 +781,9 @@ class PlantDetailsScreen(BaseScreen):
                 # Add photo ID to event's photos list
                 photos = event.setdefault("photos", [])
                 photos.append(photo_id)
-                from data import EventRepository
                 EventRepository.save(plant_id, {
                     "plant_id": plant_id,
-                    "events": load_plant_events(plant_id).get("events", []),
+                    "events": EventRepository.get(plant_id).get("events", []),
                 })
                 # Refresh the view
                 self.selected_event_view()

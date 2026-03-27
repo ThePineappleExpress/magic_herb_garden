@@ -18,8 +18,8 @@ from labels import FieldLabel, TitleLabel
 from screens import BaseScreen
 from text_inputs import MedTextInput
 from ui_builders import create_initial_layout
+from data import GardenRepository
 import lang
-import storage
 
 LOG = logging.getLogger(__name__)
 
@@ -382,7 +382,7 @@ class AddGardenScreen(BaseScreen):
                 "created_at": date.today().isoformat(),
             }
 
-        if storage.save_garden(garden):
+        if GardenRepository.save(garden):
             LOG.info("Created garden '%s' (%s)", name, garden["id"])
             app = App.get_running_app()
             app.current_garden_id = garden["id"]
@@ -395,7 +395,7 @@ class AddGardenScreen(BaseScreen):
         if app.previous_screen:
             app.screen.current = app.previous_screen
         else:
-            gardens = storage.load_gardens()
+            gardens = GardenRepository.list_all()
             if gardens:
                 app.screen.current = "select_garden"
             else:

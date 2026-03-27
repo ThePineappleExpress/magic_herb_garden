@@ -16,7 +16,6 @@ from kivy.core.window import Window
 from strain_trie import trie_search
 from breeder_trie import breeder_search
 import lang
-import storage
 from effects import shake_and_flash
 from labels import FieldLabel, TitleLabel, WarningLabel, HintLabel, WarningTitleLabel
 from kivy.metrics import dp

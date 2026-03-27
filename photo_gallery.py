@@ -259,8 +259,7 @@ class PhotoGalleryScreen(BaseScreen):
             garden_id = str(app.current_garden_id or "")
             # Attach to the latest event for this plant
             from data import EventRepository
-            from storage import load_plant_events
-            data = load_plant_events(plant_id)
+            data = EventRepository.get(plant_id)
             events = data.get("events", []) if data else []
             event_id = events[-1].get("id", "") if events else ""
 

@@ -11,8 +11,8 @@ LOG = logging.getLogger(__name__)
 def _load_shader_prefs() -> tuple[bool, str, list, list]:
     """Return (enabled, shader_name, color_a, color_b) from saved settings + theme."""
     try:
-        import storage
-        settings = storage.load_settings()
+        from data import SettingsRepository
+        settings = SettingsRepository.get_all()
     except Exception:
         settings = {}
 

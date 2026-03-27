@@ -13,7 +13,7 @@ from kivy.uix.dropdown import DropDown
 from kivy.uix.screenmanager import Screen
 from kivy.core.window import Window
 
-from storage import add_plant_to_garden
+from services.plant_service import create_plant
 from effects import shake_and_flash
 import lang
 from labels import FieldLabel, TitleLabel, WarningLabel, HintLabel, WarningTitleLabel
@@ -326,7 +326,7 @@ class SetEnvironmentScreen(BaseScreen):
         }
         garden_id = getattr(app, 'current_garden_id', None)
         if garden_id:
-            add_plant_to_garden(garden_id, plant)
+            create_plant(garden_id, plant)
         self.clear_fields()
         app.pending_plant_data = {}
         garden_screen = app.screen.get_screen("garden_view")

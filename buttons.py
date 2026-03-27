@@ -99,21 +99,34 @@ class ResetButton(HoverToggle):
 
 
 class SortDirButton(HoverToggle):
-    """Toggle button that draws a filled up-triangle (ascending) or down-triangle (descending)."""
+    """Toggle button that draws a filled up-triangle (ascending) or down-triangle (descending).
+
+    Background stays transparent; the arrow uses the yellow button color.
+    """
 
     def __init__(self, **kwargs):
         kwargs.setdefault('text', '')
         super().__init__(**kwargs)
+        self.background_color = [0, 0, 0, 0]
         self.bind(pos=self._redraw, size=self._redraw, state=self._redraw)
 
+    # Keep background transparent regardless of toggle state or hover.
+    def on_enter(self):
+        pass
+
+    def on_leave(self):
+        pass
+
     def _redraw(self, *args):
+        # Force background transparent on every redraw (state change)
+        self.background_color = [0, 0, 0, 0]
         self.canvas.after.clear()
         with self.canvas.after:
             app = App.get_running_app()
             if app and hasattr(app, 'theme'):
-                Color(*app.theme.color_highlight)
+                Color(*app.theme.color_button_yellow_bg)
             else:
-                Color(1, 1, 1, 1)
+                Color(1, 0.651, 0.188, 1)
             cx = self.x + self.width / 2
             cy = self.y + self.height / 2
             r = min(self.width, self.height) * 0.28
