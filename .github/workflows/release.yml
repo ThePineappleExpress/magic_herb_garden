@@ -147,25 +147,32 @@ jobs:
         run: |
           $version  = "${{ steps.version.outputs.version }}"
           $stem     = "magic-herb-tracker-${version}-windows-amd64"
-          $buildDir = "${{ matrix.build_dir }}"
+          $buildDir = (Resolve-Path "${{ matrix.build_dir }}").Path
           $iscc     = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
           New-Item -ItemType Directory -Force dist | Out-Null
 
           # Rename .dist folder to include version + platform for both outputs
-          Rename-Item "${buildDir}\main.dist" $stem
+          Rename-Item "$buildDir\main.dist" $stem
+
+          $sourceDir = "$buildDir\$stem"
+          $outputDir = (Resolve-Path "dist").Path
+
+          Write-Host "SourceDir: $sourceDir"
+          Write-Host "OutputDir: $outputDir"
+          Get-ChildItem $sourceDir -Name | Select-Object -First 10
+
           if (Test-Path $iscc) {
-            $root = (Get-Location).Path
             & $iscc `
               "/DAppVersion=${version}" `
-              "/DSourceDir=${root}\${buildDir}\${stem}" `
-              "/DOutputDir=${root}\dist" `
+              "/DSourceDir=${sourceDir}" `
+              "/DOutputDir=${outputDir}" `
               "packaging\inno_setup.iss"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             Write-Host "Installer built: dist\${stem}-setup.exe"
           } else {
-            Write-Warning "Inno Setup not found — skipping installer"
+            Write-Warning "Inno Setup not found - skipping installer"
           }
-          Compress-Archive -Path "${buildDir}\${stem}" `
+          Compress-Archive -Path "$sourceDir" `
                            -DestinationPath "dist\${stem}.zip"
           Write-Host "Portable zip: dist\${stem}.zip"
       - name: Upload build artifact
