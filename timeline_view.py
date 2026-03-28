@@ -7,7 +7,10 @@ from kivy.graphics import Color, Rectangle, Line, Ellipse, InstructionGroup
 from kivy.core.text import Label as CoreLabel
 from kivy.metrics import dp
 
-from kivy.garden.graph import Graph, LinePlot
+try:
+    from kivy.garden.graph import Graph, LinePlot
+except ImportError:
+    from kivy_garden.graph import Graph, LinePlot
 
 from constants import EVENT_WATERING, EVENT_FEEDING, EVENT_PLANTING
 from buttons import ButtonRed, NutrientButton, GraphButton

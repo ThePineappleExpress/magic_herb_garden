@@ -367,6 +367,11 @@ class SettingsScreen(BaseScreen):
 
         SettingsRepository.save_all(settings)
 
+        # Update snapshot so _on_back doesn't revert what we just saved
+        self._saved_theme = settings["theme"]
+        self._saved_shader = settings["shader"]
+        self._saved_shader_enabled = settings["shader_enabled"]
+
         # If language changed, restart the app
         new_lang = settings["language"]
         if self._saved_language and new_lang != self._saved_language:
