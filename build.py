@@ -154,9 +154,12 @@ def build_nuitka(onefile: bool = True) -> Path:
     ]
 
     # -- platform-specific flags -----------------------------------------------
+    # Allow Nuitka to auto-download tools (Dependency Walker etc.) in CI
+    cmd.append("--assume-yes-for-downloads")
+
     if system == "Windows":
         cmd += [
-            "--windows-disable-console",   # GUI app - no terminal window
+            "--windows-console-mode=disable",   # GUI app - no terminal window
         ]
         icon = ROOT / "res" / "branding" / "icon.ico"
         if icon.exists():

@@ -101,7 +101,7 @@ jobs:
           mkdir -p dist
           ARTIFACT="magic-herb-tracker-${{ steps.version.outputs.version }}-linux-x86_64"
           BUILD="${{ matrix.build_dir }}"
-          mv "${BUILD}/magic-herb-tracker.dist" "${BUILD}/${ARTIFACT}"
+          mv "${BUILD}/main.dist" "${BUILD}/${ARTIFACT}"
           cp packaging/magic-herb-tracker.desktop "${BUILD}/${ARTIFACT}/"
           cp res/branding/mht.png "${BUILD}/${ARTIFACT}/magic-herb-tracker.png"
           tar -C "${BUILD}" -czf "dist/${ARTIFACT}.tar.gz" "${ARTIFACT}"
@@ -125,7 +125,7 @@ jobs:
             security list-keychains -s build.keychain
             codesign --deep --force --verify --verbose \
               --sign "Developer ID Application" \
-              "${BUILD}/magic-herb-tracker.dist/magic-herb-tracker"
+              "${BUILD}/main.dist/magic-herb-tracker"
           fi
           if command -v create-dmg &>/dev/null; then
             create-dmg \
@@ -133,11 +133,11 @@ jobs:
               --window-size 540 380 \
               --app-drop-link 380 170 \
               "dist/${STEM}.dmg" \
-              "${BUILD}/magic-herb-tracker.dist"
+              "${BUILD}/main.dist"
             echo "DMG: dist/${STEM}.dmg"
           else
             # Fallback: plain zip
-            mv "${BUILD}/magic-herb-tracker.dist" "${BUILD}/${STEM}"
+            mv "${BUILD}/main.dist" "${BUILD}/${STEM}"
             zip -r "dist/${STEM}.zip" "${BUILD}/${STEM}"
             echo "Zip: dist/${STEM}.zip"
           fi
@@ -152,7 +152,7 @@ jobs:
           New-Item -ItemType Directory -Force dist | Out-Null
 
           # Rename .dist folder to include version + platform for both outputs
-          Rename-Item "${buildDir}\magic-herb-tracker.dist" $stem
+          Rename-Item "${buildDir}\main.dist" $stem
           if (Test-Path $iscc) {
             & $iscc `
               "/DAppVersion=${version}" `
