@@ -154,10 +154,11 @@ jobs:
           # Rename .dist folder to include version + platform for both outputs
           Rename-Item "${buildDir}\main.dist" $stem
           if (Test-Path $iscc) {
+            $root = (Get-Location).Path
             & $iscc `
               "/DAppVersion=${version}" `
-              "/DSourceDir=${buildDir}\${stem}" `
-              "/DOutputDir=dist" `
+              "/DSourceDir=${root}\${buildDir}\${stem}" `
+              "/DOutputDir=${root}\dist" `
               "packaging\inno_setup.iss"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
             Write-Host "Installer built: dist\${stem}-setup.exe"
