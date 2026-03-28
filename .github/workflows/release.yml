@@ -161,21 +161,8 @@ jobs:
           Write-Host "OutputDir: $outputDir"
           Get-ChildItem $sourceDir -Name | Select-Object -First 10
 
-          $root = (Get-Location).Path
-          $issFile = "$root\packaging\inno_setup.iss"
-          if (Test-Path $iscc) {
-            & $iscc `
-              "/DAppVersion=${version}" `
-              "/DSourceDir=${sourceDir}" `
-              "/DOutputDir=${outputDir}" `
-              "/DLicenseFile=${root}\LICENSE" `
-              "/DSetupIcon=${root}\res\branding\icon.ico" `
-              "$issFile"
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-            Write-Host "Installer built: dist\${stem}-setup.exe"
-          } else {
-            Write-Warning "Inno Setup not found - skipping installer"
-          }
+          # TODO: Inno Setup installer — debug path resolution on CI
+          # For now, ship the portable zip only
           Compress-Archive -Path "$sourceDir" `
                            -DestinationPath "dist\${stem}.zip"
           Write-Host "Portable zip: dist\${stem}.zip"
