@@ -59,7 +59,7 @@ def _get_version() -> str:
 
 def _run(args: list[str], **kwargs) -> None:
     """Run a subprocess, raising on non-zero exit."""
-    print(f"\n▶ {' '.join(str(a) for a in args)}\n")
+    print(f"\n> {' '.join(str(a) for a in args)}\n")
     subprocess.run([str(a) for a in args], check=True, **kwargs)
 
 
@@ -85,7 +85,7 @@ def build_rust(skip: bool = False) -> None:
         print("maturin not found in venv - attempting install")
         _run([PYTHON, "-m", "pip", "install", "maturin"])
 
-    print("Building crypto_rs Rust extension (release) …")
+    print("Building crypto_rs Rust extension (release) ...")
     _run([
         maturin, "develop",
         "--release",
@@ -133,9 +133,7 @@ def build_nuitka(onefile: bool = True) -> Path:
 
         # Dynamic imports that Nuitka cannot trace statically:
         # - lang.py uses importlib.import_module(f"bin.lang.{name}")
-        # - storage.py uses platformdirs at runtime
         # - validators.py uses jsonschema conditionally
-        "--include-package=platformdirs",
         "--include-package=jsonschema",
 
         # Remove unused heavy imports that may have been auto-detected
@@ -181,7 +179,7 @@ def build_nuitka(onefile: bool = True) -> Path:
     # -- entry point ----------------------------------------------------------
     cmd.append(ROOT / "main.py")
 
-    print(f"Compiling with Nuitka (onefile={onefile}) …")
+    print(f"Compiling with Nuitka (onefile={onefile}) ...")
     _run(cmd)
 
     # Locate the output artifact
@@ -205,7 +203,7 @@ def build_nuitka(onefile: bool = True) -> Path:
 
 def archive(artifact: Path, skip: bool = False) -> None:
     if skip:
-        print("⏭  Skipping archive creation (--no-archive)")
+        print("Skipping archive creation (--no-archive)")
         return
 
     system = platform.system()
@@ -256,7 +254,7 @@ def main() -> None:
     archive(artifact, skip=args.no_archive)
 
     print(f"\n{'='*60}")
-    print(f"  Build complete ✓")
+    print(f"  Build complete OK")
     print(f"{'='*60}\n")
 
 
